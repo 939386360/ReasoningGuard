@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Defense} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{Latency (ms)} \\
+\midrule
+{No Defense} & {72.8} & {96.4} & --- \\
+{AttestMCP} & {12.4} & {87.4} & 8.3 \\
+{Guardrail} & {28.1} & {82.3} & 45.2 \\
+{PTG-Only} & {16.7} & {89.1} & 11.2 \\
+{RTV-Only} & {21.3} & {88.7} & 9.8 \\
+\textbf{ReasoningGuard} & \textbf{5.3} & \textbf{91.2} & 14.6 \\
+\bottomrule
+\end{tabular}
+\caption{Main results on MCPTox (GPT-4o, $n{=}3$ runs, 95\% CI). ASR=Attack Success Rate, TCR=Task Completion Rate.}
+\label{tab:main}
+\end{table}

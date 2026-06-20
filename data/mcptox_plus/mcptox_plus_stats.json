@@ -1,0 +1,11 @@
+{
+  "total_scenarios": 130,
+  "context_dependent": 80,
+  "cross_session_t3": 50,
+  "difficulty_distribution": {
+    "easy": 28,
+    "medium": 46,
+    "hard": 56
+  },
+  "avg_session_gap_t3": 2.82
+}

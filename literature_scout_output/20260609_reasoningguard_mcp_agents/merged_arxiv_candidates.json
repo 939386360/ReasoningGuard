@@ -1,0 +1,482 @@
+﻿[
+    {
+        "arxiv_id":  "2606.09549",
+        "title":  "SecureClaw: Clawing Back Control of LLM Agents",
+        "published":  "2026-06-08T14:29:01Z",
+        "abs_url":  "https://arxiv.org/abs/2606.09549v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_tool_security.json"
+    },
+    {
+        "arxiv_id":  "2606.09315",
+        "title":  "Brain-Prompt Injection: A Route-Safety Audit for BCI-LLM Agents",
+        "published":  "2026-06-08T10:19:34Z",
+        "abs_url":  "https://arxiv.org/abs/2606.09315v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2606.09084",
+        "title":  "Context-Fractured Decomposition Attacks on Tool-Using LLM Agents: Exploiting Artifact Provenance Gaps",
+        "published":  "2026-06-08T06:29:42Z",
+        "abs_url":  "https://arxiv.org/abs/2606.09084v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2606.05743",
+        "title":  "Membrane: A Self-Evolving Contrastive Safety Memory for LLM Agent Defense",
+        "published":  "2026-06-04T06:14:08Z",
+        "abs_url":  "https://arxiv.org/abs/2606.05743v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2606.04990",
+        "title":  "From Agent Traces to Trust: Evidence Tracing and Execution Provenance in LLM Agents",
+        "published":  "2026-06-03T15:12:47Z",
+        "abs_url":  "https://arxiv.org/abs/2606.04990v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2606.04329",
+        "title":  "From Untrusted Input to Trusted Memory: A Systematic Study of Memory Poisoning Attacks in LLM Agents",
+        "published":  "2026-06-03T01:04:13Z",
+        "abs_url":  "https://arxiv.org/abs/2606.04329v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2606.02240",
+        "title":  "AgentRedBench: Dynamic Redteaming and Integration-Aware Defense for LLM Agents over SaaS Integrations",
+        "published":  "2026-06-01T13:34:24Z",
+        "abs_url":  "https://arxiv.org/abs/2606.02240v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2605.29960",
+        "title":  "Hijacking Agent Memory: Stealthy Trojan Attacks Through Conversational Interaction",
+        "published":  "2026-05-28T14:02:00Z",
+        "abs_url":  "https://arxiv.org/abs/2605.29960v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2605.26497",
+        "title":  "Aligning Provenance with Authorization: A Dual-Graph Defense for LLM Agents",
+        "published":  "2026-05-26T03:20:23Z",
+        "abs_url":  "https://arxiv.org/abs/2605.26497v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.26269",
+        "title":  "AgentSecBench: Measuring Prompt Injection, Privacy Leakage, and Tool-Use Integrity in LLM Agents",
+        "published":  "2026-05-25T18:53:22Z",
+        "abs_url":  "https://arxiv.org/abs/2605.26269v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.24941",
+        "title":  "Memory-Induced Tool-Drift in LLM Agents",
+        "published":  "2026-05-24T08:41:39Z",
+        "abs_url":  "https://arxiv.org/abs/2605.24941v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2605.26154",
+        "title":  "MemMorph: Tool Hijacking in LLM Agents via Memory Poisoning",
+        "published":  "2026-05-24T04:26:13Z",
+        "abs_url":  "https://arxiv.org/abs/2605.26154v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2605.24659",
+        "title":  "IterInject: Indirect Prompt Injection Against LLM Agents via Feedback-Guided Iterative Optimization",
+        "published":  "2026-05-23T17:00:06Z",
+        "abs_url":  "https://arxiv.org/abs/2605.24659v1",
+        "primary_category":  "cs.LG",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2605.24069",
+        "title":  "When the Manual Lies: A Realistic Benchmark to Evaluate MCP Poisoning Attacks for LLM Agents",
+        "published":  "2026-05-22T08:34:48Z",
+        "abs_url":  "https://arxiv.org/abs/2605.24069v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_tool_security.json"
+    },
+    {
+        "arxiv_id":  "2605.17830",
+        "title":  "Remembering More, Risking More: Longitudinal Safety Risks in Memory-Equipped LLM Agents",
+        "published":  "2026-05-18T04:06:34Z",
+        "abs_url":  "https://arxiv.org/abs/2605.17830v1",
+        "primary_category":  "cs.AI",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2605.17453",
+        "title":  "Trust No Tool: Evaluating and Defending LLM Agents under Untrusted Tool Feedback",
+        "published":  "2026-05-17T13:51:34Z",
+        "abs_url":  "https://arxiv.org/abs/2605.17453v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_tool_security.json"
+    },
+    {
+        "arxiv_id":  "2605.15338",
+        "title":  "Hidden in Memory: Sleeper Memory Poisoning in LLM Agents",
+        "published":  "2026-05-14T19:06:10Z",
+        "abs_url":  "https://arxiv.org/abs/2605.15338v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2605.14421",
+        "title":  "MemLineage: Lineage-Guided Enforcement for LLM Agent Memory",
+        "published":  "2026-05-14T06:07:54Z",
+        "abs_url":  "https://arxiv.org/abs/2605.14421v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.11504",
+        "title":  "CTFusion: A CTF-based Benchmark for LLM Agent Evaluation",
+        "published":  "2026-05-12T04:23:42Z",
+        "abs_url":  "https://arxiv.org/abs/2605.11504v1",
+        "primary_category":  "cs.LG",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2605.11039",
+        "title":  "The Granularity Mismatch in Agent Security: Argument-Level Provenance Solves Enforcement and Isolates the LLM Reasoning Bottleneck",
+        "published":  "2026-05-11T04:09:11Z",
+        "abs_url":  "https://arxiv.org/abs/2605.11039v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.09817",
+        "title":  "Evaluating Tool Cloning in Agentic-AI Ecosystems",
+        "published":  "2026-05-10T23:39:44Z",
+        "abs_url":  "https://arxiv.org/abs/2605.09817v2",
+        "primary_category":  "cs.SE",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.11026",
+        "title":  "AgentShield: Deception-based Compromise Detection for Tool-using LLM Agents",
+        "published":  "2026-05-10T20:08:27Z",
+        "abs_url":  "https://arxiv.org/abs/2605.11026v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_tool_security.json"
+    },
+    {
+        "arxiv_id":  "2605.09033",
+        "title":  "ShadowMerge: A Novel Poisoning Attack on Graph-Based Agent Memory via Relation-Channel Conflicts",
+        "published":  "2026-05-09T16:16:41Z",
+        "abs_url":  "https://arxiv.org/abs/2605.09033v3",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2605.08828",
+        "title":  "When Agents Overtrust Environmental Evidence: An Extensible Agentic Framework for Benchmarking Evidence-Grounding Defects in LLM Agents",
+        "published":  "2026-05-09T09:32:27Z",
+        "abs_url":  "https://arxiv.org/abs/2605.08828v2",
+        "primary_category":  "cs.AI",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.08763",
+        "title":  "When LLMs Team Up: A Coordinated Attack Framework for Automated Cyber Intrusions",
+        "published":  "2026-05-09T07:47:42Z",
+        "abs_url":  "https://arxiv.org/abs/2605.08763v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.06812",
+        "title":  "Towards Security-Auditable LLM Agents: A Unified Graph Representation",
+        "published":  "2026-05-07T18:14:29Z",
+        "abs_url":  "https://arxiv.org/abs/2605.06812v1",
+        "primary_category":  "cs.AI",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2605.03482",
+        "title":  "MEMSAD: Gradient-Coupled Anomaly Detection for Memory Poisoning in Retrieval-Augmented Agents",
+        "published":  "2026-05-05T08:15:41Z",
+        "abs_url":  "https://arxiv.org/abs/2605.03482v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2605.03378",
+        "title":  "ARGUS: Defending LLM Agents Against Context-Aware Prompt Injection",
+        "published":  "2026-05-05T05:37:00Z",
+        "abs_url":  "https://arxiv.org/abs/2605.03378v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2605.01970",
+        "title":  "Trojan Hippo: Weaponizing Agent Memory for Data Exfiltration",
+        "published":  "2026-05-03T17:07:20Z",
+        "abs_url":  "https://arxiv.org/abs/2605.01970v3",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2604.24118",
+        "title":  "AgentVisor: Defending LLM Agents Against Prompt Injection via Semantic Virtualization",
+        "published":  "2026-04-27T07:12:52Z",
+        "abs_url":  "https://arxiv.org/abs/2604.24118v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2604.23374",
+        "title":  "Ghost in the Agent: Redefining Information Flow Tracking for LLM Agents",
+        "published":  "2026-04-25T16:39:16Z",
+        "abs_url":  "https://arxiv.org/abs/2604.23374v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2604.21477",
+        "title":  "MCP Pitfall Lab: Exposing Developer Pitfalls in MCP Tool Server Security under Multi-Vector Attacks",
+        "published":  "2026-04-23T09:39:15Z",
+        "abs_url":  "https://arxiv.org/abs/2604.21477v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2604.16548",
+        "title":  "A Survey on the Security of Long-Term Memory in LLM Agents: Toward Mnemonic Sovereignty",
+        "published":  "2026-04-17T06:28:22Z",
+        "abs_url":  "https://arxiv.org/abs/2604.16548v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2604.13630",
+        "title":  "SafeHarness: Lifecycle-Integrated Security Architecture for LLM-based Agent Deployment",
+        "published":  "2026-04-15T08:59:00Z",
+        "abs_url":  "https://arxiv.org/abs/2604.13630v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_tool_security.json"
+    },
+    {
+        "arxiv_id":  "2604.11790",
+        "title":  "ClawGuard: A Runtime Security Framework for Tool-Augmented LLM Agents Against Indirect Prompt Injection",
+        "published":  "2026-04-13T17:55:11Z",
+        "abs_url":  "https://arxiv.org/abs/2604.11790v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2604.10134",
+        "title":  "PlanGuard: Defending Agents against Indirect Prompt Injection via Planning-based Consistency Verification",
+        "published":  "2026-04-11T09:59:46Z",
+        "abs_url":  "https://arxiv.org/abs/2604.10134v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2604.05432",
+        "title":  "Your LLM Agent Can Leak Your Data: Data Exfiltration via Backdoored Tool Use",
+        "published":  "2026-04-07T04:58:01Z",
+        "abs_url":  "https://arxiv.org/abs/2604.05432v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_tool_security.json"
+    },
+    {
+        "arxiv_id":  "2604.04426",
+        "title":  "ShieldNet: Network-Level Guardrails against Emerging Supply-Chain Injections in Agentic Systems",
+        "published":  "2026-04-06T05:15:00Z",
+        "abs_url":  "https://arxiv.org/abs/2604.04426v1",
+        "primary_category":  "cs.AI",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2604.04035",
+        "title":  "Causality Laundering: Denial-Feedback Leakage in Tool-Calling LLM Agents",
+        "published":  "2026-04-05T09:28:51Z",
+        "abs_url":  "https://arxiv.org/abs/2604.04035v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2604.01350",
+        "title":  "No Attacker Needed: Unintentional Cross-User Contamination in Shared-State LLM Agents",
+        "published":  "2026-04-01T20:03:56Z",
+        "abs_url":  "https://arxiv.org/abs/2604.01350v1",
+        "primary_category":  "cs.CL",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2603.22868",
+        "title":  "Agent-Sentry: Bounding LLM Agents via Execution Provenance",
+        "published":  "2026-03-24T07:12:53Z",
+        "abs_url":  "https://arxiv.org/abs/2603.22868v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2603.22853",
+        "title":  "Agent Audit: A Security Analysis System for LLM Agent Applications",
+        "published":  "2026-03-24T06:44:51Z",
+        "abs_url":  "https://arxiv.org/abs/2603.22853v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2603.19469",
+        "title":  "A Framework for Formalizing LLM Agent Security",
+        "published":  "2026-03-19T21:01:49Z",
+        "abs_url":  "https://arxiv.org/abs/2603.19469v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_formal_agent_security.json"
+    },
+    {
+        "arxiv_id":  "2603.19328",
+        "title":  "The Verifier Tax: Horizon Dependent Safety Success Tradeoffs in Tool Using LLM Agents",
+        "published":  "2026-03-18T16:16:34Z",
+        "abs_url":  "https://arxiv.org/abs/2603.19328v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_tool_security.json"
+    },
+    {
+        "arxiv_id":  "2603.15372",
+        "title":  "SKILLS: Structured Knowledge Injection for LLM-Driven Telecommunications Operations",
+        "published":  "2026-03-16T14:48:53Z",
+        "abs_url":  "https://arxiv.org/abs/2603.15372v1",
+        "primary_category":  "cs.SE",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2603.11853",
+        "title":  "OpenClaw PRISM: A Zero-Fork, Defense-in-Depth Runtime Security Layer for Tool-Augmented LLM Agents",
+        "published":  "2026-03-12T12:20:12Z",
+        "abs_url":  "https://arxiv.org/abs/2603.11853v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2603.11619",
+        "title":  "Taming OpenClaw: Security Analysis and Mitigation of Autonomous LLM Agent Threats",
+        "published":  "2026-03-12T07:24:05Z",
+        "abs_url":  "https://arxiv.org/abs/2603.11619v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2603.10749",
+        "title":  "AttriGuard: Defeating Indirect Prompt Injection in LLM Agents via Causal Attribution of Tool Invocations",
+        "published":  "2026-03-11T13:23:46Z",
+        "abs_url":  "https://arxiv.org/abs/2603.10749v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2602.22724",
+        "title":  "AgentSentry: Mitigating Indirect Prompt Injection in LLM Agents via Temporal Causal Diagnostics and Context Purification",
+        "published":  "2026-02-26T07:59:10Z",
+        "abs_url":  "https://arxiv.org/abs/2602.22724v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2602.22450",
+        "title":  "Silent Egress: When Implicit Prompt Injection Makes LLM Agents Leak Without a Trace",
+        "published":  "2026-02-25T22:26:23Z",
+        "abs_url":  "https://arxiv.org/abs/2602.22450v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2602.16901",
+        "title":  "AgentLAB: Benchmarking LLM Agents against Long-Horizon Attacks",
+        "published":  "2026-02-18T21:30:20Z",
+        "abs_url":  "https://arxiv.org/abs/2602.16901v1",
+        "primary_category":  "cs.AI",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2602.12430",
+        "title":  "Agent Skills for Large Language Models: Architecture, Acquisition, Security, and the Path Forward",
+        "published":  "2026-02-12T21:33:25Z",
+        "abs_url":  "https://arxiv.org/abs/2602.12430v4",
+        "primary_category":  "cs.MA",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    },
+    {
+        "arxiv_id":  "2602.07398",
+        "title":  "AgentSys: Secure and Dynamic LLM Agents Through Explicit Hierarchical Memory Management",
+        "published":  "2026-02-07T06:28:51Z",
+        "abs_url":  "https://arxiv.org/abs/2602.07398v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2601.17549",
+        "title":  "Breaking the Protocol: Security Analysis of the Model Context Protocol Specification and Prompt Injection Vulnerabilities in Tool-Integrated LLM Agents",
+        "published":  "2026-01-24T18:40:17Z",
+        "abs_url":  "https://arxiv.org/abs/2601.17549v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2601.10955",
+        "title":  "Beyond Max Tokens: Stealthy Resource Amplification via Tool Calling Chains in LLM Agents",
+        "published":  "2026-01-16T02:47:45Z",
+        "abs_url":  "https://arxiv.org/abs/2601.10955v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_mcp_security_benchmark.json"
+    },
+    {
+        "arxiv_id":  "2601.07395",
+        "title":  "MCP-ITP: An Automated Framework for Implicit Tool Poisoning in MCP",
+        "published":  "2026-01-12T10:28:46Z",
+        "abs_url":  "https://arxiv.org/abs/2601.07395v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_mcp_tool_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2601.05755",
+        "title":  "VIGIL: Defending LLM Agents Against Tool Stream Injection via Verify-Before-Commit",
+        "published":  "2026-01-09T12:19:49Z",
+        "abs_url":  "https://arxiv.org/abs/2601.05755v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2601.05504",
+        "title":  "Memory Poisoning Attack and Defense on Memory Based LLM-Agents",
+        "published":  "2026-01-09T03:26:10Z",
+        "abs_url":  "https://arxiv.org/abs/2601.05504v2",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_memory_poisoning.json"
+    },
+    {
+        "arxiv_id":  "2601.04795",
+        "title":  "Defense Against Indirect Prompt Injection via Tool Result Parsing",
+        "published":  "2026-01-08T10:21:56Z",
+        "abs_url":  "https://arxiv.org/abs/2601.04795v1",
+        "primary_category":  "cs.AI",
+        "source_file":  "arxiv_indirect_prompt_injection.json"
+    },
+    {
+        "arxiv_id":  "2601.01241",
+        "title":  "MCP-SandboxScan: WASM-based Secure Execution and Runtime Analysis for MCP Tools",
+        "published":  "2026-01-03T17:25:38Z",
+        "abs_url":  "https://arxiv.org/abs/2601.01241v1",
+        "primary_category":  "cs.CR",
+        "source_file":  "arxiv_agent_provenance_security.json"
+    }
+]

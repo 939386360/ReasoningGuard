@@ -1,0 +1,148 @@
+{
+  "query": "all:\"LLM agents\" AND all:autonomous AND all:\"security benchmark\"",
+  "result_count": 5,
+  "results": [
+    {
+      "arxiv_id": "2605.24069",
+      "title": "When the Manual Lies: A Realistic Benchmark to Evaluate MCP Poisoning Attacks for LLM Agents",
+      "authors": [
+        "Shi Liu",
+        "Xuehai Tang",
+        "Xikang Yang",
+        "Liang Lin",
+        "Biyu Zhou",
+        "Wenjie Xiao",
+        "Wantao Liu"
+      ],
+      "abstract": "The rise of tool-using Large Language Model (LLM) agents, standardized by protocols like the Model Context Protocol (MCP), has unlocked unprecedented autonomous execution capabilities for LLM Agents by integrating external open-domain knowledge and tools. However, this interoperability introduces a covert attack surface targeting the agent's cognitive planning layer. This paper systematically investigates Tool Description Poisoning (TDP), a novel semantic attack. In TDP, malicious instructions are not embedded in a tool's executable code, but rather covertly injected into its descriptive metadata, the very \"manual\" an agent relies on for secure planning and decision-making. To rigorously and systematically evaluate this emerging threat, we introduce the MCP-TDP Security Benchmark. This high-fidelity sandbox environment comprises 32 realistic, real-world test cases spanning 6 distinct risk categories. Our evaluation of 8 mainstream LLMs reveals severe vulnerabilities, with leading models like GPT-4o exhibiting a nearly 100% Attack Success Rate (ASR) in six high-risk scenarios. Furthermore, our findings demonstrate that common prompt-guardrail defenses are largely ineffective and can, counterintuitively, even be counterproductive (a phenomenon which we term the \"Firewall Fallacy\"). Crucially, we also propose a defense mechanism: \"Reactive Self-Correction,\" where an agent autonomously detects and reverts its own malicious actions post-execution. This work provides the first specialized security benchmark tailored for TDP, offering essential insights for securing the cognitive and planning layers of advanced agentic systems.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-22T08:34:48Z",
+      "updated": "2026-05-22T08:34:48Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.24069v1",
+      "abs_url": "https://arxiv.org/abs/2605.24069v1"
+    },
+    {
+      "arxiv_id": "2604.23374",
+      "title": "Ghost in the Agent: Redefining Information Flow Tracking for LLM Agents",
+      "authors": [
+        "Yuandao Cai",
+        "Wensheng Tang",
+        "Cheng Wen",
+        "Shengchao Qin"
+      ],
+      "abstract": "Autonomous Large Language Model (LLM) agents are increasingly deployed to conduct complex tasks by interacting with external tools, APIs, and memory stores. However, processing untrusted external data exposes these agents to severe security threats, such as indirect prompt injection and unauthorized tool execution. Securing these systems requires effective information flow tracking. Yet, traditional taint analysis that is designed for program memory states fundamentally fails when applied to LLMs, where data propagation is governed by probabilistic natural language reasoning. In this paper, we present NeuroTaint, the first comprehensive taint tracking framework tailored for the unique information flow characteristics of LLM agents. Our key insight is that taint propagation in LLM agents must be understood not only as explicit content transfer, but also as semantic transformation, causal influence on decisions, and cross-session persistence through memory. NeuroTaint therefore audits execution traces offline to reconstruct provenance from untrusted sources to privileged sinks using semantic evidence, causal reasoning, and persistent context tracking, rather than relying on exact string matches or pre-defined source-sink paths alone. Extensive evaluation using TaintBench, our 400-scenario benchmark spanning 20 real-world agent frameworks, shows that NeuroTaint substantially outperforms FIDES, an information-flow-control (IFC)-style baseline for LLM agents, in source-sink propagation detection. We further show that NeuroTaint remains effective on established agent-security benchmarks, including InjecAgent and ToolEmu, while operating offline with modest additional auditing cost.",
+      "categories": [
+        "cs.CR"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-04-25T16:39:16Z",
+      "updated": "2026-04-25T16:39:16Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2604.23374v1",
+      "abs_url": "https://arxiv.org/abs/2604.23374v1"
+    },
+    {
+      "arxiv_id": "2606.02302",
+      "title": "SeClaw: Spec-Driven Security Task Synthesis for Evaluating Autonomous Agents",
+      "authors": [
+        "Hao Cheng",
+        "Changtao Miao",
+        "Tianle Song",
+        "Yin Wu",
+        "He Liu",
+        "Erjia Xiao",
+        "Junchi Chen",
+        "Xiaoyu Shi",
+        "Yichi Wang",
+        "Jing Yang",
+        "Taowen Wang",
+        "Jinhao Duan",
+        "Mengshu Sun",
+        "Peiyan Dong",
+        "Xuan Shen",
+        "Yang Cao",
+        "Renjing Xu",
+        "Kaidi Xu",
+        "Jindong Gu",
+        "Bo Zhang",
+        "Jize Zhang",
+        "Chenhao Lin",
+        "Philip Torr",
+        "Chao Shen"
+      ],
+      "abstract": "Autonomous LLM agents increasingly operate in stateful environments where they access tools, files, memory, and external services. While such capabilities enable complex real-world workflows, they also introduce security risks that are difficult to capture with existing evaluations. Current agent security benchmarks often rely on manually curated tasks, provide limited coverage of emerging threats, and focus primarily on final outcomes rather than the execution processes that lead to unsafe behavior. We introduce SeClaw, a framework that combines specification-driven security task synthesis with execution-based security evaluation for Autonomous agents. Spec-driven security task synthesis enables scalable and controllable construction of security tasks from structured risk specifications, while SeClaw docker provides a standardized testbed for evaluating agent behavior under diverse safety-risk scenarios. The benchmark covers risks arising from resources, user tasks, environments, and intrinsic agent behaviors, and supports trajectory-aware assessment of unsafe actions beyond final responses. By bridging systematic task synthesis and reproducible security evaluation, SeClaw provides a practical foundation for measuring, diagnosing, and comparing security failures in autonomous LLM agents. The code is available at https://github.com/seclaw-eval/seclaw-eval.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-06-01T14:23:42Z",
+      "updated": "2026-06-01T14:23:42Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2606.02302v1",
+      "abs_url": "https://arxiv.org/abs/2606.02302v1"
+    },
+    {
+      "arxiv_id": "2603.18235",
+      "title": "Toward Reliable, Safe, and Secure LLMs for Scientific Applications",
+      "authors": [
+        "Saket Sanjeev Chaturvedi",
+        "Joshua Bergerson",
+        "Tanwi Mallick"
+      ],
+      "abstract": "As large language models (LLMs) evolve into autonomous \"AI scientists,\" they promise transformative advances but introduce novel vulnerabilities, from potential \"biosafety risks\" to \"dangerous explosions.\" Ensuring trustworthy deployment in science requires a new paradigm centered on reliability (ensuring factual accuracy and reproducibility), safety (preventing unintentional physical or biological harm), and security (preventing malicious misuse). Existing general-purpose safety benchmarks are poorly suited for this purpose, suffering from a fundamental domain mismatch, limited threat coverage of science-specific vectors, and benchmark overfitting, which create a critical gap in vulnerability evaluation for scientific applications. This paper examines the unique security and safety landscape of LLM agents in science. We begin by synthesizing a detailed taxonomy of LLM threats contextualized for scientific research, to better understand the unique risks associated with LLMs in science. Next, we conceptualize a mechanism to address the evaluation gap by utilizing dedicated multi-agent systems for the automated generation of domain-specific adversarial security benchmarks. Based on our analysis, we outline how existing safety methods can be brought together and integrated into a conceptual multilayered defense framework designed to combine a red-teaming exercise and external boundary controls with a proactive internal Safety LLM Agent. Together, these conceptual elements provide a necessary structure for defining, evaluating, and creating comprehensive defense strategies for trustworthy LLM agent deployment in scientific disciplines.",
+      "categories": [
+        "cs.CR",
+        "cs.CV"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-03-18T19:43:38Z",
+      "updated": "2026-03-18T19:43:38Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2603.18235v1",
+      "abs_url": "https://arxiv.org/abs/2603.18235v1"
+    },
+    {
+      "arxiv_id": "2603.05517",
+      "title": "Traversal-as-Policy: Log-Distilled Gated Behavior Trees as Externalized, Verifiable Policies for Safe, Robust, and Efficient Agents",
+      "authors": [
+        "Peiran Li",
+        "Jiashuo Sun",
+        "Fangzhou Lin",
+        "Shuo Xing",
+        "Tianfu Fu",
+        "Suofei Feng",
+        "Chaoqun Ni",
+        "Zhengzhong Tu"
+      ],
+      "abstract": "Autonomous LLM agents fail because long-horizon policy remains implicit in model weights and transcripts, while safety is retrofitted post hoc. We propose Traversal-as-Policy: distill sandboxed OpenHands execution logs into a single executable Gated Behavior Tree (GBT) and treat tree traversal -- rather than unconstrained generation -- as the control policy whenever a task is in coverage. Each node encodes a state-conditioned action macro mined and merge-checked from successful trajectories; macros implicated by unsafe traces attach deterministic pre-execution gates over structured tool context and bounded history, updated under experience-grounded monotonicity so previously rejected unsafe contexts cannot be re-admitted. At runtime, a lightweight traverser matches the base model's intent to child macros, executes one macro at a time under global and node-local gating, and when stalled performs risk-aware shortest-path recovery to a feasible success leaf; the visited path forms a compact spine memory that replaces transcript replay. Evaluated in a unified OpenHands sandbox on 15+ software, web, reasoning, and safety/security benchmarks, GBT improves success while driving violations toward zero and reducing cost. On SWE-bench Verified (Protocol A, 500 issues), GBT-SE raises success from 34.6% to 73.6%, reduces violations from 2.8% to 0.2%, and cuts token/character usage from 208k/820k to 126k/490k; with the same distilled tree, 8B executors more than double success on SWE-bench Verified (14.0%58.8%) and WebArena (9.1%37.3%).",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CR",
+        "cs.SE"
+      ],
+      "primary_category": "cs.LG",
+      "published": "2026-01-30T16:25:08Z",
+      "updated": "2026-01-30T16:25:08Z",
+      "doi": "",
+      "comment": "30 pages, 1 figurres, 23 tables",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2603.05517v1",
+      "abs_url": "https://arxiv.org/abs/2603.05517v1"
+    }
+  ]
+}

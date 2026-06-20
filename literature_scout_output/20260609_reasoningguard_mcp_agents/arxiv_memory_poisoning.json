@@ -1,0 +1,506 @@
+{
+  "query": "all:\"memory poisoning\" AND all:\"LLM agent\"",
+  "result_count": 20,
+  "results": [
+    {
+      "arxiv_id": "2601.05504",
+      "title": "Memory Poisoning Attack and Defense on Memory Based LLM-Agents",
+      "authors": [
+        "Balachandra Devarangadi Sunil",
+        "Isheeta Sinha",
+        "Piyush Maheshwari",
+        "Shantanu Todmal",
+        "Shreyan Mallik",
+        "Shuchi Mishra"
+      ],
+      "abstract": "Large language model agents equipped with persistent memory are vulnerable to memory poisoning attacks, where adversaries inject malicious instructions through query only interactions that corrupt the agents long term memory and influence future responses. Recent work demonstrated that the MINJA (Memory Injection Attack) achieves over 95 % injection success rate and 70 % attack success rate under idealized conditions. However, the robustness of these attacks in realistic deployments and effective defensive mechanisms remain understudied. This work addresses these gaps through systematic empirical evaluation of memory poisoning attacks and defenses in Electronic Health Record (EHR) agents. We investigate attack robustness by varying three critical dimensions: initial memory state, number of indication prompts, and retrieval parameters. Our experiments on GPT-4o-mini, Gemini-2.0-Flash and Llama-3.1-8B-Instruct models using MIMIC-III clinical data reveal that realistic conditions with pre-existing legitimate memories dramatically reduce attack effectiveness. We then propose and evaluate two novel defense mechanisms: (1) Input/Output Moderation using composite trust scoring across multiple orthogonal signals, and (2) Memory Sanitization with trust-aware retrieval employing temporal decay and pattern-based filtering. Our defense evaluation reveals that effective memory sanitization requires careful trust threshold calibration to prevent both overly conservative rejection (blocking all entries) and insufficient filtering (missing subtle attacks), establishing important baselines for future adaptive defense mechanisms. These findings provide crucial insights for securing memory-augmented LLM agents in production environments.",
+      "categories": [
+        "cs.CR",
+        "cs.MA"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-01-09T03:26:10Z",
+      "updated": "2026-01-12T03:35:39Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2601.05504v2",
+      "abs_url": "https://arxiv.org/abs/2601.05504v2"
+    },
+    {
+      "arxiv_id": "2606.04329",
+      "title": "From Untrusted Input to Trusted Memory: A Systematic Study of Memory Poisoning Attacks in LLM Agents",
+      "authors": [
+        "Pritam Dash",
+        "Tongyu Ge",
+        "Aditi Jain",
+        "Tanmay Shah",
+        "Zhiwei Shang"
+      ],
+      "abstract": "Memory is a core component of AI agents, enabling them to accumulate knowledge across interactions and improve performance. However, persistent memory introduces the risk of memory poisoning, where a single adversarial memory write can exert long-term influence over agent behavior. We present a systematic study of memory poisoning in LLM-based agents. We identify four memory write channels and nine structural vulnerabilities in model capabilities, system prompt design, and agent system architecture that make these channels exploitable. Based on these vulnerabilities, we develop a taxonomy of six classes of memory poisoning attacks. Furthermore, we design MPBench -- a benchmark for evaluating memory poisoning attacks, and show that agents designed to write and retrieve memory more aggressively are more exploitable. We also show that existing prompt injection defenses fail to cover memory poisoning attacks. Our findings provide a foundation for understanding and mitigating memory poisoning attacks against AI agents.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-06-03T01:04:13Z",
+      "updated": "2026-06-03T01:04:13Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2606.04329v1",
+      "abs_url": "https://arxiv.org/abs/2606.04329v1"
+    },
+    {
+      "arxiv_id": "2605.15338",
+      "title": "Hidden in Memory: Sleeper Memory Poisoning in LLM Agents",
+      "authors": [
+        "Sidharth Pulipaka",
+        "Stanislau Hlebik",
+        "Leonidas Raghav",
+        "Sahar Abdelnabi",
+        "Vyas Raina",
+        "Ivaxi Sheth",
+        "Mario Fritz"
+      ],
+      "abstract": "Large language models are increasingly augmented with persistent memory, allowing assistants to store user-specific information across sessions for personalization and continuity. This statefulness introduces a new security risk: adversarial content can corrupt what an assistant remembers and thereby influence future interactions. We propose and study sleeper memory poisoning, a delayed attack in which an adversary manipulates external context, such as a document, webpage, or repository, to cause the assistant to store a fabricated memory about the user. Unlike conventional prompt injection, the attack can remain dormant and re-emerge across multiple later conversations. We evaluate the full attack pipeline: whether poisoned memories are written, later retrieved, and ultimately used to steer the following conversations. Across stateful LLM assistants, poisoned memories were added up to 99.8% on GPT-5.5 and 95% on Kimi-K2.6. Crucially, among successful retrievals, poisoned memories cause attacker-intended agentic actions in 60-89% of evaluations across models. These results show that persistent memory can act as a long-term attack surface across multiple future conversations.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-14T19:06:10Z",
+      "updated": "2026-05-18T07:05:25Z",
+      "doi": "",
+      "comment": "86 pages, 60 tables",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.15338v2",
+      "abs_url": "https://arxiv.org/abs/2605.15338v2"
+    },
+    {
+      "arxiv_id": "2602.16901",
+      "title": "AgentLAB: Benchmarking LLM Agents against Long-Horizon Attacks",
+      "authors": [
+        "Tanqiu Jiang",
+        "Yuhui Wang",
+        "Jiacheng Liang",
+        "Ting Wang"
+      ],
+      "abstract": "LLM agents are increasingly deployed in long-horizon, complex environments to solve challenging problems, but this expansion exposes them to long-horizon attacks that exploit multi-turn user-agent-environment interactions to achieve objectives infeasible in single-turn settings. To measure agent vulnerabilities to such risks, we present AgentLAB, the first benchmark dedicated to evaluating LLM agent susceptibility to adaptive, long-horizon attacks. Currently, AgentLAB supports five novel attack types including intent hijacking, tool chaining, task injection, objective drifting, and memory poisoning, spanning 28 realistic agentic environments, and 644 security test cases. Leveraging AgentLAB, we evaluate representative LLM agents and find that they remain highly susceptible to long-horizon attacks; moreover, defenses designed for single-turn interactions fail to reliably mitigate long-horizon threats. We anticipate that AgentLAB will serve as a valuable benchmark for tracking progress on securing LLM agents in practical settings. The benchmark is publicly available at https://tanqiujiang.github.io/AgentLAB_main.",
+      "categories": [
+        "cs.AI"
+      ],
+      "primary_category": "cs.AI",
+      "published": "2026-02-18T21:30:20Z",
+      "updated": "2026-02-18T21:30:20Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2602.16901v1",
+      "abs_url": "https://arxiv.org/abs/2602.16901v1"
+    },
+    {
+      "arxiv_id": "2603.19469",
+      "title": "A Framework for Formalizing LLM Agent Security",
+      "authors": [
+        "Vincent Siu",
+        "Jingxuan He",
+        "Kyle Montgomery",
+        "Zhun Wang",
+        "Neil Gong",
+        "Chenguang Wang",
+        "Dawn Song"
+      ],
+      "abstract": "Security in LLM agents is inherently contextual. For example, the same action taken by an agent may represent legitimate behavior or a security violation depending on whose instruction led to the action, what objective is being pursued, and whether the action serves that objective. However, existing definitions of security attacks against LLM agents often fail to capture this contextual nature. As a result, defenses face a fundamental utility-security tradeoff: applying defenses uniformly across all contexts can lead to significant utility loss, while applying defenses in insufficient or inappropriate contexts can result in security vulnerabilities. In this work, we present a framework that systematizes existing attacks and defenses from the perspective of contextual security. To this end, we propose four security properties that capture contextual security for LLM agents: task alignment (pursuing authorized objectives), action alignment (individual actions serving those objectives), source authorization (executing commands from authenticated sources), and data isolation (ensuring information flows respect privilege boundaries). We further introduce a set of oracle functions that enable verification of whether these security properties are violated as an agent executes a user task. Using this framework, we reformalize existing attacks, such as indirect prompt injection, direct prompt injection, jailbreak, task drift, and memory poisoning, as violations of one or more security properties, thereby providing precise and contextual definitions of these attacks. Similarly, we reformalize defenses as mechanisms that strengthen oracle functions or perform security property checks. Finally, we discuss several important future research directions enabled by our framework.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-03-19T21:01:49Z",
+      "updated": "2026-03-19T21:01:49Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2603.19469v1",
+      "abs_url": "https://arxiv.org/abs/2603.19469v1"
+    },
+    {
+      "arxiv_id": "2603.11619",
+      "title": "Taming OpenClaw: Security Analysis and Mitigation of Autonomous LLM Agent Threats",
+      "authors": [
+        "Xinhao Deng",
+        "Yixiang Zhang",
+        "Jiaqing Wu",
+        "Jiaqi Bai",
+        "Sibo Yi",
+        "Zhuoheng Zou",
+        "Yue Xiao",
+        "Rennai Qiu",
+        "Jianan Ma",
+        "Jialuo Chen",
+        "Xiaohu Du",
+        "Xiaofang Yang",
+        "Shiwen Cui",
+        "Changhua Meng",
+        "Weiqiang Wang",
+        "Jiaxing Song",
+        "Ke Xu",
+        "Qi Li"
+      ],
+      "abstract": "Autonomous Large Language Model (LLM) agents, exemplified by OpenClaw, demonstrate remarkable capabilities in executing complex, long-horizon tasks. However, their tightly coupled instant-messaging interaction paradigm and high-privilege execution capabilities substantially expand the system attack surface. In this paper, we present a comprehensive security threat analysis of OpenClaw. To structure our analysis, we introduce a five-layer lifecycle-oriented security framework that captures key stages of agent operation, i.e., initialization, input, inference, decision, and execution, and systematically examine compound threats across the agent's operational lifecycle, including indirect prompt injection, skill supply chain contamination, memory poisoning, and intent drift. Through detailed case studies on OpenClaw, we demonstrate the prevalence and severity of these threats and analyze the limitations of existing defenses. Our findings reveal critical weaknesses in current point-based defense mechanisms when addressing cross-temporal and multi-stage systemic risks, highlighting the need for holistic security architectures for autonomous LLM agents. Within this framework, we further examine representative defense strategies at each lifecycle stage, including plugin vetting frameworks, context-aware instruction filtering, memory integrity validation protocols, intent verification mechanisms, and capability enforcement architectures.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-03-12T07:24:05Z",
+      "updated": "2026-03-12T07:24:05Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2603.11619v1",
+      "abs_url": "https://arxiv.org/abs/2603.11619v1"
+    },
+    {
+      "arxiv_id": "2605.03482",
+      "title": "MEMSAD: Gradient-Coupled Anomaly Detection for Memory Poisoning in Retrieval-Augmented Agents",
+      "authors": [
+        "Ishrith Gowda"
+      ],
+      "abstract": "Persistent external memory enables LLM agents to maintain context across sessions, yet its security properties remain formally uncharacterized. We formalize memory poisoning attacks on retrieval-augmented agents as a Stackelberg game with a unified evaluation framework spanning three attack classes with escalating access assumptions. Correcting an evaluation protocol inconsistency in the triggered-query specification of Chen et al. (2024), we show faithful evaluation increases measured attack success by $4\\times$ (ASR-R: $0.25 \\to 1.00$). Our primary contribution is MEMSAD (Semantic Anomaly Detection), a calibration-based defense grounded in a gradient coupling theorem: under encoder regularity, the anomaly score gradient and the retrieval objective gradient are provably identical, so any continuous perturbation that reduces detection risk necessarily degrades retrieval rank. This coupling yields a certified detection radius guaranteeing correct classification regardless of adversary strategy. We prove minimax optimality via Le Cam's method, showing any threshold detector requires $¦¸(1/¦Ñ^2)$ calibration samples and MEMSAD achieves this up to $\\log(1/¦Ä)$ factors. We further derive online regret bounds for rolling calibration at rate $O(¦Ò^{2/3}¦¤^{1/3})$, and formally characterize a discrete synonym-invariance loophole that marks the boundary of what continuous-space defenses can guarantee. Experiments on a $3 \\times 5$ attack-defense matrix with bootstrap confidence intervals, Bonferroni-corrected hypothesis tests, and Clopper-Pearson validation ($n=1{,}000$) confirm: composite defenses achieve TPR $= 1.00$, FPR $= 0.00$ across all attacks, while synonym substitution evades detection at $¦¤$ ASR-R $\\approx 0$, exposing a gap existing embedding-based defenses cannot close.",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-05T08:15:41Z",
+      "updated": "2026-05-07T11:41:14Z",
+      "doi": "",
+      "comment": "28 pages, 9 figures, 6 theorems. Submitted to NeurIPS 2026",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.03482v2",
+      "abs_url": "https://arxiv.org/abs/2605.03482v2"
+    },
+    {
+      "arxiv_id": "2605.14421",
+      "title": "MemLineage: Lineage-Guided Enforcement for LLM Agent Memory",
+      "authors": [
+        "Ciyan Ouyang",
+        "Rui Hou"
+      ],
+      "abstract": "We introduce MemLineage, a defense for LLM agent memory that attaches both cryptographic provenance and LLM-mediated derivation lineage to every entry. Recent and concurrent work shows that untrusted content can be written into persistent agent state and re-enter later sessions as an instruction; the remaining systems question is how to preserve useful memory recall while preventing such state from justifying sensitive actions. MemLineage treats this as a chain-of-custody problem rather than a filtering problem. It is a six-module design around an RFC-6962 Merkle log over per-principal Ed25519-signed entries: a weighted derivation DAG records which retrieved entries influenced each new memory, and a max-of-strong-edges propagation rule makes Untrusted-Path Persistence hold for any chain whose attribution edges remain above threshold. The sensitive-action gate then refuses dispatches whose active justification descends from an external ancestor, while still allowing benign recall. We evaluate three defense cells against three memory-poisoning workloads on a deterministic mechanism-isolation harness; MemLineage is the only configuration in that harness that drives all three columns to zero ASR, while sub-millisecond per-operation overhead keeps it well below the noise floor of any LLM call. A Codex-backed AgentDojo bridge further separates strong-model behavior from defense-layer behavior: under an intentionally vulnerable tool-output profile, no-defense and signature-only baselines fail on all six banking pairs, while all MemLineage rows reduce strict AgentDojo ASR to zero. The core deterministic artifacts are byte-equal CI-verified; hosted-model AgentDojo and live-model sweeps are recorded as auditable logs rather than byte-pinned artifacts.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-14T06:07:54Z",
+      "updated": "2026-05-14T06:07:54Z",
+      "doi": "",
+      "comment": "24 pages, 8 figures. Rui Hou is the corresponding author",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.14421v1",
+      "abs_url": "https://arxiv.org/abs/2605.14421v1"
+    },
+    {
+      "arxiv_id": "2605.17830",
+      "title": "Remembering More, Risking More: Longitudinal Safety Risks in Memory-Equipped LLM Agents",
+      "authors": [
+        "Ahmad Al-Tawaha",
+        "Shangding Gu",
+        "Peizhi Niu",
+        "Ruoxi Jia",
+        "Ming Jin"
+      ],
+      "abstract": "Safety evaluations of memory-equipped LLM agents typically measure within-task safety: whether an agent completes a single scenario safely, often under adversarial conditions such as prompt injection or memory poisoning. In deployment, however, a single agent serves many independent tasks over a long horizon, and memory accumulated during earlier tasks can affect behavior on later, unrelated ones. Studying this regime requires evaluation along the temporal dimension across tasks: not whether an agent is safe at any single memory state, but how its safety profile changes as memory accumulates across many independent interactions. We call this failure mode temporal memory contamination. To isolate memory exposure from stream non-stationarity, we introduce a trigger-probe protocol that evaluates a fixed probe set against read-only memory snapshots at varying prefix lengths, together with a NullMemory counterfactual baseline for identifying memory-induced violations. We apply this protocol across three deployment scenarios spanning records, memos, forms, and email correspondence and eight memory architectures, and additionally on Claw-like AI agents, such as OpenClaw, using the platform's native memory mechanism. Memory-enabled agents consistently exceed the NullMemory baseline, and memory-induced violation rates show a robust upward trend with exposure length on both agent classes. Order-randomization experiments indicate that the effect is driven primarily by accumulated content rather than encounter order. Finally, a structural consequence of the event decomposition is that memory-induced risk is detectable from retrieval state before generation, which we confirm with a high-recall diagnostic monitor. Our results argue for treating memory safety as a longitudinal property that requires temporal evaluation, not a single-state property that can be captured by a snapshot.",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "primary_category": "cs.AI",
+      "published": "2026-05-18T04:06:34Z",
+      "updated": "2026-05-18T04:06:34Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.17830v1",
+      "abs_url": "https://arxiv.org/abs/2605.17830v1"
+    },
+    {
+      "arxiv_id": "2512.16962",
+      "title": "MemoryGraft: Persistent Compromise of LLM Agents via Poisoned Experience Retrieval",
+      "authors": [
+        "Saksham Sahai Srivastava",
+        "Haoyu He"
+      ],
+      "abstract": "Large Language Model (LLM) agents increasingly rely on long-term memory and Retrieval-Augmented Generation (RAG) to persist experiences and refine future performance. While this experience learning capability enhances agentic autonomy, it introduces a critical, unexplored attack surface, i.e., the trust boundary between an agent's reasoning core and its own past. In this paper, we introduce MemoryGraft. It is a novel indirect injection attack that compromises agent behavior not through immediate jailbreaks, but by implanting malicious successful experiences into the agent's long-term memory. Unlike traditional prompt injections that are transient, or standard RAG poisoning that targets factual knowledge, MemoryGraft exploits the agent's semantic imitation heuristic which is the tendency to replicate patterns from retrieved successful tasks. We demonstrate that an attacker who can supply benign ingestion-level artifacts that the agent reads during execution can induce it to construct a poisoned RAG store where a small set of malicious procedure templates is persisted alongside benign experiences. When the agent later encounters semantically similar tasks, union retrieval over lexical and embedding similarity reliably surfaces these grafted memories, and the agent adopts the embedded unsafe patterns, leading to persistent behavioral drift across sessions. We validate MemoryGraft on MetaGPT's DataInterpreter agent with GPT-4o and find that a small number of poisoned records can account for a large fraction of retrieved experiences on benign workloads, turning experience-based self-improvement into a vector for stealthy and durable compromise. To facilitate reproducibility and future research, our code and evaluation data are available at https://github.com/Jacobhhy/Agent-Memory-Poisoning.",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-12-18T08:34:40Z",
+      "updated": "2025-12-18T08:34:40Z",
+      "doi": "",
+      "comment": "14 pages, 1 figure, includes appendix",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2512.16962v1",
+      "abs_url": "https://arxiv.org/abs/2512.16962v1"
+    },
+    {
+      "arxiv_id": "2605.29960",
+      "title": "Hijacking Agent Memory: Stealthy Trojan Attacks Through Conversational Interaction",
+      "authors": [
+        "Hongtao Wang",
+        "Se Yang",
+        "Yu Chen",
+        "Puzhuo Liu"
+      ],
+      "abstract": "Large language model (LLM) agents increasingly leverage long term memory to support persistent and autonomous task execution. However, this capability also introduces a new attack surface: memory poisoning, where adversaries can inject malicious information to influence future behavior. Existing memory poisoning attacks often assume that injected content can be stored directly in memory, overlooking the selective extraction and rewriting stages in modern memory pipelines. This makes prior methods ineffective under realistic settings. In this paper, we propose MemPoison, a novel memory poisoning attack that bypasses selective memory mechanisms in LLM agents, where an attacker can inject triggerable backdoors into the agent's long-term memory through dialogue interactions, thereby misleading its subsequent responses. MemPoison introduces three key components: (i) a semantic relational bridge that binds the trigger and payload into a coherent statement to ensure they are extracted into memory together; (ii) entity masquerading that optimizes triggers to mimic named entities, resisting rewriting; and (iii) joint embedding optimization that shapes trigger-injected texts into a tight cluster in the embedding space while maintaining isolation from benign embeddings for stealth. Evaluations across different agent domains and memory mechanisms show MemPoison achieves attack success rates up to 0.95, outperforming existing baselines. Mechanistic analysis indicates that the attack exploits embedding-space anisotropy and shifts attention patterns, highlighting core vulnerabilities in selective memory systems. We evaluate multiple defense strategies and demonstrate their fundamental limitations in mitigating the attack.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-28T14:02:00Z",
+      "updated": "2026-05-28T14:02:00Z",
+      "doi": "",
+      "comment": "19 pages, 12 figures",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.29960v1",
+      "abs_url": "https://arxiv.org/abs/2605.29960v1"
+    },
+    {
+      "arxiv_id": "2606.05743",
+      "title": "Membrane: A Self-Evolving Contrastive Safety Memory for LLM Agent Defense",
+      "authors": [
+        "Minseok Choi",
+        "Seungbin Yang",
+        "Dongjin Kim",
+        "Subin Kim",
+        "Jungmin Son",
+        "Yunseung Lee",
+        "Jaegul Choo",
+        "Youngjun Kwak"
+      ],
+      "abstract": "Despite advances in safety alignment, large language models remain vulnerable to continuously evolving jailbreaks. Existing fine-tuned safety classifiers cannot adapt to these evolving attacks, while adaptive memory-based guardrails tend to over-refuse benign queries that resemble stored attacks. We propose Membrane, a self-evolving guardrail built on Contrastive Safety Memory (CSM): each cell pairs the conditions for blocking a harmful query with those for permitting a superficially similar benign request. Without retraining, Membrane evolves CSM by distilling each harmful interaction and its benign counterpart into a contrastive cell indexed by the underlying attack strategy, so that one cell generalizes across topical variants of the same mechanism. At inference, retrieved cells serve as grounding context for precise safety decisions. Across model-level safety on HarmBench and agent-level safety on AgentHarm, Membrane achieves the highest F1 on all six jailbreak attacks. Notably, benign refusal on AgentHarm stays at 7-14%, well below the 28-85% range of prior guards. Memory cells also retain 87-88% F1 under cross-attack transfer and remain stable under memory poisoning.",
+      "categories": [
+        "cs.CR",
+        "cs.CL"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-06-04T06:14:08Z",
+      "updated": "2026-06-04T06:14:08Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2606.05743v1",
+      "abs_url": "https://arxiv.org/abs/2606.05743v1"
+    },
+    {
+      "arxiv_id": "2605.26154",
+      "title": "MemMorph: Tool Hijacking in LLM Agents via Memory Poisoning",
+      "authors": [
+        "Xuanye Zhang",
+        "Yongsen Zheng",
+        "Zhuqin Xu",
+        "Kaiyu Zhou",
+        "Bowen Shen",
+        "Haoran Ou",
+        "Tianwei Zhang",
+        "Kwok-Yan Lam"
+      ],
+      "abstract": "LLM-driven agents are capable of selecting external tools to complete users' tasks. However, attackers could compromise such process, steering agents toward inappropriate/wrong tools and enabling malicious actions. Most existing attacks primarily manipulate the tool metadata, which is easily detectable by auditing and may lose effectiveness as modern agents increasingly adopt memory modules to refine tool selection policies through accumulated experience. This paper proposes MemMorph, the first attack that bias tool selection by poisoning the agent's long-term memory. Rather than explicitly dictating the tool invocation decision, MemMorph injects a small number of crafted records that are disguised as technical facts, incident reports, and operational policies. These poisoned records reshape the agent's contextual perception and decision-making process, leading it to autonomously infer and select the tool preferred by the attacker. Experiments across 3 benchmarks, 10 agent backbones, and 3 memory-module implementations show that MemMorph achieves up to 85.9% attack success rate with only three injected records, outperforming the strongest baseline by up to 25% while retaining potency under 3 representative defenses. Our findings expose long-term memory as a critical and under-explored attack surface in tool-augmented agents, urging the development of memory-level integrity safeguards.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-24T04:26:13Z",
+      "updated": "2026-05-24T04:26:13Z",
+      "doi": "",
+      "comment": "Preprint. Under review",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.26154v1",
+      "abs_url": "https://arxiv.org/abs/2605.26154v1"
+    },
+    {
+      "arxiv_id": "2604.01350",
+      "title": "No Attacker Needed: Unintentional Cross-User Contamination in Shared-State LLM Agents",
+      "authors": [
+        "Tiankai Yang",
+        "Jiate Li",
+        "Yi Nian",
+        "Shen Dong",
+        "Ruiyao Xu",
+        "Ryan Rossi",
+        "Kaize Ding",
+        "Yue Zhao"
+      ],
+      "abstract": "LLM-based agents increasingly operate across repeated sessions, maintaining task states to ensure continuity. In many deployments, a single agent serves multiple users within a team or organization, reusing a shared knowledge layer across user identities. This shared persistence expands the failure surface: information that is locally valid for one user can silently degrade another user's outcome when the agent reapplies it without regard for scope. We refer to this failure mode as unintentional cross-user contamination (UCC). Unlike adversarial memory poisoning, UCC requires no attacker; it arises from benign interactions whose scope-bound artifacts persist and are later misapplied. We formalize UCC through a controlled evaluation protocol, introduce a taxonomy of three contamination types, and evaluate the problem in two shared-state mechanisms. Under raw shared state, benign interactions alone produce contamination rates of 57--71%. A write-time sanitization is effective when shared state is conversational, but leaves substantial residual risk when shared state includes executable artifacts, with contamination often manifesting as silent wrong answers. These results indicate that shared-state agents need artifact-level defenses beyond text-level sanitization to prevent silent cross-user failures.",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.CR"
+      ],
+      "primary_category": "cs.CL",
+      "published": "2026-04-01T20:03:56Z",
+      "updated": "2026-04-01T20:03:56Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2604.01350v1",
+      "abs_url": "https://arxiv.org/abs/2604.01350v1"
+    },
+    {
+      "arxiv_id": "2605.06812",
+      "title": "Towards Security-Auditable LLM Agents: A Unified Graph Representation",
+      "authors": [
+        "Chaofan Li",
+        "Lyuye Zhang",
+        "Jintao Zhai",
+        "Siyue Feng",
+        "Xichun Yang",
+        "Huahao Wang",
+        "Shihan Dou",
+        "Yu Ji",
+        "Yutao Hu",
+        "Yueming Wu",
+        "Yang Liu",
+        "Deqing Zou"
+      ],
+      "abstract": "LLM-based agentic systems are rapidly evolving to perform complex autonomous tasks through dynamic tool invocation, stateful memory management, and multi-agent collaboration. However, this semantics-driven execution paradigm creates a severe semantic gap between low-level physical events and high-level execution intent, making post-hoc security auditing fundamentally difficult. Existing representation mechanisms, including static SBOMs and runtime logs, provide only fragmented evidence and fail to capture cognitive-state evolution, capability bindings, persistent memory contamination, and cascading risk propagation across interacting agents. To bridge this gap, we propose Agent-BOM, a unified structural representation for agent security auditing. Agent-BOM models an agentic system as a hierarchical attributed directed graph that separates static capability bases, such as models, tools, and long-term memory, from dynamic runtime semantic states, such as goals, reasoning trajectories, and actions. These layers are connected through semantic edges and security attributes, transforming fragmented execution traces into queryable audit paths. Building on Agent-BOM, we develop a graph-query-based paradigm for path-level risk assessment and instantiate it with the OWASP Agentic Top 10. We further implement an auditing plugin in the OpenClaw environment to construct Agent-BOM from live executions. Evaluation on representative real-world agentic attack scenarios shows that Agent-BOM can reconstruct stealthy attack chains, including cross-session memory poisoning and tool misuse, capability supply-chain hijacking and unexpected code execution, multi-agent ecosystem hijacking, and privilege and trust abuse. These results demonstrate that Agent-BOM provides a unified and auditable foundation for root-cause analysis and security adjudication in complex agentic ecosystems.",
+      "categories": [
+        "cs.AI"
+      ],
+      "primary_category": "cs.AI",
+      "published": "2026-05-07T18:14:29Z",
+      "updated": "2026-05-07T18:14:29Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.06812v1",
+      "abs_url": "https://arxiv.org/abs/2605.06812v1"
+    },
+    {
+      "arxiv_id": "2604.16548",
+      "title": "A Survey on the Security of Long-Term Memory in LLM Agents: Toward Mnemonic Sovereignty",
+      "authors": [
+        "Zehao Lin",
+        "Chunyu Li",
+        "Kai Chen"
+      ],
+      "abstract": "Research on large language model (LLM) security is shifting from \"will the model leak training data\" to a more consequential question: can an agent with persistent, long-term memory be continuously shaped, cross-session poisoned, accessed without authorization, and propagated across shared organizational state? Recent surveys cover memory architectures and agent mechanisms, but fewer center the epistemic and governance properties of persistent, writable memory as the reason memory is an independent security problem. This survey addresses that gap. Drawing on cognitive neuroscience and the philosophy of memory, we characterize agent memory as malleable, rewritable, and socially propagating, and develop a memory-lifecycle framework organized around six phases -- Write, Store, Retrieve, Execute, Share, Forget/Rollback -- cross-tabulated against four security objectives: integrity, confidentiality, availability, governance. We organize the literature on memory poisoning, extraction, retrieval corruption, control-flow hijacking, cross-agent propagation, rollback, and governance, and situate representative architectures as determinants of which phases are explicitly governable. Three findings stand out: the literature concentrates on write- and retrieve-time integrity attacks, while confidentiality, availability, store/forget, and benign-persistence failures remain sparsely studied; no published architecture covers all nine governance primitives we identify; and using LLMs themselves for memory security remains sparse yet essential. We unify these under mnemonic sovereignty -- verifiable, recoverable governance over what may be written, who may read, when updates are authorized, and which states may be forgotten -- arguing future secure agents will be differentiated not only by recall capacity, but by memory governance quality.",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-04-17T06:28:22Z",
+      "updated": "2026-04-17T06:28:22Z",
+      "doi": "",
+      "comment": "63 pages, 7 figures, 10 tables. Survey paper. Preprint; submitted for review",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2604.16548v1",
+      "abs_url": "https://arxiv.org/abs/2604.16548v1"
+    },
+    {
+      "arxiv_id": "2605.08828",
+      "title": "When Agents Overtrust Environmental Evidence: An Extensible Agentic Framework for Benchmarking Evidence-Grounding Defects in LLM Agents",
+      "authors": [
+        "Strick Sheng",
+        "Ziyue Wang",
+        "Liyi Zhou"
+      ],
+      "abstract": "Large language model agents increasingly operate through environment-facing scaffolds that expose files, web pages, APIs, and logs. These observations influence tool use, state tracking, and action sequencing, yet their reliability and authority are often uncertain. Environmental grounding is therefore a systems-level problem involving context admission, evidence provenance, freshness checking, verification policy, action gating, and model reasoning. Existing agent benchmarks mainly evaluate task capability or specific attacks such as prompt injection and memory poisoning, but they under-specify a fundamental reliability question: whether agents remain grounded in the true environment state when observations are stale, incorrect, or malicious. We introduce EnvTrustBench, an agentic framework for benchmarking this failure mode. We define an evidence-grounding defect (EGD) as a behavioral failure in which an agent treats an environment-facing claim as sufficient evidence for action without resolving it against available current evidence, leading to a task-incorrect false path under the true environment state. Given a task scenario, EnvTrustBench generates the workspace, environment, agent-facing objective, and validation oracle, executes the evaluated agent, records its action-observation trajectory and final state, and applies the oracle to produce a verdict. Using 6 LLM backbones and 5 widely used scaffolds, we evaluate 55 generated cases across 11 task scenarios, with each scenario expanded through five feedback-guided generation iterations. Results show that EGDs consistently emerge across operational workflows, highlighting environmental grounding as a core agent reliability problem with important security implications.",
+      "categories": [
+        "cs.AI"
+      ],
+      "primary_category": "cs.AI",
+      "published": "2026-05-09T09:32:27Z",
+      "updated": "2026-05-12T08:22:21Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.08828v2",
+      "abs_url": "https://arxiv.org/abs/2605.08828v2"
+    },
+    {
+      "arxiv_id": "2512.15790",
+      "title": "Bilevel Optimization for Covert Memory Tampering in Heterogeneous Multi-Agent Architectures (XAMT)",
+      "authors": [
+        "Akhil Sharma",
+        "Shaikh Yaser Arafat",
+        "Jai Kumar Sharma",
+        "Ken Huang"
+      ],
+      "abstract": "The increasing operational reliance on complex Multi-Agent Systems (MAS) across safety-critical domains necessitates rigorous adversarial robustness assessment. Modern MAS are inherently heterogeneous, integrating conventional Multi-Agent Reinforcement Learning (MARL) with emerging Large Language Model (LLM) agent architectures utilizing Retrieval-Augmented Generation (RAG). A critical shared vulnerability is reliance on centralized memory components: the shared Experience Replay (ER) buffer in MARL and the external Knowledge Base (K) in RAG agents. This paper proposes XAMT (Bilevel Optimization for Covert Memory Tampering in Heterogeneous Multi-Agent Architectures), a novel framework that formalizes attack generation as a bilevel optimization problem. The Upper Level minimizes perturbation magnitude (delta) to enforce covertness while maximizing system behavior divergence toward an adversary-defined target (Lower Level). We provide rigorous mathematical instantiations for CTDE MARL algorithms and RAG-based LLM agents, demonstrating that bilevel optimization uniquely crafts stealthy, minimal-perturbation poisons evading detection heuristics. Comprehensive experimental protocols utilize SMAC and SafeRAG benchmarks to quantify effectiveness at sub-percent poison rates (less than or equal to 1 percent in MARL, less than or equal to 0.1 percent in RAG). XAMT defines a new unified class of training-time threats essential for developing intrinsically secure MAS, with implications for trust, formal verification, and defensive strategies prioritizing intrinsic safety over perimeter-based detection.",
+      "categories": [
+        "cs.CR"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-12-15T23:04:48Z",
+      "updated": "2025-12-15T23:04:48Z",
+      "doi": "",
+      "comment": "10 pages, 5 figures, 4 tables. Conference-style paper (IEEEtran). Proposes unified bilevel optimization framework for covert memory poisoning attacks in heterogeneous multi-agent systems (MARL + RAG)",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2512.15790v1",
+      "abs_url": "https://arxiv.org/abs/2512.15790v1"
+    },
+    {
+      "arxiv_id": "2605.09033",
+      "title": "ShadowMerge: A Novel Poisoning Attack on Graph-Based Agent Memory via Relation-Channel Conflicts",
+      "authors": [
+        "Yang Luo",
+        "Zifeng Kang",
+        "Tiantian Ji",
+        "Xinran Liu",
+        "Yong Liu",
+        "Shuyu Li",
+        "Lingyun Peng"
+      ],
+      "abstract": "Graph-based agent memory is increasingly used in LLM agents to support structured long-term recall and multi-hop reasoning, but it also creates a new poisoning surface: an attacker can inject a crafted relation into graph memory so that it is later retrieved and influences agent behavior. Existing agent-memory poisoning attacks mainly target flat textual records and are ineffective in graph-based memory because malicious relations often fail to be extracted, merged into the target anchor neighborhood, or retrieved for the victim query. We present SHADOWMERGE, a poisoning attack against graph-based agent memory that exploits relation-channel conflicts. Its key insight is that a poisoned relation can share the same query-activated anchor and canonicalized relation channel as benign evidence while carrying a conflicting value. To realize this, we design AIR, a pipeline that converts the conflict into an ordinary interaction that can be extracted, merged, and retrieved by the graph-memory system. We evaluate SHADOWMERGE on Mem0 and three public real-world datasets: PubMedQA, WebShop, and ToolEmu. SHADOWMERGE achieves 93.8% average attack success rate, improving the best baseline by 50.3 absolute points, while having negligible impact on unrelated benign tasks. Mechanism studies show that SHADOWMERGE overcomes the three key limitations of existing agent-memory poisoning attacks, and defense analysis shows that representative input-side defenses are insufficient to mitigate it. We have responsibly disclosed our findings to affected graph-memory vendors and open sourced SHADOWMERGE.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-09T16:16:41Z",
+      "updated": "2026-05-15T08:27:09Z",
+      "doi": "",
+      "comment": "Preprint. Corresponding authors: Zifeng Kang and Tiantian Ji. Code is available at https://anonymous.4open.science/status/ShadowMerge-033C",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.09033v3",
+      "abs_url": "https://arxiv.org/abs/2605.09033v3"
+    },
+    {
+      "arxiv_id": "2605.01970",
+      "title": "Trojan Hippo: Weaponizing Agent Memory for Data Exfiltration",
+      "authors": [
+        "Debeshee Das",
+        "Julien Piet",
+        "Darya Kaviani",
+        "Luca Beurer-Kellner",
+        "Florian Tram¨¨r",
+        "David Wagner"
+      ],
+      "abstract": "Memory systems enable otherwise-stateless LLM agents to persist user information across sessions, but also introduce a new attack surface. We characterize the Trojan Hippo attack, a class of persistent memory attacks that operates in a more realistic threat model than prior memory poisoning work: the attacker plants a dormant payload into an agent's long-term memory via a single untrusted tool call (e.g., a crafted email), which activates only when the user later discusses sensitive topics such as finance, health, or identity, and exfiltrates high-value personal data to the attacker. While anecdotal demonstrations of such attacks have appeared against deployed systems, no prior work systematically evaluates them across heterogeneous memory architectures and defenses. We introduce a dynamic evaluation framework comprising two components: (1) an OpenEvolve-based adaptive red-teaming benchmark that stress-tests defenses and memory backends against continuously refined attacks, and (2) the first capability-aware security/utility analysis for persistent memory systems, enabling principled reasoning about defense deployment across different usage profiles. Instantiated on an email assistant across four memory backends (explicit tool memory, agentic memory, RAG, and sliding-window context), Trojan Hippo achieves up to 85-100% ASR against current frontier models from OpenAI and Google, with planted memories successfully activating even after 100 benign sessions. We evaluate four memory-system defenses inspired by basic security principles, finding they substantially reduce attack success rates (to as low as 0-5%), though at utility costs that vary widely with task requirements. Because of this substantial security-utility tradeoff, the effective real-world deployment of defenses remains an open challenge, which our evaluation framework is specifically designed to address.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-03T17:07:20Z",
+      "updated": "2026-05-15T06:42:15Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.01970v3",
+      "abs_url": "https://arxiv.org/abs/2605.01970v3"
+    }
+  ]
+}

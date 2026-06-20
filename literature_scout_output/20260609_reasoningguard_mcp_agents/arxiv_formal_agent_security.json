@@ -1,0 +1,32 @@
+{
+  "query": "all:formalizing AND all:\"LLM agent security\"",
+  "result_count": 1,
+  "results": [
+    {
+      "arxiv_id": "2603.19469",
+      "title": "A Framework for Formalizing LLM Agent Security",
+      "authors": [
+        "Vincent Siu",
+        "Jingxuan He",
+        "Kyle Montgomery",
+        "Zhun Wang",
+        "Neil Gong",
+        "Chenguang Wang",
+        "Dawn Song"
+      ],
+      "abstract": "Security in LLM agents is inherently contextual. For example, the same action taken by an agent may represent legitimate behavior or a security violation depending on whose instruction led to the action, what objective is being pursued, and whether the action serves that objective. However, existing definitions of security attacks against LLM agents often fail to capture this contextual nature. As a result, defenses face a fundamental utility-security tradeoff: applying defenses uniformly across all contexts can lead to significant utility loss, while applying defenses in insufficient or inappropriate contexts can result in security vulnerabilities. In this work, we present a framework that systematizes existing attacks and defenses from the perspective of contextual security. To this end, we propose four security properties that capture contextual security for LLM agents: task alignment (pursuing authorized objectives), action alignment (individual actions serving those objectives), source authorization (executing commands from authenticated sources), and data isolation (ensuring information flows respect privilege boundaries). We further introduce a set of oracle functions that enable verification of whether these security properties are violated as an agent executes a user task. Using this framework, we reformalize existing attacks, such as indirect prompt injection, direct prompt injection, jailbreak, task drift, and memory poisoning, as violations of one or more security properties, thereby providing precise and contextual definitions of these attacks. Similarly, we reformalize defenses as mechanisms that strengthen oracle functions or perform security property checks. Finally, we discuss several important future research directions enabled by our framework.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-03-19T21:01:49Z",
+      "updated": "2026-03-19T21:01:49Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2603.19469v1",
+      "abs_url": "https://arxiv.org/abs/2603.19469v1"
+    }
+  ]
+}

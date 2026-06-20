@@ -1,0 +1,510 @@
+{
+  "query": "all:\"LLM agent\" AND all:\"tool use\" AND all:security",
+  "result_count": 20,
+  "results": [
+    {
+      "arxiv_id": "2604.05432",
+      "title": "Your LLM Agent Can Leak Your Data: Data Exfiltration via Backdoored Tool Use",
+      "authors": [
+        "Wuyang Zhang",
+        "Shichao Pei"
+      ],
+      "abstract": "Tool-use large language model (LLM) agents are increasingly deployed to support sensitive workflows, relying on tool calls for retrieval, external API access, and session memory management. While prior research has examined various threats, the risk of systematic data exfiltration by backdoored agents remains underexplored. In this work, we present Back-Reveal, a data exfiltration attack that embeds semantic triggers into fine-tuned LLM agents. When triggered, the backdoored agent invokes memory-access tool calls to retrieve stored user context and exfiltrates it via disguised retrieval tool calls. We further demonstrate that multi-turn interaction amplifies the impact of data exfiltration, as attacker-controlled retrieval responses can subtly steer subsequent agent behavior and user interactions, enabling sustained and cumulative information leakage over time. Our experimental results expose a critical vulnerability in LLM agents with tool access and highlight the need for defenses against exfiltration-oriented backdoors.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-04-07T04:58:01Z",
+      "updated": "2026-04-07T04:58:01Z",
+      "doi": "",
+      "comment": "The 64th Annual Meeting of the Association for Computational Linguistics",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2604.05432v1",
+      "abs_url": "https://arxiv.org/abs/2604.05432v1"
+    },
+    {
+      "arxiv_id": "2510.15994",
+      "title": "MCP Security Bench (MSB): Benchmarking Attacks Against Model Context Protocol in LLM Agents",
+      "authors": [
+        "Dongsen Zhang",
+        "Zekun Li",
+        "Xu Luo",
+        "Xuannan Liu",
+        "Peipei Li",
+        "Wenjun Xu"
+      ],
+      "abstract": "The Model Context Protocol (MCP) standardizes how large language model (LLM) agents discover, describe, and call external tools. While MCP unlocks broad interoperability, it also enlarges the attack surface by making tools first-class, composable objects with natural-language metadata, and standardized I/O. We present MSB (MCP Security Benchmark), the first end-to-end evaluation suite that systematically measures how well LLM agents resist MCP-specific attacks throughout the full tool-use pipeline: task planning, tool invocation, and response handling. MSB contributes: (1) a taxonomy of 12 attacks including name-collision, preference manipulation, prompt injections embedded in tool descriptions, out-of-scope parameter requests, user-impersonating responses, false-error escalation, tool-transfer, retrieval injection, and mixed attacks; (2) an evaluation harness that executes attacks by running real tools (both benign and malicious) via MCP rather than simulation; and (3) a robustness metric that quantifies the trade-off between security and performance: Net Resilient Performance (NRP). We evaluate nine popular LLM agents across 10 domains and 405 tools, producing 2,000 attack instances. Results reveal the effectiveness of attacks against each stage of MCP. Models with stronger performance are more vulnerable to attacks due to their outstanding tool calling and instruction following capabilities. MSB provides a practical baseline for researchers and practitioners to study, compare, and harden MCP agents. Code: https://github.com/dongsenzhang/MSB",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-10-14T07:36:25Z",
+      "updated": "2026-03-24T15:41:31Z",
+      "doi": "",
+      "comment": "Accepted by ICLR 2026",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2510.15994v2",
+      "abs_url": "https://arxiv.org/abs/2510.15994v2"
+    },
+    {
+      "arxiv_id": "2410.14923",
+      "title": "Imprompter: Tricking LLM Agents into Improper Tool Use",
+      "authors": [
+        "Xiaohan Fu",
+        "Shuheng Li",
+        "Zihan Wang",
+        "Yihao Liu",
+        "Rajesh K. Gupta",
+        "Taylor Berg-Kirkpatrick",
+        "Earlence Fernandes"
+      ],
+      "abstract": "Large Language Model (LLM) Agents are an emerging computing paradigm that blends generative machine learning with tools such as code interpreters, web browsing, email, and more generally, external resources. These agent-based systems represent an emerging shift in personal computing. We contribute to the security foundations of agent-based systems and surface a new class of automatically computed obfuscated adversarial prompt attacks that violate the confidentiality and integrity of user resources connected to an LLM agent. We show how prompt optimization techniques can find such prompts automatically given the weights of a model. We demonstrate that such attacks transfer to production-level agents. For example, we show an information exfiltration attack on Mistral's LeChat agent that analyzes a user's conversation, picks out personally identifiable information, and formats it into a valid markdown command that results in leaking that data to the attacker's server. This attack shows a nearly 80% success rate in an end-to-end evaluation. We conduct a range of experiments to characterize the efficacy of these attacks and find that they reliably work on emerging agent-based systems like Mistral's LeChat, ChatGLM, and Meta's Llama. These attacks are multimodal, and we show variants in the text-only and image domains.",
+      "categories": [
+        "cs.CR"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2024-10-19T01:00:57Z",
+      "updated": "2024-10-22T00:53:48Z",
+      "doi": "",
+      "comment": "website: https://imprompter.ai code: https://github.com/Reapor-Yurnero/imprompter v2 changelog: add new results to Table 3, correct several typos",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2410.14923v2",
+      "abs_url": "https://arxiv.org/abs/2410.14923v2"
+    },
+    {
+      "arxiv_id": "2502.09809",
+      "title": "AgentGuard: Repurposing Agentic Orchestrator for Safety Evaluation of Tool Orchestration",
+      "authors": [
+        "Jizhou Chen",
+        "Samuel Lee Cong"
+      ],
+      "abstract": "The integration of tool use into large language models (LLMs) enables agentic systems with real-world impact. In the meantime, unlike standalone LLMs, compromised agents can execute malicious workflows with more consequential impact, signified by their tool-use capability. We propose AgentGuard, a framework to autonomously discover and validate unsafe tool-use workflows, followed by generating safety constraints to confine the behaviors of agents, achieving the baseline of safety guarantee at deployment. AgentGuard leverages the LLM orchestrator's innate capabilities - knowledge of tool functionalities, scalable and realistic workflow generation, and tool execution privileges - to act as its own safety evaluator. The framework operates through four phases: identifying unsafe workflows, validating them in real-world execution, generating safety constraints, and validating constraint efficacy. The output, an evaluation report with unsafe workflows, test cases, and validated constraints, enables multiple security applications. We empirically demonstrate AgentGuard's feasibility with experiments. With this exploratory work, we hope to inspire the establishment of standardized testing and hardening procedures for LLM agents to enhance their trustworthiness in real-world applications.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-02-13T23:00:33Z",
+      "updated": "2025-02-13T23:00:33Z",
+      "doi": "",
+      "comment": "Project report of AgentGuard in LLM Agent MOOC Hackathon hosted by UC Berkeley in 2024",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2502.09809v1",
+      "abs_url": "https://arxiv.org/abs/2502.09809v1"
+    },
+    {
+      "arxiv_id": "2605.11026",
+      "title": "AgentShield: Deception-based Compromise Detection for Tool-using LLM Agents",
+      "authors": [
+        "Yassin H. Rassul",
+        "Tarik A. Rashid"
+      ],
+      "abstract": "Defenses against indirect prompt injection (IPI) in tool-using LLM agents share two structural weaknesses. First, they all attempt to prevent attacks rather than detect the compromises that slip through. Second, they have only been evaluated in English, leaving users of low-resource languages such as Kurdish and Arabic without tested protection. This paper addresses both gaps with AgentShield, a deception-based detection framework that places three layers of traps inside the agent's tool interface: fake tools, fake credentials, and allowlisted parameters. The same trap triggers serve as high-precision labels for a self-supervised classifier. An LLM agent that follows an attacker's hidden instruction almost always touches one of these traps, which gives both a real-time compromise signal and a zero-FP label for training a downstream detector without manual annotation. Across 176 cross-lingual attack prompts and four LLMs from three providers, and because modern LLMs already refuse most IPI attempts on their own (attack success rate <= 10%), AgentShield's job is to catch the attacks that do slip through. On commercial models, it catches 90.7%-100% of such successful attacks, with zero false alarms on 485 normal-use tests. It survives a systematic adaptive-attack evaluation with zero evasion on commercial models, and the self-supervised classifier transfers across models and languages without retraining.",
+      "categories": [
+        "cs.CR",
+        "cs.CL"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-10T20:08:27Z",
+      "updated": "2026-05-10T20:08:27Z",
+      "doi": "",
+      "comment": "20 pages, 5 figures. Code: https://github.com/Yassin-H-Rassul/AgentShield",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.11026v1",
+      "abs_url": "https://arxiv.org/abs/2605.11026v1"
+    },
+    {
+      "arxiv_id": "2401.05459",
+      "title": "Personal LLM Agents: Insights and Survey about the Capability, Efficiency and Security",
+      "authors": [
+        "Yuanchun Li",
+        "Hao Wen",
+        "Weijun Wang",
+        "Xiangyu Li",
+        "Yizhen Yuan",
+        "Guohong Liu",
+        "Jiacheng Liu",
+        "Wenxing Xu",
+        "Xiang Wang",
+        "Yi Sun",
+        "Rui Kong",
+        "Yile Wang",
+        "Hanfei Geng",
+        "Jian Luan",
+        "Xuefeng Jin",
+        "Zilong Ye",
+        "Guanjing Xiong",
+        "Fan Zhang",
+        "Xiang Li",
+        "Mengwei Xu",
+        "Zhijun Li",
+        "Peng Li",
+        "Yang Liu",
+        "Ya-Qin Zhang",
+        "Yunxin Liu"
+      ],
+      "abstract": "Since the advent of personal computing devices, intelligent personal assistants (IPAs) have been one of the key technologies that researchers and engineers have focused on, aiming to help users efficiently obtain information and execute tasks, and provide users with more intelligent, convenient, and rich interaction experiences. With the development of smartphones and IoT, computing and sensing devices have become ubiquitous, greatly expanding the boundaries of IPAs. However, due to the lack of capabilities such as user intent understanding, task planning, tool using, and personal data management etc., existing IPAs still have limited practicality and scalability. Recently, the emergence of foundation models, represented by large language models (LLMs), brings new opportunities for the development of IPAs. With the powerful semantic understanding and reasoning capabilities, LLM can enable intelligent agents to solve complex problems autonomously. In this paper, we focus on Personal LLM Agents, which are LLM-based agents that are deeply integrated with personal data and personal devices and used for personal assistance. We envision that Personal LLM Agents will become a major software paradigm for end-users in the upcoming era. To realize this vision, we take the first step to discuss several important questions about Personal LLM Agents, including their architecture, capability, efficiency and security. We start by summarizing the key components and design choices in the architecture of Personal LLM Agents, followed by an in-depth analysis of the opinions collected from domain experts. Next, we discuss several key challenges to achieve intelligent, efficient and secure Personal LLM Agents, followed by a comprehensive survey of representative solutions to address these challenges.",
+      "categories": [
+        "cs.HC",
+        "cs.AI",
+        "cs.SE"
+      ],
+      "primary_category": "cs.HC",
+      "published": "2024-01-10T09:25:45Z",
+      "updated": "2024-05-08T06:16:23Z",
+      "doi": "",
+      "comment": "https://github.com/MobileLLM/Personal_LLM_Agents_Survey",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2401.05459v2",
+      "abs_url": "https://arxiv.org/abs/2401.05459v2"
+    },
+    {
+      "arxiv_id": "2412.08054",
+      "title": "Federated In-Context LLM Agent Learning",
+      "authors": [
+        "Panlong Wu",
+        "Kangshuo Li",
+        "Junbao Nan",
+        "Fangxin Wang"
+      ],
+      "abstract": "Large Language Models (LLMs) have revolutionized intelligent services by enabling logical reasoning, tool use, and interaction with external systems as agents. The advancement of LLMs is frequently hindered by the scarcity of high-quality data, much of which is inherently sensitive. Federated learning (FL) offers a potential solution by facilitating the collaborative training of distributed LLMs while safeguarding private data. However, FL frameworks face significant bandwidth and computational demands, along with challenges from heterogeneous data distributions. The emerging in-context learning capability of LLMs offers a promising approach by aggregating natural language rather than bulky model parameters. Yet, this method risks privacy leakage, as it necessitates the collection and presentation of data samples from various clients during aggregation. In this paper, we propose a novel privacy-preserving Federated In-Context LLM Agent Learning (FICAL) algorithm, which to our best knowledge for the first work unleashes the power of in-context learning to train diverse LLM agents through FL. In our design, knowledge compendiums generated by a novel LLM-enhanced Knowledge Compendiums Generation (KCG) module are transmitted between clients and the server instead of model parameters in previous FL methods. Apart from that, an incredible Retrieval Augmented Generation (RAG) based Tool Learning and Utilizing (TLU) module is designed and we incorporate the aggregated global knowledge compendium as a teacher to teach LLM agents the usage of tools. We conducted extensive experiments and the results show that FICAL has competitive performance compared to other SOTA baselines with a significant communication cost decrease of $\\mathbf{3.33\\times10^5}$ times.",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL",
+        "cs.CR"
+      ],
+      "primary_category": "cs.LG",
+      "published": "2024-12-11T03:00:24Z",
+      "updated": "2024-12-11T03:00:24Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2412.08054v1",
+      "abs_url": "https://arxiv.org/abs/2412.08054v1"
+    },
+    {
+      "arxiv_id": "2606.09084",
+      "title": "Context-Fractured Decomposition Attacks on Tool-Using LLM Agents: Exploiting Artifact Provenance Gaps",
+      "authors": [
+        "Xiaofeng Lin",
+        "Yukai Yang",
+        "Daniel Guo",
+        "Sahil Arun Nale",
+        "Charles Fleming",
+        "Guang Cheng"
+      ],
+      "abstract": "Tool-using LLM agents interact with the world through actions that persist state in artifacts (e.g., workspace files or logs). Consequently, jailbreak defenses must reason about cross-step composition rather than isolated text. Yet most existing attacks and defenses, including ``multi-turn'' jailbreaks such as Crescendo and Tree of Attacks,still assume a single contiguous conversation visible to the defender. This assumption breaks down in real agent pipelines, where enforcement is fragmented across tools, modules, and time, and where artifact provenance is often not tracked. We operationalize a deployment failure mode for tool-using LLM agents, the \\emph{provenance gap}, and study reproducible triggers for it: \\emph{Context-Fractured Decomposition} (CFD), a family of cross-context multi-step jailbreaks that preserve benign-looking intermediate artifacts from an early interaction and elicit harmful behavior much later, potentially in a different agent instance or workflow stage, via individually innocuous tool actions whose risk emerges only under delayed artifact-mediated composition. We instrument the failure mode with trace-level diagnostics and outline a verifiable mitigation direction (provenance lineage tagging). Across agent-system jailbreak benchmarks, CFD improves success rates by up to 28.3 percentage points over state-of-the-art baselines, even against strong single-turn judges. Disclaimer: This paper contains examples of harmful or offensive language.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-06-08T06:29:42Z",
+      "updated": "2026-06-08T06:29:42Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2606.09084v1",
+      "abs_url": "https://arxiv.org/abs/2606.09084v1"
+    },
+    {
+      "arxiv_id": "2605.26269",
+      "title": "AgentSecBench: Measuring Prompt Injection, Privacy Leakage, and Tool-Use Integrity in LLM Agents",
+      "authors": [
+        "Faruk Alpay",
+        "Taylan Alpay"
+      ],
+      "abstract": "LLM agents process trusted instructions, retrieved records, and tool observations through a common generative channel. This conflates data flow with authority: an untrusted string can affect a secret-bearing response or an action proposal even when no application policy authorizes that influence. We introduce AgentSecBench as an empirical instantiation of a formal security framework for this problem. The framework defines three games-instruction-integrity, retrieval-confidentiality, and capability-integrity-under a common notion of intent-to-execution noninterference with permitted leakage. It represents an application policy as a projection onto authorized observations and capabilities, distinguishes prompt annotations from enforcing projections, and measures both adversarial advantage and whether a defense closes the relevant model-visible channel before generation. The exact-marker experiments are intentionally one observable instantiation of the games rather than a complete semantic security claim: they test disclosure and forbidden-action distinguishers with unambiguous ground truth. We evaluate six defense classes with Qwen3-0.6B and Qwen3-1.7B on paired adversarial and benign-control executions. The measurements show when risk reduction follows channel closure and when a model-visible adversarial capability remains exploitable. The result is a security-oriented evaluation method: prompt text can describe a boundary, whereas provenance projection, capability restriction, and output validation can enforce one.",
+      "categories": [
+        "cs.CR"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-25T18:53:22Z",
+      "updated": "2026-05-25T18:53:22Z",
+      "doi": "",
+      "comment": "24 pages, 3 figures. Ancillary files provided",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.26269v1",
+      "abs_url": "https://arxiv.org/abs/2605.26269v1"
+    },
+    {
+      "arxiv_id": "2506.02048",
+      "title": "Improving LLM Agents with Reinforcement Learning on Cryptographic CTF Challenges",
+      "authors": [
+        "Lajos Muzsai",
+        "David Imolai",
+        "Andr¨¢s Luk¨¢cs"
+      ],
+      "abstract": "We present 'Random-Crypto', a procedurally generated cryptographic Capture The Flag (CTF) dataset designed to unlock the potential of Reinforcement Learning (RL) for LLM-based agents in security-sensitive domains. Cryptographic reasoning offers an ideal RL testbed: it combines precise validation, structured multi-step inference, and reliance on reliable computational tool use. Leveraging these properties, we fine-tune a Python tool-augmented Llama-3.1-8B via Group Relative Policy Optimization (GRPO) in a secure execution environment. The resulting agent achieves a significant improvement in Pass@8 on previously unseen challenges. Moreover, the improvements generalize to two external benchmarks: 'picoCTF', spanning both crypto and non-crypto tasks, and 'AICrypto MCQ', a multiple-choice benchmark of 135 cryptography questions. Ablation studies attribute the gains to enhanced tool usage and procedural reasoning. These findings position 'Random-Crypto' as a rich training ground for building intelligent, adaptable LLM agents capable of handling complex cybersecurity tasks.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-06-01T01:59:52Z",
+      "updated": "2025-08-17T22:28:50Z",
+      "doi": "",
+      "comment": "13 pages, 2 figures",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2506.02048v2",
+      "abs_url": "https://arxiv.org/abs/2506.02048v2"
+    },
+    {
+      "arxiv_id": "2604.13630",
+      "title": "SafeHarness: Lifecycle-Integrated Security Architecture for LLM-based Agent Deployment",
+      "authors": [
+        "Xixun Lin",
+        "Yang Liu",
+        "Yancheng Chen",
+        "Yongxuan Wu",
+        "Yucheng Ning",
+        "Yilong Liu",
+        "Nan Sun",
+        "Shun Zhang",
+        "Bin Chong",
+        "Chuan Zhou",
+        "Yanan Cao"
+      ],
+      "abstract": "The performance of large language model (LLM) agents depends critically on the execution harness, the system layer that orchestrates tool use, context management, and state persistence. Yet this same architectural centrality makes the harness a high-value attack surface: a single compromise at the harness level can cascade through the entire execution pipeline. We observe that existing security approaches suffer from structural mismatch, leaving them blind to harness-internal state and unable to coordinate across the different phases of agent operation. In this paper, we introduce \\safeharness{}, a security architecture in which four proposed defense layers are woven directly into the agent lifecycle to address above significant limitations: adversarial context filtering at input processing, tiered causal verification at decision making, privilege-separated tool control at action execution, and safe rollback with adaptive degradation at state update. The proposed cross-layer mechanisms tie these layers together, escalating verification rigor, triggering rollbacks, and tightening tool privileges whenever sustained anomalies are detected. We evaluate \\safeharness{} on benchmark datasets across diverse harness configurations, comparing against four security baselines under five attack scenarios spanning six threat categories. Compared to the unprotected baseline, \\safeharness{} achieves an average reduction of approximately 38\\% in UBR and 42\\% in ASR, substantially lowering both the unsafe behavior rate and the attack success rate while preserving core task utility.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-04-15T08:59:00Z",
+      "updated": "2026-05-11T07:00:12Z",
+      "doi": "",
+      "comment": "26 pages, 6 figures",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2604.13630v2",
+      "abs_url": "https://arxiv.org/abs/2604.13630v2"
+    },
+    {
+      "arxiv_id": "2402.06664",
+      "title": "LLM Agents can Autonomously Hack Websites",
+      "authors": [
+        "Richard Fang",
+        "Rohan Bindu",
+        "Akul Gupta",
+        "Qiusi Zhan",
+        "Daniel Kang"
+      ],
+      "abstract": "In recent years, large language models (LLMs) have become increasingly capable and can now interact with tools (i.e., call functions), read documents, and recursively call themselves. As a result, these LLMs can now function autonomously as agents. With the rise in capabilities of these agents, recent work has speculated on how LLM agents would affect cybersecurity. However, not much is known about the offensive capabilities of LLM agents. In this work, we show that LLM agents can autonomously hack websites, performing tasks as complex as blind database schema extraction and SQL injections without human feedback. Importantly, the agent does not need to know the vulnerability beforehand. This capability is uniquely enabled by frontier models that are highly capable of tool use and leveraging extended context. Namely, we show that GPT-4 is capable of such hacks, but existing open-source models are not. Finally, we show that GPT-4 is capable of autonomously finding vulnerabilities in websites in the wild. Our findings raise questions about the widespread deployment of LLMs.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2024-02-06T14:46:08Z",
+      "updated": "2024-02-16T04:02:51Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2402.06664v3",
+      "abs_url": "https://arxiv.org/abs/2402.06664v3"
+    },
+    {
+      "arxiv_id": "2605.24069",
+      "title": "When the Manual Lies: A Realistic Benchmark to Evaluate MCP Poisoning Attacks for LLM Agents",
+      "authors": [
+        "Shi Liu",
+        "Xuehai Tang",
+        "Xikang Yang",
+        "Liang Lin",
+        "Biyu Zhou",
+        "Wenjie Xiao",
+        "Wantao Liu"
+      ],
+      "abstract": "The rise of tool-using Large Language Model (LLM) agents, standardized by protocols like the Model Context Protocol (MCP), has unlocked unprecedented autonomous execution capabilities for LLM Agents by integrating external open-domain knowledge and tools. However, this interoperability introduces a covert attack surface targeting the agent's cognitive planning layer. This paper systematically investigates Tool Description Poisoning (TDP), a novel semantic attack. In TDP, malicious instructions are not embedded in a tool's executable code, but rather covertly injected into its descriptive metadata, the very \"manual\" an agent relies on for secure planning and decision-making. To rigorously and systematically evaluate this emerging threat, we introduce the MCP-TDP Security Benchmark. This high-fidelity sandbox environment comprises 32 realistic, real-world test cases spanning 6 distinct risk categories. Our evaluation of 8 mainstream LLMs reveals severe vulnerabilities, with leading models like GPT-4o exhibiting a nearly 100% Attack Success Rate (ASR) in six high-risk scenarios. Furthermore, our findings demonstrate that common prompt-guardrail defenses are largely ineffective and can, counterintuitively, even be counterproductive (a phenomenon which we term the \"Firewall Fallacy\"). Crucially, we also propose a defense mechanism: \"Reactive Self-Correction,\" where an agent autonomously detects and reverts its own malicious actions post-execution. This work provides the first specialized security benchmark tailored for TDP, offering essential insights for securing the cognitive and planning layers of advanced agentic systems.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-22T08:34:48Z",
+      "updated": "2026-05-22T08:34:48Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.24069v1",
+      "abs_url": "https://arxiv.org/abs/2605.24069v1"
+    },
+    {
+      "arxiv_id": "2603.19328",
+      "title": "The Verifier Tax: Horizon Dependent Safety Success Tradeoffs in Tool Using LLM Agents",
+      "authors": [
+        "Tanmay Sah",
+        "Vishal Srivastava",
+        "Dolly Sah",
+        "Kayden Jordan"
+      ],
+      "abstract": "We study how runtime enforcement against unsafe actions affects end-to-end task performance in multi-step tool using large language model (LLM) agents. Using tau-bench across Airline and Retail domains, we compare baseline Tool-Calling, planning-integrated (TRIAD), and policy-mediated (TRIAD-SAFETY) architectures with GPT-OSS-20B and GLM-4-9B. We identify model dependent interaction horizons (15 to 30 turns) and decompose outcomes into overall success rate (SR), safe success rate (SSR), and unsafe success rate (USR). Our results reveal a persistent Safety Capability Gap. While safety mediation can intercept up to 94 percent of non-compliant actions, it rarely translates into strictly safe goal attainment (SSR below 5 percent in most settings). We find that high unsafe success rates are primarily driven by Integrity Leaks, where models hallucinate user identifiers to bypass mandatory authentication. Recovery rates following blocked actions are consistently low, ranging from 21 percent for GPT-OSS-20B in simpler procedural tasks to near zero in complex Retail scenarios. These results demonstrate that runtime enforcement imposes a significant verifier tax on conversational length and compute cost without guaranteeing safe completion, highlighting the critical need for agents capable of grounded identity verification and post-intervention reasoning.",
+      "categories": [
+        "cs.CR"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-03-18T16:16:34Z",
+      "updated": "2026-03-18T16:16:34Z",
+      "doi": "",
+      "comment": "10 pages, 7 figures",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2603.19328v1",
+      "abs_url": "https://arxiv.org/abs/2603.19328v1"
+    },
+    {
+      "arxiv_id": "2605.03378",
+      "title": "ARGUS: Defending LLM Agents Against Context-Aware Prompt Injection",
+      "authors": [
+        "Shihao Weng",
+        "Yang Feng",
+        "Jinrui Zhang",
+        "Xiaofei Xie",
+        "Jiongchi Yu",
+        "Jia Liu"
+      ],
+      "abstract": "The rise of Large Language Model (LLM) agents, augmented with tool use, skills, and external knowledge, has introduced new security risks. Among them, prompt injection attacks, where adversaries embed malicious instructions into the agent workflow, have emerged as the primary threat. However, existing benchmarks and defenses are fundamentally limited as they assume context-insensitive settings in which the agent works under a fully specified user instruction, and the attacks are straightforward and context-independent. As a result, they fail to capture real-world deployments where agent behavior usually depends on dynamic context, not just the user prompt, and adversaries can adapt their attacks to different context. Similarly, existing defenses built on this narrow threat model overlook the nature of real-world agent delegation. In this paper, we present AgentLure, a benchmark that captures context-dependent tasks and context-aware prompt injection attacks. AgentLure spans four agentic domains and eight attack vectors across diverse attack surfaces. Our evaluation shows that existing defenses often struggle in this setting, yielding poor performance against such attacks in agentic systems. To address this limitation, we propose ARGUS, a defense mechanism that enforces provenance-aware decision auditing for LLM agents. ARGUS constructs an influence provenance graph to track how untrusted context propagates into agent decisions and verify whether a decision is justified by trustworthy evidence before execution. Our evaluation shows ARGUS reduces attack success rate to 3.8% while preserving 87.5% task utility, significantly outperforming existing defenses and remaining robust against adaptive white-box adversaries.",
+      "categories": [
+        "cs.CR",
+        "cs.SE"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-05T05:37:00Z",
+      "updated": "2026-05-05T05:37:00Z",
+      "doi": "",
+      "comment": "19 pages",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.03378v1",
+      "abs_url": "https://arxiv.org/abs/2605.03378v1"
+    },
+    {
+      "arxiv_id": "2606.09549",
+      "title": "SecureClaw: Clawing Back Control of LLM Agents",
+      "authors": [
+        "Yuhan Ma",
+        "Stefan Schmid"
+      ],
+      "abstract": "Tool-using large language model (LLM) agents face two distinct security failures: unauthorized external actions and exposure of sensitive plaintext inside the runtime before any final output check can intervene. Existing defenses usually protect one boundary, either the planner/runtime or the action sink, and therefore do not by themselves secure both surfaces. We present SecureClaw, a dual-boundary architecture that places authorization at the effect sink and plaintext confinement at the read boundary. Sensitive reads pass through a trusted gateway that replaces raw values with opaque handles and, in the evaluated deployment, bounded summaries as an explicit declassification interface. Writes that change external state follow a PREVIEW$\\rightarrow$COMMIT protocol in which only a trusted executor may commit the exact canonical request authorized by policy. The runtime can still plan over summaries and symbolic references, but cannot directly dereference secrets or perform side effects. Across AgentDojo, AgentLeak, and Agent Security Bench (ASB), SecureClaw is the only defense we evaluate in a common harness that simultaneously retains usable task utility and achieves 0\\% attack success rate (ASR) on ASB, 0.64\\% ASR on AgentDojo, and 3.23\\% overall leak on AgentLeak's attacked parity lane, which measures final-output and internal-relay leakage.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-06-08T14:29:01Z",
+      "updated": "2026-06-08T14:29:01Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2606.09549v1",
+      "abs_url": "https://arxiv.org/abs/2606.09549v1"
+    },
+    {
+      "arxiv_id": "2509.25624",
+      "title": "STAC: When Innocent Tools Form Dangerous Chains to Jailbreak LLM Agents",
+      "authors": [
+        "Jing-Jing Li",
+        "Jianfeng He",
+        "Chao Shang",
+        "Devang Kulshreshtha",
+        "Xun Xian",
+        "Yi Zhang",
+        "Hang Su",
+        "Sandesh Swamy",
+        "Yanjun Qi"
+      ],
+      "abstract": "As LLMs advance into autonomous agents with tool-use capabilities, they introduce security challenges that extend beyond traditional content-based LLM safety concerns. This paper introduces Sequential Tool Attack Chaining (STAC), a novel multi-turn attack framework that exploits agent tool use. STAC chains together tool calls that each appear harmless in isolation but, when combined, collectively enable harmful operations that only become apparent at the final execution step. We apply our framework to automatically generate and systematically evaluate 483 STAC cases, featuring 1,352 sets of user-agent-environment interactions and spanning diverse domains, tasks, agent types, and 10 failure modes. Our evaluations show that state-of-the-art LLM agents, including GPT-4.1, are highly vulnerable to STAC, with attack success rates (ASR) exceeding 90% in most cases. The core design of STAC's automated framework is a closed-loop pipeline that synthesizes executable multi-step tool chains, validates them through in-environment execution, and reverse-engineers stealthy multi-turn prompts that reliably induce agents to execute the verified malicious sequence. We further perform defense analysis against STAC and find that existing prompt-based defenses provide limited protection. To address this gap, we propose a new reasoning-driven defense prompt that achieves far stronger protection, cutting ASR by up to 28.8%. These results highlight a crucial gap: defending tool-enabled agents requires reasoning over entire action sequences and their cumulative effects, rather than evaluating isolated prompts or responses.",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-09-30T00:31:44Z",
+      "updated": "2026-02-02T16:38:19Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2509.25624v2",
+      "abs_url": "https://arxiv.org/abs/2509.25624v2"
+    },
+    {
+      "arxiv_id": "2605.11039",
+      "title": "The Granularity Mismatch in Agent Security: Argument-Level Provenance Solves Enforcement and Isolates the LLM Reasoning Bottleneck",
+      "authors": [
+        "Linfeng Fan",
+        "Ziwei Li",
+        "Yuan Tian",
+        "Yichen Wang",
+        "Rongsheng Li",
+        "Xiong Wang"
+      ],
+      "abstract": "Tool-using LLM agents must act on untrusted webpages, emails, files, and API outputs while issuing privileged tool calls. Existing defenses often mediate trust at the granularity of an entire tool invocation, forcing a brittle choice in mixed-trust workflows: allow external content to influence a call and risk hijacked destinations or commands, or quarantine the call and block benign retrieval-then-act behavior. The key observation behind this paper is that indirect prompt injection becomes dangerous not when untrusted content appears in context, but when it determines an authority-bearing argument. We present \\textsc{PACT} (\\emph{Provenance-Aware Capability Contracts}), a runtime monitor that assigns semantic roles to tool arguments, tracks value provenance across replanning steps, and checks whether each argument's origin satisfies its role-specific trust contract. Under oracle provenance, \\textsc{PACT} achieves 100\\% utility and 100\\% security on mixed-trust diagnostic suites, while flat invocation-level monitors incur false positives or false negatives. In full AgentDojo deployments across five models, \\textsc{PACT} reaches 100\\% security on the three strongest models while recovering 38.1--46.4\\% utility, 8--16 percentage points above CaMeL at the same security level. Ablations show that both semantic roles and cross-step provenance are necessary. \\textsc{PACT} reframes agent security as authority binding, and isolates the remaining deployment bottleneck to provenance inference and contract synthesis.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-11T04:09:11Z",
+      "updated": "2026-05-11T04:09:11Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.11039v1",
+      "abs_url": "https://arxiv.org/abs/2605.11039v1"
+    },
+    {
+      "arxiv_id": "2605.17453",
+      "title": "Trust No Tool: Evaluating and Defending LLM Agents under Untrusted Tool Feedback",
+      "authors": [
+        "Lecheng Yan",
+        "Ruizhe Li",
+        "Xicheng Han",
+        "Wenxi Li",
+        "Binwu Wang",
+        "Longyue Wang",
+        "Chenyang Lyu",
+        "Guanhua Chen"
+      ],
+      "abstract": "Tool-using LLM agents increasingly rely on external tools to make consequential decisions, yet most existing agent-security benchmarks and defenses implicitly assume that tool feedback is trustworthy once a tool has been selected. We study a different failure mode, cognitive poisoning, in which a malicious tool behaves plausibly during exploration, accumulates trust through benign-looking feedback, and becomes harmful only when hidden state conditions align with the final executable action. To study this setting, we construct TRUST-Bench, a task-conditioned benchmark of 1,970 hidden-trigger tool-compromise episodes with matched safe controls, introduce an asymmetric penalty metric, GuardedJoint, to better reflect real deployment risk, and present VISTA-Guard, a backbone-agnostic framework for final-action risk scoring. The core idea is to abstract multi-step tool interaction into structured environment variables that encode trust-formation dynamics and then score the risk of the final executable action from this trajectory-conditioned representation. Experiments show that prompt-centric heuristics, scalarized features, and zero-shot judges fail in this regime, whereas trajectory-aware final-action scoring yields strong in-domain discrimination and remains effective under balanced out-of-distribution transfer. Under GuardedJoint, VISTA-Guard reaches $84.2$ in-domain and $56.9$ on balanced out-of-distribution evaluation, while methods that optimize only one side of the safety--utility tradeoff collapse to zero. These findings support a broader view of agent security in black-box tool ecosystems: the decisive defense target is not local prompt text or tool descriptors alone, but the way trust is formed across the interaction trajectory and committed through the final action.",
+      "categories": [
+        "cs.CR",
+        "cs.CL"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2026-05-17T13:51:34Z",
+      "updated": "2026-05-17T13:51:34Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2605.17453v1",
+      "abs_url": "https://arxiv.org/abs/2605.17453v1"
+    },
+    {
+      "arxiv_id": "2510.26037",
+      "title": "SIRAJ: Diverse and Efficient Red-Teaming for LLM Agents via Distilled Structured Reasoning",
+      "authors": [
+        "Kaiwen Zhou",
+        "Ahmed Elgohary",
+        "A S M Iftekhar",
+        "Amin Saied"
+      ],
+      "abstract": "The ability of LLM agents to plan and invoke tools exposes them to new safety risks, making a comprehensive red-teaming system crucial for discovering vulnerabilities and ensuring their safe deployment. We present SIRAJ: a generic red-teaming framework for arbitrary black-box LLM agents. We employ a dynamic two-step process that starts with an agent definition and generates diverse seed test cases that cover various risk outcomes, tool-use trajectories, and risk sources. Then, it iteratively constructs and refines model-based adversarial attacks based on the execution trajectories of former attempts. To optimize the red-teaming cost, we present a model distillation approach that leverages structured forms of a teacher model's reasoning to train smaller models that are equally effective. Across diverse evaluation agent settings, our seed test case generation approach yields 2 -- 2.5x boost to the coverage of risk outcomes and tool-calling trajectories. Our distilled 8B red-teamer model improves attack success rate by 100%, surpassing the 671B Deepseek-R1 model. Our ablations and analyses validate the effectiveness of the iterative framework, structured reasoning, and the generalization of our red-teamer models.",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-10-30T00:32:58Z",
+      "updated": "2025-10-30T00:32:58Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2510.26037v1",
+      "abs_url": "https://arxiv.org/abs/2510.26037v1"
+    }
+  ]
+}

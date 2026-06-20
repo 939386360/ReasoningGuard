@@ -1,0 +1,207 @@
+{
+  "query": "id_list:2403.02691,2410.14923,2412.16682,2407.12784,2502.05174,2503.00061,2505.05849,2508.14925",
+  "result_count": 8,
+  "results": [
+    {
+      "arxiv_id": "2410.14923",
+      "title": "Imprompter: Tricking LLM Agents into Improper Tool Use",
+      "authors": [
+        "Xiaohan Fu",
+        "Shuheng Li",
+        "Zihan Wang",
+        "Yihao Liu",
+        "Rajesh K. Gupta",
+        "Taylor Berg-Kirkpatrick",
+        "Earlence Fernandes"
+      ],
+      "abstract": "Large Language Model (LLM) Agents are an emerging computing paradigm that blends generative machine learning with tools such as code interpreters, web browsing, email, and more generally, external resources. These agent-based systems represent an emerging shift in personal computing. We contribute to the security foundations of agent-based systems and surface a new class of automatically computed obfuscated adversarial prompt attacks that violate the confidentiality and integrity of user resources connected to an LLM agent. We show how prompt optimization techniques can find such prompts automatically given the weights of a model. We demonstrate that such attacks transfer to production-level agents. For example, we show an information exfiltration attack on Mistral's LeChat agent that analyzes a user's conversation, picks out personally identifiable information, and formats it into a valid markdown command that results in leaking that data to the attacker's server. This attack shows a nearly 80% success rate in an end-to-end evaluation. We conduct a range of experiments to characterize the efficacy of these attacks and find that they reliably work on emerging agent-based systems like Mistral's LeChat, ChatGLM, and Meta's Llama. These attacks are multimodal, and we show variants in the text-only and image domains.",
+      "categories": [
+        "cs.CR"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2024-10-19T01:00:57Z",
+      "updated": "2024-10-22T00:53:48Z",
+      "doi": "",
+      "comment": "website: https://imprompter.ai code: https://github.com/Reapor-Yurnero/imprompter v2 changelog: add new results to Table 3, correct several typos",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2410.14923v2",
+      "abs_url": "https://arxiv.org/abs/2410.14923v2"
+    },
+    {
+      "arxiv_id": "2403.02691",
+      "title": "InjecAgent: Benchmarking Indirect Prompt Injections in Tool-Integrated Large Language Model Agents",
+      "authors": [
+        "Qiusi Zhan",
+        "Zhixiang Liang",
+        "Zifan Ying",
+        "Daniel Kang"
+      ],
+      "abstract": "Recent work has embodied LLMs as agents, allowing them to access tools, perform actions, and interact with external content (e.g., emails or websites). However, external content introduces the risk of indirect prompt injection (IPI) attacks, where malicious instructions are embedded within the content processed by LLMs, aiming to manipulate these agents into executing detrimental actions against users. Given the potentially severe consequences of such attacks, establishing benchmarks to assess and mitigate these risks is imperative. In this work, we introduce InjecAgent, a benchmark designed to assess the vulnerability of tool-integrated LLM agents to IPI attacks. InjecAgent comprises 1,054 test cases covering 17 different user tools and 62 attacker tools. We categorize attack intentions into two primary types: direct harm to users and exfiltration of private data. We evaluate 30 different LLM agents and show that agents are vulnerable to IPI attacks, with ReAct-prompted GPT-4 vulnerable to attacks 24% of the time. Further investigation into an enhanced setting, where the attacker instructions are reinforced with a hacking prompt, shows additional increases in success rates, nearly doubling the attack success rate on the ReAct-prompted GPT-4. Our findings raise questions about the widespread deployment of LLM Agents. Our benchmark is available at https://github.com/uiuc-kang-lab/InjecAgent.",
+      "categories": [
+        "cs.CL",
+        "cs.CR"
+      ],
+      "primary_category": "cs.CL",
+      "published": "2024-03-05T06:21:45Z",
+      "updated": "2024-08-04T04:52:35Z",
+      "doi": "",
+      "comment": "36 pages, 6 figures, 13 tables (ACL 2024 Findings)",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2403.02691v3",
+      "abs_url": "https://arxiv.org/abs/2403.02691v3"
+    },
+    {
+      "arxiv_id": "2508.14925",
+      "title": "MCPTox: A Benchmark for Tool Poisoning Attack on Real-World MCP Servers",
+      "authors": [
+        "Zhiqiang Wang",
+        "Yichao Gao",
+        "Yanting Wang",
+        "Suyuan Liu",
+        "Haifeng Sun",
+        "Haoran Cheng",
+        "Guanquan Shi",
+        "Haohua Du",
+        "Xiangyang Li"
+      ],
+      "abstract": "By providing a standardized interface for LLM agents to interact with external tools, the Model Context Protocol (MCP) is quickly becoming a cornerstone of the modern autonomous agent ecosystem. However, it creates novel attack surfaces due to untrusted external tools. While prior work has focused on attacks injected through external tool outputs, we investigate a more fundamental vulnerability: Tool Poisoning, where malicious instructions are embedded within a tool's metadata without execution. To date, this threat has been primarily demonstrated through isolated cases, lacking a systematic, large-scale evaluation. We introduce MCPTox, the first benchmark to systematically evaluate agent robustness against Tool Poisoning in realistic MCP settings. MCPTox is constructed upon 45 live, real-world MCP servers and 353 authentic tools. To achieve this, we design three distinct attack templates to generate a comprehensive suite of 1312 malicious test cases by few-shot learning, covering 10 categories of potential risks. Our evaluation on 20 prominent LLM agents setting reveals a widespread vulnerability to Tool Poisoning, with o1-mini, achieving an attack success rate of 72.8\\%. We find that more capable models are often more susceptible, as the attack exploits their superior instruction-following abilities. Finally, the failure case analysis reveals that agents rarely refuse these attacks, with the highest refused rate (Claude-3.7-Sonnet) less than 3\\%, demonstrating that existing safety alignment is ineffective against malicious actions that use legitimate tools for unauthorized operation. Our findings create a crucial empirical baseline for understanding and mitigating this widespread threat, and we release MCPTox for the development of verifiably safer AI agents. Our dataset is available at an anonymized repository: \\textit{https://anonymous.4open.science/r/AAAI26-7C02}.",
+      "categories": [
+        "cs.CR",
+        "cs.LG"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-08-19T10:12:35Z",
+      "updated": "2025-08-19T10:12:35Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2508.14925v1",
+      "abs_url": "https://arxiv.org/abs/2508.14925v1"
+    },
+    {
+      "arxiv_id": "2412.16682",
+      "title": "The Task Shield: Enforcing Task Alignment to Defend Against Indirect Prompt Injection in LLM Agents",
+      "authors": [
+        "Feiran Jia",
+        "Tong Wu",
+        "Xin Qin",
+        "Anna Squicciarini"
+      ],
+      "abstract": "Large Language Model (LLM) agents are increasingly being deployed as conversational assistants capable of performing complex real-world tasks through tool integration. This enhanced ability to interact with external systems and process various data sources, while powerful, introduces significant security vulnerabilities. In particular, indirect prompt injection attacks pose a critical threat, where malicious instructions embedded within external data sources can manipulate agents to deviate from user intentions. While existing defenses based on rule constraints, source spotlighting, and authentication protocols show promise, they struggle to maintain robust security while preserving task functionality. We propose a novel and orthogonal perspective that reframes agent security from preventing harmful actions to ensuring task alignment, requiring every agent action to serve user objectives. Based on this insight, we develop Task Shield, a test-time defense mechanism that systematically verifies whether each instruction and tool call contributes to user-specified goals. Through experiments on the AgentDojo benchmark, we demonstrate that Task Shield reduces attack success rates (2.07\\%) while maintaining high task utility (69.79\\%) on GPT-4o.",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2024-12-21T16:17:48Z",
+      "updated": "2024-12-21T16:17:48Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2412.16682v1",
+      "abs_url": "https://arxiv.org/abs/2412.16682v1"
+    },
+    {
+      "arxiv_id": "2503.00061",
+      "title": "Adaptive Attacks Break Defenses Against Indirect Prompt Injection Attacks on LLM Agents",
+      "authors": [
+        "Qiusi Zhan",
+        "Richard Fang",
+        "Henil Shalin Panchal",
+        "Daniel Kang"
+      ],
+      "abstract": "Large Language Model (LLM) agents exhibit remarkable performance across diverse applications by using external tools to interact with environments. However, integrating external tools introduces security risks, such as indirect prompt injection (IPI) attacks. Despite defenses designed for IPI attacks, their robustness remains questionable due to insufficient testing against adaptive attacks. In this paper, we evaluate eight different defenses and bypass all of them using adaptive attacks, consistently achieving an attack success rate of over 50%. This reveals critical vulnerabilities in current defenses. Our research underscores the need for adaptive attack evaluation when designing defenses to ensure robustness and reliability. The code is available at https://github.com/uiuc-kang-lab/AdaptiveAttackAgent.",
+      "categories": [
+        "cs.CR",
+        "cs.LG"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-02-27T04:04:50Z",
+      "updated": "2025-03-04T03:32:46Z",
+      "doi": "",
+      "comment": "17 pages, 5 figures, 6 tables (NAACL 2025 Findings)",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2503.00061v2",
+      "abs_url": "https://arxiv.org/abs/2503.00061v2"
+    },
+    {
+      "arxiv_id": "2502.05174",
+      "title": "MELON: Provable Defense Against Indirect Prompt Injection Attacks in AI Agents",
+      "authors": [
+        "Kaijie Zhu",
+        "Xianjun Yang",
+        "Jindong Wang",
+        "Wenbo Guo",
+        "William Yang Wang"
+      ],
+      "abstract": "Recent research has explored that LLM agents are vulnerable to indirect prompt injection (IPI) attacks, where malicious tasks embedded in tool-retrieved information can redirect the agent to take unauthorized actions. Existing defenses against IPI have significant limitations: either require essential model training resources, lack effectiveness against sophisticated attacks, or harm the normal utilities. We present MELON (Masked re-Execution and TooL comparisON), a novel IPI defense. Our approach builds on the observation that under a successful attack, the agent's next action becomes less dependent on user tasks and more on malicious tasks. Following this, we design MELON to detect attacks by re-executing the agent's trajectory with a masked user prompt modified through a masking function. We identify an attack if the actions generated in the original and masked executions are similar. We also include three key designs to reduce the potential false positives and false negatives. Extensive evaluation on the IPI benchmark AgentDojo demonstrates that MELON outperforms SOTA defenses in both attack prevention and utility preservation. Moreover, we show that combining MELON with a SOTA prompt augmentation defense (denoted as MELON-Aug) further improves its performance. We also conduct a detailed ablation study to validate our key designs. Code is available at https://github.com/kaijiezhu11/MELON.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-02-07T18:57:49Z",
+      "updated": "2025-06-10T18:13:09Z",
+      "doi": "",
+      "comment": "ICML 2025",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2502.05174v4",
+      "abs_url": "https://arxiv.org/abs/2502.05174v4"
+    },
+    {
+      "arxiv_id": "2407.12784",
+      "title": "AgentPoison: Red-teaming LLM Agents via Poisoning Memory or Knowledge Bases",
+      "authors": [
+        "Zhaorun Chen",
+        "Zhen Xiang",
+        "Chaowei Xiao",
+        "Dawn Song",
+        "Bo Li"
+      ],
+      "abstract": "LLM agents have demonstrated remarkable performance across various applications, primarily due to their advanced capabilities in reasoning, utilizing external knowledge and tools, calling APIs, and executing actions to interact with environments. Current agents typically utilize a memory module or a retrieval-augmented generation (RAG) mechanism, retrieving past knowledge and instances with similar embeddings from knowledge bases to inform task planning and execution. However, the reliance on unverified knowledge bases raises significant concerns about their safety and trustworthiness. To uncover such vulnerabilities, we propose a novel red teaming approach AgentPoison, the first backdoor attack targeting generic and RAG-based LLM agents by poisoning their long-term memory or RAG knowledge base. In particular, we form the trigger generation process as a constrained optimization to optimize backdoor triggers by mapping the triggered instances to a unique embedding space, so as to ensure that whenever a user instruction contains the optimized backdoor trigger, the malicious demonstrations are retrieved from the poisoned memory or knowledge base with high probability. In the meantime, benign instructions without the trigger will still maintain normal performance. Unlike conventional backdoor attacks, AgentPoison requires no additional model training or fine-tuning, and the optimized backdoor trigger exhibits superior transferability, in-context coherence, and stealthiness. Extensive experiments demonstrate AgentPoison's effectiveness in attacking three types of real-world LLM agents: RAG-based autonomous driving agent, knowledge-intensive QA agent, and healthcare EHRAgent. On each agent, AgentPoison achieves an average attack success rate higher than 80% with minimal impact on benign performance (less than 1%) with a poison rate less than 0.1%.",
+      "categories": [
+        "cs.LG",
+        "cs.CR",
+        "cs.IR"
+      ],
+      "primary_category": "cs.LG",
+      "published": "2024-07-17T17:59:47Z",
+      "updated": "2024-07-17T17:59:47Z",
+      "doi": "",
+      "comment": "22 pages, 13 figures, 7 tables",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2407.12784v1",
+      "abs_url": "https://arxiv.org/abs/2407.12784v1"
+    },
+    {
+      "arxiv_id": "2505.05849",
+      "title": "AgentVigil: Generic Black-Box Red-teaming for Indirect Prompt Injection against LLM Agents",
+      "authors": [
+        "Zhun Wang",
+        "Vincent Siu",
+        "Zhe Ye",
+        "Tianneng Shi",
+        "Yuzhou Nie",
+        "Xuandong Zhao",
+        "Chenguang Wang",
+        "Wenbo Guo",
+        "Dawn Song"
+      ],
+      "abstract": "The strong planning and reasoning capabilities of Large Language Models (LLMs) have fostered the development of agent-based systems capable of leveraging external tools and interacting with increasingly complex environments. However, these powerful features also introduce a critical security risk: indirect prompt injection, a sophisticated attack vector that compromises the core of these agents, the LLM, by manipulating contextual information rather than direct user prompts. In this work, we propose a generic black-box fuzzing framework, AgentVigil, designed to automatically discover and exploit indirect prompt injection vulnerabilities across diverse LLM agents. Our approach starts by constructing a high-quality initial seed corpus, then employs a seed selection algorithm based on Monte Carlo Tree Search (MCTS) to iteratively refine inputs, thereby maximizing the likelihood of uncovering agent weaknesses. We evaluate AgentVigil on two public benchmarks, AgentDojo and VWA-adv, where it achieves 71% and 70% success rates against agents based on o3-mini and GPT-4o, respectively, nearly doubling the performance of baseline attacks. Moreover, AgentVigil exhibits strong transferability across unseen tasks and internal LLMs, as well as promising results against defenses. Beyond benchmark evaluations, we apply our attacks in real-world environments, successfully misleading agents to navigate to arbitrary URLs, including malicious sites.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "primary_category": "cs.CR",
+      "published": "2025-05-09T07:40:17Z",
+      "updated": "2025-06-14T01:50:21Z",
+      "doi": "",
+      "comment": "",
+      "journal_ref": "",
+      "pdf_url": "https://arxiv.org/pdf/2505.05849v4",
+      "abs_url": "https://arxiv.org/abs/2505.05849v4"
+    }
+  ]
+}
