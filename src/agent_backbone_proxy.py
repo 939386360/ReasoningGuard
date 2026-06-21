@@ -6,7 +6,7 @@ from urllib.parse import urlsplit, urlunsplit
 from src.agent_backbone import AgentBackbone
 
 
-DEFAULT_PROXY_BASE_URL = "https://llm-api.net/v1"
+DEFAULT_PROXY_BASE_URL = "https://llm-api.net/v1/chat/completions"
 
 DEFAULT_MODEL_MAP: Dict[str, str] = {
     "GPT-4o": "gpt-4o",
@@ -115,7 +115,7 @@ class ProxyAgentBackbone(AgentBackbone):
         model: str,
         api_key: Optional[str] = None,
         base_url: str = DEFAULT_PROXY_BASE_URL,
-        api_style: str = "auto",
+        api_style: str = "chat",
         mock_mode: bool = True,
         max_tokens: int = 1024,
         temperature: float = 0.0,
@@ -186,7 +186,7 @@ def create_proxy_backbone(
     mock_mode: bool = True,
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
-    api_style: str = "auto",
+    api_style: str = "chat",
     model_map: Optional[Mapping[str, str]] = None,
     api_key_env: str = "LLM_API_KEY",
     max_tokens: int = 1024,

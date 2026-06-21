@@ -127,13 +127,19 @@ agent.invoke(prompt, servers)
 - `experiments/run_live_table1_proxy.py`：单模型 live Table 1 入口，内部把 agent backbone 替换为中转站版本。
 - `experiments/run_live_multimodel_proxy.py`：依次跑四个论文 agent base model。
 
-中转站给出的三个地址含义如下：
+中转站当前这批 agent base model 支持的是 Chat Completions 格式，因此默认使用完整 endpoint：
+
+```text
+https://llm-api.net/v1/chat/completions
+```
+
+三个地址在当前适配器中的含义如下：
 
 |地址|推荐用法|说明|
 |---|---|---|
-|`https://llm-api.net/v1`|推荐默认值|适配器会按 Chat Completions 补成 `/v1/chat/completions`|
-|`https://llm-api.net/v1/chat/completions`|推荐用于当前项目|当前 agent prompt 是 `messages` 结构，和 Chat Completions 最匹配|
-|`https://llm-api.net/v1/responses`|仅在中转站确认支持 Responses API 时使用|适配器会改用 `input` 和 `max_output_tokens`，并解析 `output_text`|
+|`https://llm-api.net/v1/chat/completions`|当前默认值，推荐使用|当前 agent prompt 是 `messages` 结构，和 Chat Completions 最匹配|
+|`https://llm-api.net/v1`|可用|适配器会按 Chat Completions 补成 `/v1/chat/completions`|
+|`https://llm-api.net/v1/responses`|当前不推荐|只有显式传 `--agent_api_style responses` 时才会走 Responses API；当前中转站模型既然支持 Chat Completions，就不要使用该路径|
 
 默认模型映射：
 
@@ -156,8 +162,7 @@ $env:LLM_API_MODEL_MAP='{"GPT-4o":"relay-gpt-4o","Claude-3.5-Sonnet":"relay-clau
 ```powershell
 $env:LLM_API_KEY="你的中转站 key"
 python experiments\run_live_table1_proxy.py `
-  --agent_base_url https://llm-api.net/v1 `
-  --agent_api_style chat `
+  --agent_base_url https://llm-api.net/v1/chat/completions `
   --model GPT-4o `
   --runs 1 `
   --max_scenarios 5
@@ -169,20 +174,22 @@ python experiments\run_live_table1_proxy.py `
 $env:LLM_API_KEY="你的中转站 key"
 python experiments\run_live_multimodel_proxy.py `
   --agent_base_url https://llm-api.net/v1/chat/completions `
-  --agent_api_style chat `
   --runs 1 `
   --max_scenarios 5
 ```
 
-如果确认中转站支持 Responses API，可以改为：
+当前 `--agent_api_style` 默认就是 `chat`，所以一般不需要显式传入。适配器发出的请求体是 Chat Completions 格式：
 
-```powershell
-python experiments\run_live_table1_proxy.py `
-  --agent_base_url https://llm-api.net/v1/responses `
-  --agent_api_style responses `
-  --model GPT-4o `
-  --runs 1 `
-  --max_scenarios 5
+```json
+{
+  "model": "gpt-4o",
+  "messages": [
+    {"role": "system", "content": "..."},
+    {"role": "user", "content": "..."}
+  ],
+  "temperature": 0.0,
+  "max_tokens": 1024
+}
 ```
 
 注意：该适配器只负责 agent base model。RTV judge 默认仍是规则化 `ConstrainedJudgeModel`；如果要让 judge 也走中转站，需要另外配置 `--judge_mode llm`、`--judge_provider vllm` 和 judge endpoint。

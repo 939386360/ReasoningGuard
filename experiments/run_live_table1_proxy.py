@@ -21,8 +21,8 @@ def _parse_model_map(value: Optional[str]) -> Optional[Dict[str, str]]:
 
 def main():
     proxy_parser = argparse.ArgumentParser(add_help=False)
-    proxy_parser.add_argument("--agent_base_url", default=os.environ.get("LLM_API_BASE_URL", "https://llm-api.net/v1"))
-    proxy_parser.add_argument("--agent_api_style", choices=["auto", "chat", "responses"], default="auto")
+    proxy_parser.add_argument("--agent_base_url", default=os.environ.get("LLM_API_BASE_URL", "https://llm-api.net/v1/chat/completions"))
+    proxy_parser.add_argument("--agent_api_style", choices=["auto", "chat", "responses"], default="chat")
     proxy_parser.add_argument("--agent_api_key_env", default="LLM_API_KEY")
     proxy_parser.add_argument("--agent_model_map", default=None)
     proxy_parser.add_argument("--agent_timeout", type=int, default=60)

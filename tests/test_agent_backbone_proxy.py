@@ -102,6 +102,14 @@ class TestAgentBackboneProxy(unittest.TestCase):
             agent = create_proxy_backbone("Claude-3.5-Sonnet", mock_mode=True, base_url="https://llm-api.net/v1")
         self.assertEqual(agent.model, "claude-3-5-sonnet-20241022")
         self.assertEqual(agent.api_key, "test-key")
+        self.assertEqual(agent.api_style, "chat")
+        self.assertEqual(agent.endpoint_url, "https://llm-api.net/v1/chat/completions")
+
+    def test_create_proxy_backbone_defaults_to_chat_completions(self):
+        with patch.dict(os.environ, {"LLM_API_KEY": "test-key"}, clear=False):
+            agent = create_proxy_backbone("GPT-4o", mock_mode=True)
+        self.assertEqual(agent.api_style, "chat")
+        self.assertEqual(agent.endpoint_url, "https://llm-api.net/v1/chat/completions")
 
     def test_create_proxy_backbone_env_model_map_override(self):
         env = {"LLM_API_MODEL_MAP": '{"GPT-4o": "relay-gpt-4o"}', "LLM_API_KEY": "test-key"}
