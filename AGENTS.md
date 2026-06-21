@@ -19,7 +19,7 @@
 |技术文档|内容|什么时候查看|
 |---|---|---|
 |`docs/tech_notes/dataset_format.md`|数据集格式说明|处理数据读取、样本结构、标注格式时|
-|`docs/tech_notes/data_preprocessing.md`|数据预处理流程|修改 transforms、数据清洗、数据增强时|
+|`docs/tech_notes/model_calling_and_judge_deployment.md`|agent 基础模型、RTV judge 调用链路与本地部署兼容性分析|排查真实模型调用、接入 vLLM/OpenAI-compatible endpoint、部署 judge 模型时|
 
 ## 3. 相关资料位置
 
