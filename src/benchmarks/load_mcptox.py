@@ -35,7 +35,7 @@ def load_mcptox(
 ) -> List[Dict[str, Any]]:
     official_path = os.path.join(data_dir, "mcptox_official.json")
     if use_official and os.path.exists(official_path):
-        with open(official_path) as f:
+        with open(official_path, encoding="utf-8") as f:
             data = json.load(f)
         print(f"Loaded official MCPTox: {len(data['scenarios'])} scenarios from {official_path}")
         return data["scenarios"]
