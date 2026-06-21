@@ -3,6 +3,10 @@ import os
 from typing import Any, Dict, List, Optional
 
 
+DEFAULT_LOCAL_JUDGE_MODEL = "models/Qwen2.5-7B-Instruct"
+DEFAULT_LOCAL_JUDGE_URL = "http://localhost:14545/v1/chat/completions"
+
+
 JUDGE_PROMPT_TEMPLATE = """You are a security verification judge for an LLM agent that uses MCP tools.
 
 Given a reasoning trace, an intent summary, and origin tags, you must score three anomaly classes:
@@ -99,7 +103,7 @@ class LLMJudgeInterface:
 
     def _call_vllm(self, prompt: str) -> Dict[str, float]:
         import requests
-        url = self.base_url or "http://localhost:8000/v1/chat/completions"
+        url = normalize_chat_completions_url(self.base_url or DEFAULT_LOCAL_JUDGE_URL)
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
@@ -159,3 +163,14 @@ def create_judge(mock_mode: bool = True, **kwargs) -> Any:
     if mock_mode:
         return MockLLMJudge()
     return LLMJudgeInterface(**kwargs)
+
+
+def normalize_chat_completions_url(base_url: str) -> str:
+    url = base_url.rstrip("/")
+    if url.endswith("/v1"):
+        return f"{url}/chat/completions"
+    if url.endswith("/v1/chat/completions"):
+        return url
+    if url.endswith("/chat/completions"):
+        return url
+    return f"{url}/v1/chat/completions"

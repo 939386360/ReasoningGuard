@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.agent_backbone import create_backbone
 from src.attacks.attack_generator import ATTACK_LAYER, AttackCategory, build_mcp_servers
 from src.benchmarks.load_mcptox import load_mcptox
-from src.judge import LLMJudgeInterface
+from src.judge import DEFAULT_LOCAL_JUDGE_MODEL, DEFAULT_LOCAL_JUDGE_URL, LLMJudgeInterface
 from src.mcp_client import MCPMessage, MCPMessageType, ReasoningStep, ReasoningTrace, Origin
 from src.ptg import ProtocolAttestedToolGateway
 from src.reasoning_guard import (
@@ -31,11 +31,15 @@ DANGEROUS_TERMS = [
 ]
 
 
+def default_judge_base_url() -> str:
+    return os.environ.get("JUDGE_BASE_URL") or os.environ.get("VLLM_URL") or DEFAULT_LOCAL_JUDGE_URL
+
+
 class ExternalJudgeAdapter:
     def __init__(
         self,
         provider: str = "vllm",
-        model: str = "models/judge_qwen2.5-7b/final",
+        model: str = DEFAULT_LOCAL_JUDGE_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         thresholds: Optional[Dict[str, float]] = None,
@@ -64,14 +68,14 @@ class ExternalJudgeAdapter:
 def make_judge(
     judge_mode: str = "heuristic",
     judge_provider: str = "vllm",
-    judge_model: str = "models/judge_qwen2.5-7b/final",
+    judge_model: str = DEFAULT_LOCAL_JUDGE_MODEL,
     judge_base_url: Optional[str] = None,
 ) -> Any:
     if judge_mode == "llm":
         return ExternalJudgeAdapter(
             provider=judge_provider,
             model=judge_model,
-            base_url=judge_base_url or os.environ.get("JUDGE_BASE_URL") or os.environ.get("VLLM_URL"),
+            base_url=judge_base_url or default_judge_base_url(),
         )
     return ConstrainedJudgeModel()
 
@@ -167,7 +171,7 @@ def run_live_table1_once(
     agent_mock: bool = False,
     judge_mode: str = "heuristic",
     judge_provider: str = "vllm",
-    judge_model: str = "models/judge_qwen2.5-7b/final",
+    judge_model: str = DEFAULT_LOCAL_JUDGE_MODEL,
     judge_base_url: Optional[str] = None,
     llamaguard_mock: bool = False,
     benign_ratio: float = 0.30,
@@ -434,8 +438,8 @@ def main():
     parser.add_argument("--agent_mock", action="store_true", help="Use mock agent for smoke tests.")
     parser.add_argument("--judge_mode", choices=["heuristic", "llm"], default="heuristic")
     parser.add_argument("--judge_provider", default="vllm")
-    parser.add_argument("--judge_model", default="models/judge_qwen2.5-7b/final")
-    parser.add_argument("--judge_base_url", default=None)
+    parser.add_argument("--judge_model", default=DEFAULT_LOCAL_JUDGE_MODEL)
+    parser.add_argument("--judge_base_url", default=default_judge_base_url())
     parser.add_argument("--llamaguard_mock", action="store_true")
     parser.add_argument("--output", default="results/live_table1_results.json")
     parser.add_argument("--tex_output", default="results/latex_tables/tab_main_live.tex")

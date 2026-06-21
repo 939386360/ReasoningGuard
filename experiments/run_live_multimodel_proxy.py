@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agent_backbone_proxy import create_proxy_backbone
 from src.evaluation import live_table1
+from src.judge import DEFAULT_LOCAL_JUDGE_MODEL
 
 
 DEFAULT_MODELS = "GPT-4o,Claude-3.5-Sonnet,Gemini-1.5-Pro,Llama-3.1-70B"
@@ -42,8 +43,8 @@ def main():
     parser.add_argument("--agent_timeout", type=int, default=60)
     parser.add_argument("--judge_mode", choices=["heuristic", "llm"], default="heuristic")
     parser.add_argument("--judge_provider", default="vllm")
-    parser.add_argument("--judge_model", default="models/judge_qwen2.5-7b/final")
-    parser.add_argument("--judge_base_url", default=None)
+    parser.add_argument("--judge_model", default=DEFAULT_LOCAL_JUDGE_MODEL)
+    parser.add_argument("--judge_base_url", default=live_table1.default_judge_base_url())
     parser.add_argument("--llamaguard_mock", action="store_true")
     parser.add_argument("--output", default="results/live_multimodel_proxy_results.json")
     args = parser.parse_args()

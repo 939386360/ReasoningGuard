@@ -2,6 +2,10 @@
 
 ## 2026-06-21
 
+- 新增本地 Qwen judge 服务接入：`LLMJudgeInterface` 的 vLLM/OpenAI-compatible 请求支持 `.../v1` 自动补全到 `/v1/chat/completions`，并发送 `do_sample=false` 以适配 deterministic judge 推理。
+- 将 live LLM judge 默认模型改为 `models/Qwen2.5-7B-Instruct`，默认 endpoint 改为 `http://localhost:14545/v1/chat/completions`，用于复用 `/home/liuenguang24/deployed_models` 的本地服务。
+- 更新 `/home/liuenguang24/deployed_models` 部署服务：新增 Qwen2.5-7B-Instruct 文本 handler，默认只加载 `/home/liuenguang24/models/Qwen2.5-7B-Instruct`，并注册相对别名和绝对路径两个 model 名。
+- 更新 `docs/tech_notes/model_calling_and_judge_deployment.md`，记录 vLLM 安装不可用时使用本地 Qwen handler 部署 RTV LLM judge 的方式。
 - 新增 `experiments/run_quick_benchmark_by_category.py`，支持按 benchmark/category 每类抽少量样本快速评估，并在脚本末尾提供 PowerShell 使用示例。
 - 新增 `tests/test_quick_benchmark_by_category.py`，覆盖每类抽样、MCPTox+ flatten 和 mock quick evaluation 输出。
 - 调整中转站 agent base model 适配默认值：默认 endpoint 改为 `https://llm-api.net/v1/chat/completions`，默认 API style 改为 Chat Completions，以匹配当前中转站模型支持的请求格式。

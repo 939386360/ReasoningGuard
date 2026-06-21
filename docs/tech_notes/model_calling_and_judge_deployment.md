@@ -2,7 +2,7 @@
 
 更新日期：2026-06-21
 
-本文档整理当前项目如何调用 agent 基础模型、RTV judge 模型如何接入，以及 `/home/liuenguang24/deployed_models` 这种本地部署方式是否能满足 judge 调用。结论基于当前仓库代码和对部署目录的只读检查。
+本文档整理当前项目如何调用 agent 基础模型、RTV judge 模型如何接入，以及 `/home/liuenguang24/deployed_models` 这种本地部署方式如何承载 judge 调用。结论基于当前仓库代码和部署目录实现。
 
 ## 1. 总体结论
 
@@ -23,10 +23,9 @@
 
 对 `/home/liuenguang24/deployed_models` 的判断：
 
-- 该目录下的服务提供了 `/v1/chat/completions`，响应结构接近 OpenAI chat completions，理论上可作为 `LLMJudgeInterface(provider="vllm")` 的 HTTP endpoint。
-- 但当前服务只注册了 `models/LLaVA-OneVision-1.5-8B-Instruct`，没有注册 `models/judge_qwen2.5-7b/final` 或 `Qwen/Qwen2.5-7B-Instruct`。
-- 当前仓库和部署目录未发现 judge 微调产物、LoRA adapter 或常见 Hugging Face 权重配置文件。
-- 因此，现有部署目录“接口形态可复用”，但“当前内容不能直接满足 judge 模型调用”。要满足 judge，需要额外加载文本 judge 模型，或改用标准 vLLM/OpenAI-compatible 服务部署 Qwen judge。
+- 该目录下的服务提供 `/v1/chat/completions`，响应结构接近 OpenAI chat completions，可作为 `LLMJudgeInterface(provider="vllm")` 的 HTTP endpoint。
+- 已新增 `Qwen25InstructHandler`，默认加载 `/home/liuenguang24/models/Qwen2.5-7B-Instruct`，并注册 `models/Qwen2.5-7B-Instruct` 与绝对路径两个模型名。
+- 当前接入的是 base `Qwen2.5-7B-Instruct`，不是论文中的 fine-tuned RTV judge。它能跑通 LLM judge 链路，但判别质量不等同于微调 verifier。
 
 ## 2. Agent 基础模型如何调用
 
@@ -336,6 +335,7 @@ LLMJudgeInterface(provider="vllm", model=output_dir)
   base_model_handler.py
   vlm_serve.py
   models/
+    qwen25_instruct_handler.py
     llava_onevision_8b_handler.py
     llava_7b_model_handler.py
   submit.sh
@@ -364,57 +364,44 @@ POST /v1/chat/completions
 content = data["choices"][0]["message"]["content"]
 ```
 
-### 4.2 当前只加载了 LLaVA-OneVision
+### 4.2 当前默认加载 Qwen2.5-7B-Instruct
 
 `vlm_serve.py` 当前启动时只注册：
 
 ```python
-llava_onevision_id = "models/LLaVA-OneVision-1.5-8B-Instruct"
-model_handlers[llava_onevision_id] = OneVisionHandler(model_id=llava_onevision_id)
+QWEN_MODEL_PATH = "/home/liuenguang24/models/Qwen2.5-7B-Instruct"
+QWEN_MODEL_ALIASES = [
+    "models/Qwen2.5-7B-Instruct",
+    QWEN_MODEL_PATH,
+]
 ```
 
-所以如果 judge 请求使用默认模型名：
+因此 judge 请求可使用：
 
 ```text
-models/judge_qwen2.5-7b/final
+models/Qwen2.5-7B-Instruct
+/home/liuenguang24/models/Qwen2.5-7B-Instruct
 ```
 
-该服务会返回模型不存在。除非把 `--judge_model` 改成 `models/LLaVA-OneVision-1.5-8B-Instruct`，但这不等于满足 judge 要求，因为它不是为 RTV CAI/OAV/IAD JSON 打分训练或配置的文本 judge。
+项目侧默认 judge model 已改为 `models/Qwen2.5-7B-Instruct`，默认 endpoint 为 `http://localhost:14545/v1/chat/completions`。
 
-### 4.3 当前 handler 对 judge 的兼容问题
+### 4.3 当前 handler 对 judge 的兼容状态
 
-即使复用这个 FastAPI 框架，也有几个问题需要处理：
+新增的 `Qwen25InstructHandler` 已处理以下兼容点：
 
-1. **没有 Qwen judge handler**
+1. **纯文本 Qwen handler**
 
-   当前只有 LLaVA/LLaVA-OneVision handler。judge 是纯文本分类/打分任务，应使用 `AutoTokenizer` + `AutoModelForCausalLM` 或 vLLM 加载 Qwen/Qwen2.5 judge。
+   使用 `AutoTokenizer` + `AutoModelForCausalLM` 加载 `/home/liuenguang24/models/Qwen2.5-7B-Instruct`。
 
-2. **没有加载 judge 权重**
+2. **完整 messages 处理**
 
-   部署目录中没有发现 `config.json`、`adapter_config.json`、`tokenizer_config.json`、`*.safetensors` 等常见模型文件。
+   使用 tokenizer chat template 处理完整 `request.messages`，不再只取最后一条 user message。
 
-3. **messages 处理过窄**
+3. **deterministic generation**
 
-   `OneVisionHandler.process_request()` 只取最后一条 user message：
+   当 `temperature=0.0` 或 `do_sample=false` 时强制 greedy decoding，避免 transformers 在采样模式下接收非法 `temperature=0.0`。
 
-   ```python
-   user_message = request.messages[-1]
-   ```
-
-   对 `LLMJudgeInterface` 当前的单 user prompt 尚可，但对 agent 的 system+user 多消息会丢 system prompt。若未来复用给 agent，应完整应用 chat template。
-
-4. **默认采样不适合 judge**
-
-   `ChatCompletionRequest` 默认：
-
-   ```python
-   do_sample: True
-   temperature: 0.5
-   ```
-
-   judge 需要稳定 JSON 输出，应使用 `temperature=0.0`，并在 handler 中把 `temperature=0.0` 映射为 deterministic generation，避免 sampling 参数冲突。
-
-5. **缺少 JSON 约束**
+4. **仍缺少 JSON 约束**
 
    `LLMJudgeInterface._parse_response()` 可以从文本中截取 JSON，但如果模型输出不稳定，异常时会回退到：
 
@@ -430,82 +417,61 @@ models/judge_qwen2.5-7b/final
 |---|---|---|
 |是否有 `/v1/chat/completions` endpoint|有|接口形态可复用|
 |响应是否有 `choices[0].message.content`|有|可被 `LLMJudgeInterface` 解析|
-|是否加载 judge 模型名 `models/judge_qwen2.5-7b/final`|否|不满足|
-|是否有 Qwen/Qwen2.5 文本模型 handler|否|不满足|
-|是否有 judge 微调权重/LoRA adapter|未发现|不满足|
-|是否默认 deterministic JSON 输出|否|不满足正式 judge 要求|
+|是否加载 judge 模型名 `models/Qwen2.5-7B-Instruct`|是|满足本地 base judge 调用|
+|是否有 Qwen/Qwen2.5 文本模型 handler|是|满足|
+|是否有 judge 微调权重/LoRA adapter|未使用|不满足论文级 fine-tuned judge|
+|是否默认 deterministic JSON 输出|是|满足基础稳定性要求|
 
-最终结论：当前 `/home/liuenguang24/deployed_models` 方式可以作为部署框架参考，但不能直接满足 judge 模型调用。最小可行改造是新增一个 Qwen text handler，注册 judge 模型，并确保 endpoint、模型名、JSON 输出和 deterministic 推理都与 `LLMJudgeInterface` 对齐。
+最终结论：当前 `/home/liuenguang24/deployed_models` 已可作为本地 Qwen base judge 服务使用。若要论文级复现，还需要部署 fine-tuned RTV judge 权重或 LoRA 合并产物，并增强 JSON 输出约束。
 
 ## 5. 推荐接入方式
 
-### 5.1 首选：标准 vLLM OpenAI-compatible 服务
+### 5.1 当前采用：复用 `/home/liuenguang24/deployed_models`
 
-如果目标是尽快让 `--judge_mode llm` 跑通，建议使用标准 vLLM 服务，而不是复用 VLM handler：
+当前 vLLM 安装不成功，因此使用现有 FastAPI 服务部署 Qwen judge。启动方式：
 
 ```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model models/judge_qwen2.5-7b/final \
-  --served-model-name models/judge_qwen2.5-7b/final \
-  --host 0.0.0.0 \
-  --port 8000
+cd /home/liuenguang24/deployed_models
+sbatch submit.sh
 ```
 
-然后运行：
+最小 curl 验证：
+
+```bash
+curl http://localhost:14545/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "models/Qwen2.5-7B-Instruct",
+    "messages": [{"role": "user", "content": "Respond only JSON: {\"CAI\":0.0,\"OAV\":0.0,\"IAD\":0.0}"}],
+    "max_tokens": 100,
+    "temperature": 0.0,
+    "do_sample": false
+  }'
+```
+
+live 评测接入：
 
 ```bash
 python experiments/run_live_table1.py \
-  --model GPT-4o \
   --judge_mode llm \
   --judge_provider vllm \
-  --judge_model models/judge_qwen2.5-7b/final \
-  --judge_base_url http://localhost:8000/v1/chat/completions
+  --judge_model models/Qwen2.5-7B-Instruct \
+  --judge_base_url http://localhost:14545/v1/chat/completions
 ```
 
-注意：当前代码的 `judge_base_url` 要传完整 `/v1/chat/completions`。
+当前代码也支持把 `--judge_base_url` 写成 `http://localhost:14545/v1`，会自动补成 `/v1/chat/completions`。
 
-### 5.2 复用 `/home/liuenguang24/deployed_models` 的最小改造
+### 5.2 可选：标准 vLLM OpenAI-compatible 服务
 
-如果必须复用现有部署框架，建议做以下改造：
+如果后续 vLLM 可用，仍可改用标准 vLLM 服务部署同一模型或 fine-tuned judge：
 
-1. 新增 `QwenJudgeHandler(BaseModelHandler)`：
-   - `AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)`
-   - `AutoModelForCausalLM.from_pretrained(model_id, torch_dtype="auto", device_map="auto", trust_remote_code=True)`
-   - 使用 tokenizer chat template 处理完整 `request.messages`
-   - `generate(max_new_tokens=request.max_tokens, do_sample=False)` 或在 `temperature=0.0` 时禁用采样
-
-2. 在 `vlm_serve.py` 注册：
-
-   ```python
-   judge_id = "models/judge_qwen2.5-7b/final"
-   model_handlers[judge_id] = QwenJudgeHandler(model_id=judge_id)
-   ```
-
-3. 确认该路径下确实存在完整模型或可加载的 LoRA 合并产物。
-
-4. 用一个最小 curl 验证：
-
-   ```bash
-   curl http://localhost:14545/v1/chat/completions \
-     -H 'Content-Type: application/json' \
-     -d '{
-       "model": "models/judge_qwen2.5-7b/final",
-       "messages": [{"role": "user", "content": "Respond only JSON: {\"CAI\":0.0,\"OAV\":0.0,\"IAD\":0.0}"}],
-       "max_tokens": 100,
-       "temperature": 0.0,
-       "do_sample": false
-     }'
-   ```
-
-5. 再用项目 live 评测接入：
-
-   ```bash
-   python experiments/run_live_table1.py \
-     --judge_mode llm \
-     --judge_provider vllm \
-     --judge_model models/judge_qwen2.5-7b/final \
-     --judge_base_url http://localhost:14545/v1/chat/completions
-   ```
+```bash
+python -m vllm.entrypoints.openai.api_server \
+  --model /home/liuenguang24/models/Qwen2.5-7B-Instruct \
+  --served-model-name models/Qwen2.5-7B-Instruct \
+  --host 0.0.0.0 \
+  --port 8000
+```
 
 ## 6. 后续代码改进建议
 
@@ -513,7 +479,7 @@ python experiments/run_live_table1.py \
 
 1. 统一 `base_url` 语义。
 
-   当前 OpenAI SDK 的 `base_url` 通常是 `.../v1`，但 raw `requests.post()` 路径期望完整 `.../v1/chat/completions`。建议新增 helper，把 `.../v1` 自动补成 `.../v1/chat/completions`。
+   当前 `LLMJudgeInterface` 已能把 `.../v1` 自动补成 `.../v1/chat/completions`。`AgentBackbone(provider="vllm")` 仍有类似语义差异，后续也应统一。
 
 2. 让 `create_backbone()` 和 judge 配置读取 `config.yaml`。
 
