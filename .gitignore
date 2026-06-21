@@ -1,10 +1,12 @@
 # AI agent working docs
-AGENTS.md
-CLAUDE.md
-docs/PROJECT.md
-docs/CHANGELOG.md
-docs/tech_notes/
-docs/references/
+# AGENTS.md
+# CLAUDE.md
+# docs/PROJECT.md
+# docs/CHANGELOG.md
+# docs/tech_notes/
+# docs/references/
+
+docs/**/*.pdf
 
 # Local AI agent state/config
 .agents/
