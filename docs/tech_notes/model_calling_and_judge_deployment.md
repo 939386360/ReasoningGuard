@@ -24,7 +24,7 @@
 对 `/home/liuenguang24/deployed_models` 的判断：
 
 - 该目录下的服务提供 `/v1/chat/completions`，响应结构接近 OpenAI chat completions，可作为 `LLMJudgeInterface(provider="vllm")` 的 HTTP endpoint。
-- 已新增 `Qwen25InstructHandler`，默认加载 `/home/liuenguang24/models/Qwen2.5-7B-Instruct`，并注册 `models/Qwen2.5-7B-Instruct` 与绝对路径两个模型名。
+- 已新增/接入 `Qwen2.5-7B-Instruct` 文本服务，当前已验证的 served model 名为 `qwen2.5-7B-Instruct`，endpoint 为 `http://aias-compute-4:14545/v1/chat/completions`。
 - 当前接入的是 base `Qwen2.5-7B-Instruct`，不是论文中的 fine-tuned RTV judge。它能跑通 LLM judge 链路，但判别质量不等同于微调 verifier。
 
 ## 2. Agent 基础模型如何调用
@@ -366,24 +366,19 @@ content = data["choices"][0]["message"]["content"]
 
 ### 4.2 当前默认加载 Qwen2.5-7B-Instruct
 
-`vlm_serve.py` 当前启动时只注册：
-
-```python
-QWEN_MODEL_PATH = "/home/liuenguang24/models/Qwen2.5-7B-Instruct"
-QWEN_MODEL_ALIASES = [
-    "models/Qwen2.5-7B-Instruct",
-    QWEN_MODEL_PATH,
-]
-```
-
-因此 judge 请求可使用：
+当前服务部署的模型路径为：
 
 ```text
-models/Qwen2.5-7B-Instruct
 /home/liuenguang24/models/Qwen2.5-7B-Instruct
 ```
 
-项目侧默认 judge model 已改为 `models/Qwen2.5-7B-Instruct`，默认 endpoint 为 `http://localhost:14545/v1/chat/completions`。
+当前已验证的对外模型名为：
+
+```text
+qwen2.5-7B-Instruct
+```
+
+项目侧默认 judge model 已改为 `qwen2.5-7B-Instruct`，默认 endpoint 为 `http://aias-compute-4:14545/v1/chat/completions`。
 
 ### 4.3 当前 handler 对 judge 的兼容状态
 
@@ -417,7 +412,7 @@ models/Qwen2.5-7B-Instruct
 |---|---|---|
 |是否有 `/v1/chat/completions` endpoint|有|接口形态可复用|
 |响应是否有 `choices[0].message.content`|有|可被 `LLMJudgeInterface` 解析|
-|是否加载 judge 模型名 `models/Qwen2.5-7B-Instruct`|是|满足本地 base judge 调用|
+|是否加载 judge 模型名 `qwen2.5-7B-Instruct`|是|满足本地 base judge 调用|
 |是否有 Qwen/Qwen2.5 文本模型 handler|是|满足|
 |是否有 judge 微调权重/LoRA adapter|未使用|不满足论文级 fine-tuned judge|
 |是否默认 deterministic JSON 输出|是|满足基础稳定性要求|
@@ -438,10 +433,10 @@ sbatch submit.sh
 最小 curl 验证：
 
 ```bash
-curl http://localhost:14545/v1/chat/completions \
+curl http://aias-compute-4:14545/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
-    "model": "models/Qwen2.5-7B-Instruct",
+    "model": "qwen2.5-7B-Instruct",
     "messages": [{"role": "user", "content": "Respond only JSON: {\"CAI\":0.0,\"OAV\":0.0,\"IAD\":0.0}"}],
     "max_tokens": 100,
     "temperature": 0.0,
@@ -455,11 +450,11 @@ live 评测接入：
 python experiments/run_live_table1.py \
   --judge_mode llm \
   --judge_provider vllm \
-  --judge_model models/Qwen2.5-7B-Instruct \
-  --judge_base_url http://localhost:14545/v1/chat/completions
+  --judge_model qwen2.5-7B-Instruct \
+  --judge_base_url http://aias-compute-4:14545/v1/chat/completions
 ```
 
-当前代码也支持把 `--judge_base_url` 写成 `http://localhost:14545/v1`，会自动补成 `/v1/chat/completions`。
+当前代码也支持把 `--judge_base_url` 写成 `http://aias-compute-4:14545/v1`，会自动补成 `/v1/chat/completions`。
 
 ### 5.2 可选：标准 vLLM OpenAI-compatible 服务
 

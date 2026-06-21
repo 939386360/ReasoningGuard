@@ -11,3 +11,9 @@ docs/**/*.pdf
 # Local AI agent state/config
 .agents/
 .codex/
+
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class

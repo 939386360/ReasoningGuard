@@ -9,22 +9,11 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agent_backbone import create_backbone
-from src.agent_backbone_proxy import create_proxy_backbone
+from src.agent_backbone_proxy import DEFAULT_PROXY_BASE_URL, create_proxy_backbone
 from src.benchmarks.load_agentpi import load_agentpi
 from src.benchmarks.load_mcptox import load_mcptox
-from src.evaluation.live_table1 import (
-    _agent_output_to_inputs,
-    _detail_record,
-    _evaluate_all_defenses,
-    build_attack_query,
-    build_benign_query,
-    compute_live_metrics,
-    is_harmful_output,
-    make_defenses,
-    make_judge,
-    normalize_scenario,
-)
-from src.attacks.attack_generator import build_mcp_servers
+from src.evaluation import live_table1
+from src.judge import DEFAULT_LOCAL_JUDGE_MODEL
 
 
 DEFAULT_OUTPUT_DIR = "results/quick_eval"
@@ -34,7 +23,7 @@ DEFAULT_MODELS = ["GPT-4o", "Claude-3.5-Sonnet", "Gemini-1.5-Pro", "Llama-3.1-70
 def load_benchmark_scenarios(
     benchmark: str,
     seed: int = 42,
-    synthetic: bool = False,
+    official: bool = False,
     mcptox_data_dir: str = "data/mcptox",
     agentpi_data_dir: str = "data/agentpi",
     mcptox_plus_data_dir: str = "data/mcptox_plus",
@@ -46,7 +35,7 @@ def load_benchmark_scenarios(
             scenarios.extend(load_benchmark_scenarios(
                 name,
                 seed=seed,
-                synthetic=synthetic,
+                official=official,
                 mcptox_data_dir=mcptox_data_dir,
                 agentpi_data_dir=agentpi_data_dir,
                 mcptox_plus_data_dir=mcptox_plus_data_dir,
@@ -55,12 +44,12 @@ def load_benchmark_scenarios(
 
     if selected == "mcptox":
         return _tag_benchmark(
-            load_mcptox(data_dir=mcptox_data_dir, use_official=not synthetic, seed=seed),
+            load_mcptox(data_dir=mcptox_data_dir, use_official=official, seed=seed),
             "MCPTox",
         )
     if selected == "agentpi":
         return _tag_benchmark(
-            load_agentpi(data_dir=agentpi_data_dir, use_official=not synthetic, seed=seed),
+            load_agentpi(data_dir=agentpi_data_dir, use_official=official, seed=seed),
             "AgentPI",
         )
     if selected == "mcptox_plus":
@@ -125,9 +114,19 @@ def select_per_category(
     return selected, summary
 
 
+def summarize_selected(scenarios: Iterable[Mapping[str, Any]]) -> Dict[str, int]:
+    summary: Dict[str, int] = defaultdict(int)
+    for raw in scenarios:
+        category = str(raw.get("category") or raw.get("attack_vector") or "unknown")
+        benchmark = str(raw.get("benchmark") or raw.get("source") or "unknown")
+        summary[f"{benchmark}::{category}"] += 1
+    return dict(sorted(summary.items()))
+
+
 def run_quick_evaluation(
     scenarios: List[Mapping[str, Any]],
     model_name: str = "GPT-4o",
+    runs: int = 1,
     seed: int = 42,
     agent_backend: str = "proxy",
     agent_mock: bool = False,
@@ -138,21 +137,18 @@ def run_quick_evaluation(
     agent_timeout: int = 60,
     judge_mode: str = "heuristic",
     judge_provider: str = "vllm",
-    judge_model: str = "models/judge_qwen2.5-7b/final",
+    judge_model: str = DEFAULT_LOCAL_JUDGE_MODEL,
     judge_base_url: Optional[str] = None,
-    llamaguard_mock: bool = True,
-    benign_ratio: float = 0.0,
+    llamaguard_mock: bool = False,
+    llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
+    llamaguard_device: str = "auto",
+    llamaguard_fail_fast: bool = False,
+    benign_ratio: float = 0.30,
     output_results: Optional[str] = None,
     output_records: Optional[str] = None,
 ) -> Dict[str, Dict[str, float]]:
-    rng = random.Random(seed)
-    servers = build_mcp_servers()
-    judge = make_judge(judge_mode, judge_provider, judge_model, judge_base_url)
-    defenses = make_defenses(judge=judge, llamaguard_mock=llamaguard_mock)
-    agent = _make_agent(
-        model_name=model_name,
+    agent_factory = _make_agent_factory(
         backend=agent_backend,
-        mock_mode=agent_mock,
         base_url=agent_base_url,
         api_style=agent_api_style,
         api_key_env=agent_api_key_env,
@@ -160,62 +156,63 @@ def run_quick_evaluation(
         timeout=agent_timeout,
     )
 
-    records: Dict[str, List[Dict[str, Any]]] = {name: [] for name in defenses}
-    detailed_records: List[Dict[str, Any]] = []
-
-    for idx, raw in enumerate(scenarios):
-        scenario = normalize_scenario(dict(raw))
-        scenario["benchmark"] = raw.get("benchmark") or raw.get("source") or "unknown"
-
-        attack_agent = agent.invoke(build_attack_query(scenario), servers)
-        attack_msg, attack_trace, attack_intent = _agent_output_to_inputs(attack_agent, scenario, is_attack=True)
-        attack_harmful = is_harmful_output(attack_msg, attack_trace, attack_intent, scenario)
-        _evaluate_all_defenses(defenses, records, attack_msg, attack_trace, attack_intent, True, attack_harmful, scenario)
-        _tag_latest_rows(records, scenario)
-        detailed_records.append(_quick_detail_record(idx, scenario, True, attack_agent, attack_msg, attack_harmful))
-
-        if rng.random() < benign_ratio:
-            benign_agent = agent.invoke(build_benign_query(scenario), servers)
-            benign_msg, benign_trace, benign_intent = _agent_output_to_inputs(benign_agent, scenario, is_attack=False)
-            _evaluate_all_defenses(defenses, records, benign_msg, benign_trace, benign_intent, False, False, scenario)
-            _tag_latest_rows(records, scenario)
-            detailed_records.append(_quick_detail_record(idx, scenario, False, benign_agent, benign_msg, False))
-
-    results = {name: compute_live_metrics(rows) for name, rows in records.items()}
+    results = live_table1.run_live_table1_scenarios_multi(
+        scenarios=[dict(s) for s in scenarios],
+        runs=runs,
+        model_name=model_name,
+        seed=seed,
+        agent_mock=agent_mock,
+        judge_mode=judge_mode,
+        judge_provider=judge_provider,
+        judge_model=judge_model,
+        judge_base_url=judge_base_url,
+        llamaguard_mock=llamaguard_mock,
+        llamaguard_model=llamaguard_model,
+        llamaguard_device=llamaguard_device,
+        llamaguard_fail_fast=llamaguard_fail_fast,
+        benign_ratio=benign_ratio,
+        output_records=output_records,
+        agent_factory=agent_factory,
+    )
     if output_results:
         _write_json(output_results, results)
-    if output_records:
-        _write_json(output_records, detailed_records)
     return results
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run a small per-category benchmark sample for quick debugging.")
+    parser = argparse.ArgumentParser(description="Run a small per-category sample through the live Table 1 evaluation path.")
+    parser.add_argument("--model", default="GPT-4o")
+    parser.add_argument("--runs", type=int, default=1)
+    parser.add_argument("--max_scenarios", type=int, default=200)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--data_dir", default="data/mcptox")
+    parser.add_argument("--official", action="store_true", help="Use official/adapted benchmark files when available; default is synthetic.")
+    parser.add_argument("--agent_mock", action="store_true", help="Use mock agent for smoke tests.")
+    parser.add_argument("--judge_mode", choices=["heuristic", "llm"], default="heuristic")
+    parser.add_argument("--judge_provider", default="vllm")
+    parser.add_argument("--judge_model", default=DEFAULT_LOCAL_JUDGE_MODEL)
+    parser.add_argument("--judge_base_url", default=live_table1.default_judge_base_url())
+    parser.add_argument("--llamaguard_mock", action="store_true")
+    parser.add_argument("--llamaguard_model", default="meta-llama/LlamaGuard-3-8B")
+    parser.add_argument("--llamaguard_device", default="auto")
+    parser.add_argument("--llamaguard_fail_fast", action="store_true")
+    parser.add_argument("--benign_ratio", type=float, default=0.30)
+    parser.add_argument("--output", default=os.path.join(DEFAULT_OUTPUT_DIR, "quick_benchmark_results.json"))
+    parser.add_argument("--tex_output", default=os.path.join(DEFAULT_OUTPUT_DIR, "quick_benchmark_table.tex"))
+    parser.add_argument("--records_output", default=os.path.join(DEFAULT_OUTPUT_DIR, "quick_benchmark_records.json"))
     parser.add_argument("--benchmark", choices=["mcptox", "agentpi", "mcptox_plus", "all"], default="mcptox")
     parser.add_argument("--per_category", type=int, default=2)
     parser.add_argument("--categories", default="", help="Comma-separated category filter after loading the benchmark.")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--synthetic", action="store_true", help="Force synthetic fallback for MCPTox/AgentPI.")
-    parser.add_argument("--model", default="GPT-4o")
     parser.add_argument("--agent_backend", choices=["proxy", "default"], default="proxy")
-    parser.add_argument("--agent_mock", action="store_true")
-    parser.add_argument("--agent_base_url", default=os.environ.get("LLM_API_BASE_URL", "https://llm-api.net/v1/chat/completions"))
+    parser.add_argument("--agent_base_url", default=os.environ.get("LLM_API_BASE_URL", DEFAULT_PROXY_BASE_URL))
     parser.add_argument("--agent_api_style", choices=["auto", "chat", "responses"], default="chat")
     parser.add_argument("--agent_api_key_env", default="LLM_API_KEY")
     parser.add_argument("--agent_model_map", default=None)
     parser.add_argument("--agent_timeout", type=int, default=60)
-    parser.add_argument("--judge_mode", choices=["heuristic", "llm"], default="heuristic")
-    parser.add_argument("--judge_provider", default="vllm")
-    parser.add_argument("--judge_model", default="models/judge_qwen2.5-7b/final")
-    parser.add_argument("--judge_base_url", default=None)
-    parser.add_argument("--llamaguard_mock", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--benign_ratio", type=float, default=0.0)
-    parser.add_argument("--mcptox_data_dir", default="data/mcptox")
+    parser.add_argument("--mcptox_data_dir", default=None)
     parser.add_argument("--agentpi_data_dir", default="data/agentpi")
     parser.add_argument("--mcptox_plus_data_dir", default="data/mcptox_plus")
-    parser.add_argument("--output_dir", default=DEFAULT_OUTPUT_DIR)
-    parser.add_argument("--results_output", default=None)
-    parser.add_argument("--records_output", default=None)
+    parser.add_argument("--results_output", default=None, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     model_map = _parse_json_map(args.agent_model_map, "--agent_model_map")
@@ -223,17 +220,19 @@ def main():
     scenarios = load_benchmark_scenarios(
         args.benchmark,
         seed=args.seed,
-        synthetic=args.synthetic,
-        mcptox_data_dir=args.mcptox_data_dir,
+        official=args.official,
+        mcptox_data_dir=args.mcptox_data_dir or args.data_dir,
         agentpi_data_dir=args.agentpi_data_dir,
         mcptox_plus_data_dir=args.mcptox_plus_data_dir,
     )
     selected, summary = select_per_category(scenarios, args.per_category, seed=args.seed, categories=categories)
+    selected = selected[:args.max_scenarios]
+    summary = summarize_selected(selected)
     if not selected:
         raise SystemExit("No scenarios selected. Check --benchmark, --categories, and data paths.")
 
-    results_output = args.results_output or os.path.join(args.output_dir, "quick_benchmark_results.json")
-    records_output = args.records_output or os.path.join(args.output_dir, "quick_benchmark_records.json")
+    results_output = args.results_output or args.output
+    records_output = args.records_output
 
     print("Selected scenarios by benchmark/category:")
     for key, count in summary.items():
@@ -243,6 +242,7 @@ def main():
     results = run_quick_evaluation(
         selected,
         model_name=args.model,
+        runs=args.runs,
         seed=args.seed,
         agent_backend=args.agent_backend,
         agent_mock=args.agent_mock,
@@ -256,14 +256,19 @@ def main():
         judge_model=args.judge_model,
         judge_base_url=args.judge_base_url,
         llamaguard_mock=args.llamaguard_mock,
+        llamaguard_model=args.llamaguard_model,
+        llamaguard_device=args.llamaguard_device,
+        llamaguard_fail_fast=args.llamaguard_fail_fast,
         benign_ratio=args.benign_ratio,
         output_results=results_output,
         output_records=records_output,
     )
 
+    live_table1.write_table1_tex(results, args.tex_output, include_ci=args.runs > 1)
     print(json.dumps(results, indent=2, ensure_ascii=False))
     print(f"Saved quick results to {results_output}")
     print(f"Saved quick records to {records_output}")
+    print(f"Saved quick LaTeX table to {args.tex_output}")
 
 
 def _tag_benchmark(scenarios: Iterable[Mapping[str, Any]], benchmark: str) -> List[Dict[str, Any]]:
@@ -275,48 +280,28 @@ def _tag_benchmark(scenarios: Iterable[Mapping[str, Any]], benchmark: str) -> Li
     return tagged
 
 
-def _make_agent(
-    model_name: str,
+def _make_agent_factory(
     backend: str,
-    mock_mode: bool,
     base_url: Optional[str],
     api_style: str,
     api_key_env: str,
     model_map: Optional[Mapping[str, str]],
     timeout: int,
 ):
-    if backend == "proxy":
+    def factory(model_name: str, mock_mode: bool = True, api_key: Optional[str] = None):
+        if backend != "proxy":
+            return create_backbone(model_name, mock_mode=mock_mode, api_key=api_key)
         return create_proxy_backbone(
             model_name=model_name,
             mock_mode=mock_mode,
+            api_key=api_key,
             base_url=base_url,
             api_style=api_style,
             api_key_env=api_key_env,
             model_map=model_map,
             timeout=timeout,
         )
-    return create_backbone(model_name, mock_mode=mock_mode)
-
-
-def _tag_latest_rows(records: Dict[str, List[Dict[str, Any]]], scenario: Mapping[str, Any]):
-    for rows in records.values():
-        if rows:
-            rows[-1]["benchmark"] = scenario.get("benchmark", "unknown")
-            rows[-1]["sample_key"] = f"{scenario.get('benchmark', 'unknown')}::{scenario.get('category', 'unknown')}"
-
-
-def _quick_detail_record(
-    idx: int,
-    scenario: Mapping[str, Any],
-    is_attack: bool,
-    agent_output: Mapping[str, Any],
-    msg: Any,
-    harmful: bool,
-) -> Dict[str, Any]:
-    record = _detail_record(idx, dict(scenario), is_attack, dict(agent_output), msg, harmful)
-    record["benchmark"] = scenario.get("benchmark", "unknown")
-    record["sample_key"] = f"{scenario.get('benchmark', 'unknown')}::{scenario.get('category', 'unknown')}"
-    return record
+    return factory
 
 
 def _parse_csv(value: str) -> List[str]:
@@ -350,25 +335,73 @@ if __name__ == "__main__":
 # python experiments\run_quick_benchmark_by_category.py `
 #   --benchmark mcptox `
 #   --per_category 1 `
-#   --synthetic `
 #   --agent_mock
 #
-# 2. 使用中转站真实调用 GPT-4o，每个 MCPTox 类别抽 2 条。
+# 2. 使用中转站真实调用 GPT-4o，并用本地 Qwen judge，每个 MCPTox 类别抽 2 条。
 # $env:LLM_API_KEY="你的中转站 key"
 # $env:LLM_API_BASE_URL="https://llm-api.net/v1/chat/completions"
 # python experiments\run_quick_benchmark_by_category.py `
 #   --benchmark mcptox `
 #   --per_category 2 `
-#   --model GPT-4o
+#   --model GPT-4o `
+#   --judge_mode llm
 #
-# 3. 跑 MCPTox+，每个类别抽 3 条，仍使用默认 heuristic judge。
+# 3. 跑 MCPTox+，每个类别抽 3 条，仍走主表 evaluation 链路。
 # python experiments\run_quick_benchmark_by_category.py `
 #   --benchmark mcptox_plus `
 #   --per_category 3 `
-#   --model GPT-4o
+#   --model GPT-4o `
+#   --judge_mode llm
 #
 # 4. 三个 benchmark 都跑，每个 benchmark/category 只抽 1 条，适合快速看链路是否稳定。
 # python experiments\run_quick_benchmark_by_category.py `
 #   --benchmark all `
 #   --per_category 1 `
 #   --model GPT-4o
+#
+# 5. 使用中转站 GPT-4o agent + 自部署 Qwen judge 跑 MCPTox synthetic 主表链路（Linux/bash）。
+# judge 服务地址参数是 --judge_base_url。
+# 数据集默认使用 synthetic 200 条；只有显式加 --official 才会读取 adapted official。
+# export LLM_API_KEY="你的中转站 key"
+# python experiments/run_quick_benchmark_by_category.py \
+#   --benchmark mcptox \
+#   --per_category 50 \
+#   --categories "" \
+#   --max_scenarios 200 \
+#   --runs 3 \
+#   --seed 42 \
+#   --data_dir data/mcptox \
+#   --model GPT-4o \
+#   --agent_backend proxy \
+#   --agent_base_url https://llm-api.net/v1/chat/completions \
+#   --agent_api_style chat \
+#   --agent_api_key_env LLM_API_KEY \
+#   --agent_model_map '{"GPT-4o":"gpt-4o"}' \
+#   --agent_timeout 60 \
+#   --judge_mode llm \
+#   --judge_provider vllm \
+#   --judge_model qwen2.5-7B-Instruct \
+#   --judge_base_url http://aias-compute-4:14545/v1/chat/completions \
+#   --llamaguard_model /home/liuenguang24/models/LlamaGuard-3-8B \
+#   --llamaguard_device auto \
+#   --llamaguard_fail_fast \
+#   --benign_ratio 0.30 \
+#   --output results/quick_eval/table1_gpt4o_qwen_judge_results.json \
+#   --tex_output results/quick_eval/table1_gpt4o_qwen_judge.tex \
+#   --records_output results/quick_eval/table1_gpt4o_qwen_judge_records.json
+#
+# 常用可改参数：
+#   --model: 实验展示用 agent 名称，例如 GPT-4o、Claude-3.5-Sonnet、Gemini-1.5-Pro、Llama-3.1-70B。
+#   --agent_base_url: 中转站 Chat Completions endpoint。
+#   --agent_model_map: 把实验模型名映射到中转站实际 model id；如果中转站直接支持 gpt-4o，可保持上面的写法。
+#   --judge_base_url: 自部署 judge 的 Chat Completions endpoint。
+#   --judge_model: 自部署 judge 服务接受的 model 字段。
+#   --llamaguard_model: LlamaGuard 的 Hugging Face model id 或 transformers-compatible 本地目录。
+#   --llamaguard_device: 传给 transformers device_map 的值，例如 auto、cuda:0、cpu。
+#   --llamaguard_fail_fast: LlamaGuard 加载失败时直接报错，正式实验建议加。
+#   --official: 调试/对比 adapted official 时才加；主表 synthetic 口径不要加。
+#   --per_category / --max_scenarios / --runs / --seed: 控制抽样规模、总样本数、多次运行和随机种子。
+#   --benign_ratio: 每个 attack scenario 附带 benign case 的概率；主表默认 0.30。
+#   --output / --tex_output / --records_output: JSON 结果、LaTeX 表格和逐样本记录输出路径。
+#   --agent_mock: 只做 smoke test 时使用；正式实验不要加。
+#   --llamaguard_mock: 没有本地 LlamaGuard 时可加；正式比较 Guardrail baseline 时不要加。

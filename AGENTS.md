@@ -20,6 +20,7 @@
 |---|---|---|
 |`docs/tech_notes/dataset_format.md`|数据集格式说明|处理数据读取、样本结构、标注格式时|
 |`docs/tech_notes/model_calling_and_judge_deployment.md`|agent 基础模型、RTV judge 调用链路与本地部署兼容性分析|排查真实模型调用、接入 vLLM/OpenAI-compatible endpoint、部署 judge 模型时|
+|`docs/tech_notes/defense_implementation_and_experiment_readiness.md`|防御方法实现、mock 风险与真实实验就绪性梳理|梳理 No Defense、AttestMCP、Guardrail、PTG、RTV、ReasoningGuard 是否真实运行及正式实验前检查项时|
 
 ## 3. 相关资料位置
 

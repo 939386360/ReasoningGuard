@@ -34,7 +34,7 @@ def main():
     parser.add_argument("--max_scenarios", type=int, default=200)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--data_dir", default="data/mcptox")
-    parser.add_argument("--synthetic", action="store_true")
+    parser.add_argument("--official", action="store_true", help="Use data/mcptox/mcptox_official.json when available.")
     parser.add_argument("--agent_mock", action="store_true")
     parser.add_argument("--agent_base_url", default=os.environ.get("LLM_API_BASE_URL", "https://llm-api.net/v1/chat/completions"))
     parser.add_argument("--agent_api_style", choices=["auto", "chat", "responses"], default="chat")
@@ -46,6 +46,9 @@ def main():
     parser.add_argument("--judge_model", default=DEFAULT_LOCAL_JUDGE_MODEL)
     parser.add_argument("--judge_base_url", default=live_table1.default_judge_base_url())
     parser.add_argument("--llamaguard_mock", action="store_true")
+    parser.add_argument("--llamaguard_model", default="meta-llama/LlamaGuard-3-8B")
+    parser.add_argument("--llamaguard_device", default="auto")
+    parser.add_argument("--llamaguard_fail_fast", action="store_true")
     parser.add_argument("--output", default="results/live_multimodel_proxy_results.json")
     args = parser.parse_args()
 
@@ -75,7 +78,7 @@ def main():
             model_name=model_name,
             max_scenarios=args.max_scenarios,
             seed=args.seed + idx * max(args.runs, 1),
-            use_official=not args.synthetic,
+            use_official=args.official,
             data_dir=args.data_dir,
             agent_mock=args.agent_mock,
             judge_mode=args.judge_mode,
@@ -83,6 +86,9 @@ def main():
             judge_model=args.judge_model,
             judge_base_url=args.judge_base_url,
             llamaguard_mock=args.llamaguard_mock,
+            llamaguard_model=args.llamaguard_model,
+            llamaguard_device=args.llamaguard_device,
+            llamaguard_fail_fast=args.llamaguard_fail_fast,
         )
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)

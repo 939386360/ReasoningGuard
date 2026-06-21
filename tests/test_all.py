@@ -356,6 +356,19 @@ class TestLlamaGuard(unittest.TestCase):
         result = baseline.evaluate(msg)
         self.assertEqual(result["verdict"], Verdict.BLOCK)
 
+    def test_llamaguard_baseline_accepts_local_model_options(self):
+        from src.guardrails.llamaguard import LlamaGuardBaseline
+        baseline = LlamaGuardBaseline(
+            mock_mode=True,
+            model="/models/LlamaGuard",
+            device="cpu",
+            fail_fast=True,
+        )
+
+        self.assertEqual(baseline.guard.model_name, "/models/LlamaGuard")
+        self.assertEqual(baseline.guard.device, "cpu")
+        self.assertTrue(baseline.guard.fail_fast)
+
 
 class TestAgentBackbone(unittest.TestCase):
     def test_mock_agent_invoke(self):

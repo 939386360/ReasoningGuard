@@ -17,12 +17,12 @@ from src.judge import (
 class TestLocalQwenJudge(unittest.TestCase):
     def test_normalize_chat_completions_url(self):
         self.assertEqual(
-            normalize_chat_completions_url("http://localhost:14545/v1"),
-            "http://localhost:14545/v1/chat/completions",
+            normalize_chat_completions_url("http://aias-compute-4:14545/v1"),
+            "http://aias-compute-4:14545/v1/chat/completions",
         )
         self.assertEqual(
-            normalize_chat_completions_url("http://localhost:14545"),
-            "http://localhost:14545/v1/chat/completions",
+            normalize_chat_completions_url("http://aias-compute-4:14545"),
+            "http://aias-compute-4:14545/v1/chat/completions",
         )
         self.assertEqual(
             normalize_chat_completions_url(DEFAULT_LOCAL_JUDGE_URL),
@@ -40,7 +40,7 @@ class TestLocalQwenJudge(unittest.TestCase):
         judge = LLMJudgeInterface(
             provider="vllm",
             model=DEFAULT_LOCAL_JUDGE_MODEL,
-            base_url="http://localhost:14545/v1",
+            base_url="http://aias-compute-4:14545/v1",
         )
         scores = judge.score("trace", "intent", [])
 

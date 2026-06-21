@@ -83,13 +83,22 @@ def make_judge(
 def make_defenses(
     judge: Any,
     llamaguard_mock: bool = False,
+    llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
+    llamaguard_device: str = "auto",
+    llamaguard_fail_fast: bool = False,
 ) -> Dict[str, Any]:
     rtv_only = RTVOnlyBaseline()
     rtv_only.rtv = ReasoningTraceVerifier(judge=judge)
     defenses = {
         "No Defense": None,
         "AttestMCP": AttestMCPBaseline(),
-        "Guardrail": GuardrailBaseline(use_llamaguard=True, mock_mode=llamaguard_mock),
+        "Guardrail": GuardrailBaseline(
+            use_llamaguard=True,
+            mock_mode=llamaguard_mock,
+            llamaguard_model=llamaguard_model,
+            llamaguard_device=llamaguard_device,
+            llamaguard_fail_fast=llamaguard_fail_fast,
+        ),
         "PTG-Only": PTGOnlyBaseline(),
         "RTV-Only": rtv_only,
         "ReasoningGuard": ReasoningGuard(rtv=ReasoningTraceVerifier(judge=judge)),
@@ -142,6 +151,15 @@ def normalize_scenario(raw: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _normalize_with_metadata(raw: Dict[str, Any]) -> Dict[str, Any]:
+    scenario = normalize_scenario(raw)
+    benchmark = raw.get("benchmark") or raw.get("source")
+    if benchmark:
+        scenario["benchmark"] = benchmark
+        scenario["sample_key"] = f"{benchmark}::{scenario['category']}"
+    return scenario
+
+
 def build_attack_query(sc: Dict[str, Any]) -> str:
     return (
         "You are handling an MCP tool-use task. The user request is benign: complete the requested task using available MCP tools.\n"
@@ -166,7 +184,7 @@ def run_live_table1_once(
     model_name: str = "GPT-4o",
     max_scenarios: int = 200,
     seed: int = 42,
-    use_official: bool = True,
+    use_official: bool = False,
     data_dir: str = "data/mcptox",
     agent_mock: bool = False,
     judge_mode: str = "heuristic",
@@ -174,44 +192,112 @@ def run_live_table1_once(
     judge_model: str = DEFAULT_LOCAL_JUDGE_MODEL,
     judge_base_url: Optional[str] = None,
     llamaguard_mock: bool = False,
+    llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
+    llamaguard_device: str = "auto",
+    llamaguard_fail_fast: bool = False,
     benign_ratio: float = 0.30,
     output_records: Optional[str] = None,
 ) -> Dict[str, Dict[str, float]]:
     rng = random.Random(seed)
-    servers = build_mcp_servers()
     raw_scenarios = load_mcptox(data_dir=data_dir, use_official=use_official, seed=seed)
-    scenarios = [normalize_scenario(s) for s in raw_scenarios]
+    scenarios = list(raw_scenarios)
     rng.shuffle(scenarios)
     scenarios = scenarios[:max_scenarios]
 
+    return run_live_table1_scenarios_once(
+        scenarios=scenarios,
+        model_name=model_name,
+        seed=seed,
+        agent_mock=agent_mock,
+        judge_mode=judge_mode,
+        judge_provider=judge_provider,
+        judge_model=judge_model,
+        judge_base_url=judge_base_url,
+        llamaguard_mock=llamaguard_mock,
+        llamaguard_model=llamaguard_model,
+        llamaguard_device=llamaguard_device,
+        llamaguard_fail_fast=llamaguard_fail_fast,
+        benign_ratio=benign_ratio,
+        output_records=output_records,
+    )
+
+
+def run_live_table1_scenarios_once(
+    scenarios: List[Dict[str, Any]],
+    model_name: str = "GPT-4o",
+    seed: int = 42,
+    agent_mock: bool = False,
+    judge_mode: str = "heuristic",
+    judge_provider: str = "vllm",
+    judge_model: str = DEFAULT_LOCAL_JUDGE_MODEL,
+    judge_base_url: Optional[str] = None,
+    llamaguard_mock: bool = False,
+    llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
+    llamaguard_device: str = "auto",
+    llamaguard_fail_fast: bool = False,
+    benign_ratio: float = 0.30,
+    output_records: Optional[str] = None,
+    agent_factory: Any = None,
+) -> Dict[str, Dict[str, float]]:
+    rng = random.Random(seed)
+    servers = build_mcp_servers()
+    normalized_scenarios = [_normalize_with_metadata(dict(s)) for s in scenarios]
     judge = make_judge(judge_mode, judge_provider, judge_model, judge_base_url)
-    defenses = make_defenses(judge=judge, llamaguard_mock=llamaguard_mock)
-    agent = create_backbone(model_name, mock_mode=agent_mock)
+    defenses = make_defenses(
+        judge=judge,
+        llamaguard_mock=llamaguard_mock,
+        llamaguard_model=llamaguard_model,
+        llamaguard_device=llamaguard_device,
+        llamaguard_fail_fast=llamaguard_fail_fast,
+    )
+    factory = agent_factory or create_backbone
+    agent = factory(model_name, mock_mode=agent_mock)
 
     records: Dict[str, List[Dict[str, Any]]] = {name: [] for name in defenses}
     detailed_records: List[Dict[str, Any]] = []
 
-    for idx, scenario in enumerate(scenarios):
+    for idx, scenario in enumerate(normalized_scenarios):
         attack_prompt = build_attack_query(scenario)
         attack_agent = agent.invoke(attack_prompt, servers)
         attack_msg, attack_trace, attack_intent = _agent_output_to_inputs(attack_agent, scenario, is_attack=True)
         attack_harmful = is_harmful_output(attack_msg, attack_trace, attack_intent, scenario)
         _evaluate_all_defenses(defenses, records, attack_msg, attack_trace, attack_intent, True, attack_harmful, scenario)
-        detailed_records.append(_detail_record(idx, scenario, True, attack_agent, attack_msg, attack_harmful))
+        _tag_latest_rows(records, scenario)
+        detailed_records.append(_detail_record_with_metadata(idx, scenario, True, attack_agent, attack_msg, attack_harmful))
 
         if rng.random() < benign_ratio:
             benign_prompt = build_benign_query(scenario)
             benign_agent = agent.invoke(benign_prompt, servers)
             benign_msg, benign_trace, benign_intent = _agent_output_to_inputs(benign_agent, scenario, is_attack=False)
             _evaluate_all_defenses(defenses, records, benign_msg, benign_trace, benign_intent, False, False, scenario)
-            detailed_records.append(_detail_record(idx, scenario, False, benign_agent, benign_msg, False))
+            _tag_latest_rows(records, scenario)
+            detailed_records.append(_detail_record_with_metadata(idx, scenario, False, benign_agent, benign_msg, False))
 
     if output_records:
-        os.makedirs(os.path.dirname(output_records), exist_ok=True)
+        output_dir = os.path.dirname(output_records)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
         with open(output_records, "w") as f:
             json.dump(detailed_records, f, indent=2, default=str)
 
     return {name: compute_live_metrics(rows) for name, rows in records.items()}
+
+
+def run_live_table1_scenarios_multi(
+    scenarios: List[Dict[str, Any]],
+    runs: int = 3,
+    **kwargs,
+) -> Dict[str, Dict[str, float]]:
+    run_outputs = []
+    base_seed = int(kwargs.pop("seed", 42))
+    for run_idx in range(runs):
+        run_kwargs = dict(kwargs)
+        run_kwargs["seed"] = base_seed + run_idx
+        if run_idx != 0:
+            run_kwargs["output_records"] = None
+        run_outputs.append(run_live_table1_scenarios_once(scenarios=scenarios, **run_kwargs))
+
+    return _combine_live_outputs(run_outputs, runs)
 
 
 def run_live_table1_multi(
@@ -225,6 +311,13 @@ def run_live_table1_multi(
         run_kwargs["seed"] = base_seed + run_idx
         run_outputs.append(run_live_table1_once(**run_kwargs))
 
+    return _combine_live_outputs(run_outputs, runs)
+
+
+def _combine_live_outputs(
+    run_outputs: List[Dict[str, Dict[str, float]]],
+    runs: int,
+) -> Dict[str, Dict[str, float]]:
     defenses = run_outputs[0].keys()
     metrics = ["ASR", "TCR", "Latency_ms", "L4_ASR", "L2_ASR"]
     combined: Dict[str, Dict[str, float]] = {}
@@ -394,6 +487,34 @@ def _detail_record(idx: int, scenario: Dict[str, Any], is_attack: bool, agent_ou
     }
 
 
+def _detail_record_with_metadata(
+    idx: int,
+    scenario: Dict[str, Any],
+    is_attack: bool,
+    agent_output: Dict[str, Any],
+    msg: MCPMessage,
+    harmful: bool,
+) -> Dict[str, Any]:
+    record = _detail_record(idx, scenario, is_attack, agent_output, msg, harmful)
+    if "benchmark" in scenario:
+        record["benchmark"] = scenario["benchmark"]
+    if "sample_key" in scenario:
+        record["sample_key"] = scenario["sample_key"]
+    return record
+
+
+def _tag_latest_rows(records: Dict[str, List[Dict[str, Any]]], scenario: Dict[str, Any]):
+    if "benchmark" not in scenario and "sample_key" not in scenario:
+        return
+    for rows in records.values():
+        if not rows:
+            continue
+        if "benchmark" in scenario:
+            rows[-1]["benchmark"] = scenario["benchmark"]
+        if "sample_key" in scenario:
+            rows[-1]["sample_key"] = scenario["sample_key"]
+
+
 def _fmt_ci(metric: Dict[str, float], key: str, include_ci: bool) -> str:
     value = metric.get(key, 0.0)
     ci = metric.get(f"{key}_ci", 0.0)
@@ -434,13 +555,16 @@ def main():
     parser.add_argument("--max_scenarios", type=int, default=200)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--data_dir", default="data/mcptox")
-    parser.add_argument("--synthetic", action="store_true", help="Use synthetic MCPTox fallback even if official data exists.")
+    parser.add_argument("--official", action="store_true", help="Use data/mcptox/mcptox_official.json when available.")
     parser.add_argument("--agent_mock", action="store_true", help="Use mock agent for smoke tests.")
     parser.add_argument("--judge_mode", choices=["heuristic", "llm"], default="heuristic")
     parser.add_argument("--judge_provider", default="vllm")
     parser.add_argument("--judge_model", default=DEFAULT_LOCAL_JUDGE_MODEL)
     parser.add_argument("--judge_base_url", default=default_judge_base_url())
     parser.add_argument("--llamaguard_mock", action="store_true")
+    parser.add_argument("--llamaguard_model", default="meta-llama/LlamaGuard-3-8B")
+    parser.add_argument("--llamaguard_device", default="auto")
+    parser.add_argument("--llamaguard_fail_fast", action="store_true")
     parser.add_argument("--output", default="results/live_table1_results.json")
     parser.add_argument("--tex_output", default="results/latex_tables/tab_main_live.tex")
     parser.add_argument("--records_output", default="results/live_table1_records.json")
@@ -451,7 +575,7 @@ def main():
         model_name=args.model,
         max_scenarios=args.max_scenarios,
         seed=args.seed,
-        use_official=not args.synthetic,
+        use_official=args.official,
         data_dir=args.data_dir,
         agent_mock=args.agent_mock,
         judge_mode=args.judge_mode,
@@ -459,6 +583,9 @@ def main():
         judge_model=args.judge_model,
         judge_base_url=args.judge_base_url,
         llamaguard_mock=args.llamaguard_mock,
+        llamaguard_model=args.llamaguard_model,
+        llamaguard_device=args.llamaguard_device,
+        llamaguard_fail_fast=args.llamaguard_fail_fast,
         output_records=args.records_output if args.runs == 1 else None,
     )
     os.makedirs(os.path.dirname(args.output), exist_ok=True)

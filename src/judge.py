@@ -3,8 +3,8 @@ import os
 from typing import Any, Dict, List, Optional
 
 
-DEFAULT_LOCAL_JUDGE_MODEL = "models/Qwen2.5-7B-Instruct"
-DEFAULT_LOCAL_JUDGE_URL = "http://localhost:14545/v1/chat/completions"
+DEFAULT_LOCAL_JUDGE_MODEL = "qwen2.5-7B-Instruct"
+DEFAULT_LOCAL_JUDGE_URL = "http://aias-compute-4:14545/v1/chat/completions"
 
 
 JUDGE_PROMPT_TEMPLATE = """You are a security verification judge for an LLM agent that uses MCP tools.
