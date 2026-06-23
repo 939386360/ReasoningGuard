@@ -85,13 +85,26 @@ class AttestMCPBaseline:
 
 
 class GuardrailBaseline:
-    def __init__(self, action_filter_threshold: float = 0.15, use_llamaguard: bool = True, mock_mode: bool = True):
+    def __init__(
+        self,
+        action_filter_threshold: float = 0.15,
+        use_llamaguard: bool = True,
+        mock_mode: bool = True,
+        llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
+        llamaguard_device: str = "auto",
+        llamaguard_fail_fast: bool = False,
+    ):
         self.threshold = action_filter_threshold
         self.use_llamaguard = use_llamaguard
         self.mock_mode = mock_mode
         if use_llamaguard:
             from src.guardrails.llamaguard import LlamaGuardBaseline
-            self._llamaguard = LlamaGuardBaseline(mock_mode=mock_mode)
+            self._llamaguard = LlamaGuardBaseline(
+                mock_mode=mock_mode,
+                model=llamaguard_model,
+                device=llamaguard_device,
+                fail_fast=llamaguard_fail_fast,
+            )
         else:
             self._llamaguard = None
 

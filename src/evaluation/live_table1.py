@@ -21,6 +21,15 @@ from src.reasoning_guard import (
 )
 from src.rtv import ConstrainedJudgeModel, ReasoningTraceVerifier
 from src.evaluation.multi_run import compute_ci
+from src.runtime_audit import (
+    audit_context,
+    audit_event,
+    configure_audit,
+    default_audit_log_path,
+    get_audit_path,
+    get_audit_summary,
+    is_strict_runtime,
+)
 
 
 DANGEROUS_TERMS = [
@@ -242,6 +251,19 @@ def run_live_table1_scenarios_once(
     rng = random.Random(seed)
     servers = build_mcp_servers()
     normalized_scenarios = [_normalize_with_metadata(dict(s)) for s in scenarios]
+    audit_event(
+        "evaluation",
+        "run.start",
+        model=model_name,
+        seed=seed,
+        num_scenarios=len(normalized_scenarios),
+        judge_mode=judge_mode,
+        judge_provider=judge_provider,
+        judge_model=judge_model,
+        judge_base_url=judge_base_url,
+        audit_log=get_audit_path(),
+        strict_runtime=is_strict_runtime(),
+    )
     judge = make_judge(judge_mode, judge_provider, judge_model, judge_base_url)
     defenses = make_defenses(
         judge=judge,
@@ -257,21 +279,41 @@ def run_live_table1_scenarios_once(
     detailed_records: List[Dict[str, Any]] = []
 
     for idx, scenario in enumerate(normalized_scenarios):
-        attack_prompt = build_attack_query(scenario)
-        attack_agent = agent.invoke(attack_prompt, servers)
-        attack_msg, attack_trace, attack_intent = _agent_output_to_inputs(attack_agent, scenario, is_attack=True)
-        attack_harmful = is_harmful_output(attack_msg, attack_trace, attack_intent, scenario)
-        _evaluate_all_defenses(defenses, records, attack_msg, attack_trace, attack_intent, True, attack_harmful, scenario)
-        _tag_latest_rows(records, scenario)
-        detailed_records.append(_detail_record_with_metadata(idx, scenario, True, attack_agent, attack_msg, attack_harmful))
+        with audit_context(
+            scenario_idx=idx,
+            scenario_id=scenario["scenario_id"],
+            category=scenario["category"],
+            attack_layer=scenario["attack_layer"],
+            benchmark=scenario.get("benchmark"),
+            sample_key=scenario.get("sample_key"),
+            model=model_name,
+            is_attack=True,
+        ):
+            attack_prompt = build_attack_query(scenario)
+            attack_agent = agent.invoke(attack_prompt, servers)
+            attack_msg, attack_trace, attack_intent = _agent_output_to_inputs(attack_agent, scenario, is_attack=True)
+            attack_harmful = is_harmful_output(attack_msg, attack_trace, attack_intent, scenario)
+            _evaluate_all_defenses(defenses, records, attack_msg, attack_trace, attack_intent, True, attack_harmful, scenario)
+            _tag_latest_rows(records, scenario)
+            detailed_records.append(_detail_record_with_metadata(idx, scenario, True, attack_agent, attack_msg, attack_harmful))
 
         if rng.random() < benign_ratio:
-            benign_prompt = build_benign_query(scenario)
-            benign_agent = agent.invoke(benign_prompt, servers)
-            benign_msg, benign_trace, benign_intent = _agent_output_to_inputs(benign_agent, scenario, is_attack=False)
-            _evaluate_all_defenses(defenses, records, benign_msg, benign_trace, benign_intent, False, False, scenario)
-            _tag_latest_rows(records, scenario)
-            detailed_records.append(_detail_record_with_metadata(idx, scenario, False, benign_agent, benign_msg, False))
+            with audit_context(
+                scenario_idx=idx,
+                scenario_id=scenario["scenario_id"],
+                category=scenario["category"],
+                attack_layer="benign",
+                benchmark=scenario.get("benchmark"),
+                sample_key=scenario.get("sample_key"),
+                model=model_name,
+                is_attack=False,
+            ):
+                benign_prompt = build_benign_query(scenario)
+                benign_agent = agent.invoke(benign_prompt, servers)
+                benign_msg, benign_trace, benign_intent = _agent_output_to_inputs(benign_agent, scenario, is_attack=False)
+                _evaluate_all_defenses(defenses, records, benign_msg, benign_trace, benign_intent, False, False, scenario)
+                _tag_latest_rows(records, scenario)
+                detailed_records.append(_detail_record_with_metadata(idx, scenario, False, benign_agent, benign_msg, False))
 
     if output_records:
         output_dir = os.path.dirname(output_records)
@@ -280,7 +322,15 @@ def run_live_table1_scenarios_once(
         with open(output_records, "w") as f:
             json.dump(detailed_records, f, indent=2, default=str)
 
-    return {name: compute_live_metrics(rows) for name, rows in records.items()}
+    results = {name: compute_live_metrics(rows) for name, rows in records.items()}
+    audit_event(
+        "evaluation",
+        "run.summary",
+        num_detailed_records=len(detailed_records),
+        audit_log=get_audit_path(),
+        audit_summary=get_audit_summary(),
+    )
+    return results
 
 
 def run_live_table1_scenarios_multi(
@@ -295,9 +345,18 @@ def run_live_table1_scenarios_multi(
         run_kwargs["seed"] = base_seed + run_idx
         if run_idx != 0:
             run_kwargs["output_records"] = None
-        run_outputs.append(run_live_table1_scenarios_once(scenarios=scenarios, **run_kwargs))
+        with audit_context(run_idx=run_idx):
+            run_outputs.append(run_live_table1_scenarios_once(scenarios=scenarios, **run_kwargs))
 
-    return _combine_live_outputs(run_outputs, runs)
+    combined = _combine_live_outputs(run_outputs, runs)
+    audit_event(
+        "evaluation",
+        "multi_run.summary",
+        runs=runs,
+        audit_log=get_audit_path(),
+        audit_summary=get_audit_summary(),
+    )
+    return combined
 
 
 def run_live_table1_multi(
@@ -309,9 +368,18 @@ def run_live_table1_multi(
     for run_idx in range(runs):
         run_kwargs = dict(kwargs)
         run_kwargs["seed"] = base_seed + run_idx
-        run_outputs.append(run_live_table1_once(**run_kwargs))
+        with audit_context(run_idx=run_idx):
+            run_outputs.append(run_live_table1_once(**run_kwargs))
 
-    return _combine_live_outputs(run_outputs, runs)
+    combined = _combine_live_outputs(run_outputs, runs)
+    audit_event(
+        "evaluation",
+        "multi_run.summary",
+        runs=runs,
+        audit_log=get_audit_path(),
+        audit_summary=get_audit_summary(),
+    )
+    return combined
 
 
 def _combine_live_outputs(
@@ -373,7 +441,30 @@ def _agent_output_to_inputs(agent_output: Dict[str, Any], scenario: Dict[str, An
     trace = agent_output.get("trace") or ReasoningTrace()
     intent = agent_output.get("intent_summary") or scenario.get("target_action", "")
     msg = agent_output.get("tool_call")
+    response = agent_output.get("response", "")
+    if not str(response).strip():
+        audit_event(
+            "agent",
+            "agent.empty_response",
+            severity="WARNING",
+            message="Evaluation received an empty agent response",
+            fallback_used=True,
+        )
+        if is_strict_runtime():
+            raise RuntimeError("Evaluation received an empty agent response")
     if msg is None:
+        audit_event(
+            "agent",
+            "agent.fallback_tool_call_constructed",
+            severity="WARNING",
+            message="Evaluation constructed a fallback tool call because the agent output had no parseable tool_call",
+            fallback_used=True,
+            response_empty=not str(response).strip(),
+            target_server=scenario["target_server"],
+            method=scenario["method"],
+        )
+        if is_strict_runtime():
+            raise RuntimeError("Agent output had no parseable tool_call")
         msg = MCPMessage(
             msg_type=MCPMessageType.REQUEST,
             sender="agent",
@@ -400,48 +491,72 @@ def _evaluate_all_defenses(
     scenario: Dict[str, Any],
 ):
     for name, defense in defenses.items():
-        start = time.perf_counter()
-        if name == "No Defense":
-            verdict = Verdict.APPROVE
-            latency_ms = 0.0
-            reason = "No defense applied"
-        elif name in ("AttestMCP", "PTG-Only"):
-            result = defense.evaluate(msg, intent)
-            verdict = result["verdict"]
-            latency_ms = result.get("latency_ms", 0.0)
-            reason = result.get("reason", "")
-        elif name == "Guardrail":
-            result = defense.evaluate(msg)
-            verdict = result["verdict"]
-            latency_ms = result.get("latency_ms", 0.0)
-            reason = result.get("reason", "")
-        elif name == "RTV-Only":
-            result = defense.evaluate(trace, intent, msg.provenance_tags)
-            verdict = result["verdict"]
-            latency_ms = result.get("latency_ms", 0.0)
-            reason = result.get("reason", "")
-        else:
-            result = defense.evaluate(msg, intent, trace)
-            verdict = result["verdict"]
-            latency_ms = result.get("total_latency_ms", 0.0)
-            reason = result.get("reason", "")
-        if latency_ms == 0.0 and name != "No Defense":
-            latency_ms = (time.perf_counter() - start) * 1000
+        with audit_context(defense=name):
+            start = time.perf_counter()
+            try:
+                if name == "No Defense":
+                    verdict = Verdict.APPROVE
+                    latency_ms = 0.0
+                    reason = "No defense applied"
+                elif name in ("AttestMCP", "PTG-Only"):
+                    result = defense.evaluate(msg, intent)
+                    verdict = result["verdict"]
+                    latency_ms = result.get("latency_ms", 0.0)
+                    reason = result.get("reason", "")
+                elif name == "Guardrail":
+                    result = defense.evaluate(msg)
+                    verdict = result["verdict"]
+                    latency_ms = result.get("latency_ms", 0.0)
+                    reason = result.get("reason", "")
+                elif name == "RTV-Only":
+                    result = defense.evaluate(trace, intent, msg.provenance_tags)
+                    verdict = result["verdict"]
+                    latency_ms = result.get("latency_ms", 0.0)
+                    reason = result.get("reason", "")
+                else:
+                    result = defense.evaluate(msg, intent, trace)
+                    verdict = result["verdict"]
+                    latency_ms = result.get("total_latency_ms", 0.0)
+                    reason = result.get("reason", "")
+            except Exception as exc:
+                audit_event(
+                    "defense",
+                    "defense.error",
+                    severity="ERROR",
+                    message="Defense evaluation failed",
+                    error_type=type(exc).__name__,
+                    error_message=str(exc),
+                )
+                raise
 
-        attack_succeeded = is_attack and harmful and verdict == Verdict.APPROVE
-        task_completed = (not is_attack) and verdict == Verdict.APPROVE and msg is not None
-        records[name].append({
-            "scenario_id": scenario["scenario_id"],
-            "category": scenario["category"],
-            "attack_layer": scenario["attack_layer"] if is_attack else "benign",
-            "is_attack": is_attack,
-            "harmful": harmful,
-            "verdict": verdict,
-            "attack_succeeded": attack_succeeded,
-            "task_completed": task_completed,
-            "latency_ms": latency_ms,
-            "reason": reason,
-        })
+            if latency_ms == 0.0 and name != "No Defense":
+                latency_ms = (time.perf_counter() - start) * 1000
+
+            attack_succeeded = is_attack and harmful and verdict == Verdict.APPROVE
+            task_completed = (not is_attack) and verdict == Verdict.APPROVE and msg is not None
+            row = {
+                "scenario_id": scenario["scenario_id"],
+                "category": scenario["category"],
+                "attack_layer": scenario["attack_layer"] if is_attack else "benign",
+                "is_attack": is_attack,
+                "harmful": harmful,
+                "verdict": verdict,
+                "attack_succeeded": attack_succeeded,
+                "task_completed": task_completed,
+                "latency_ms": latency_ms,
+                "reason": reason,
+            }
+            records[name].append(row)
+            audit_event(
+                "defense",
+                "defense.verdict",
+                verdict=verdict,
+                harmful=harmful,
+                attack_succeeded=attack_succeeded,
+                task_completed=task_completed,
+                latency_ms=latency_ms,
+                reason=reason,
+            )
 
 
 def compute_live_metrics(rows: List[Dict[str, Any]]) -> Dict[str, float]:
@@ -568,7 +683,15 @@ def main():
     parser.add_argument("--output", default="results/live_table1_results.json")
     parser.add_argument("--tex_output", default="results/latex_tables/tab_main_live.tex")
     parser.add_argument("--records_output", default="results/live_table1_records.json")
+    parser.add_argument("--audit_log", default=None, help="JSONL runtime audit log path. Defaults to <output>_audit.jsonl.")
+    parser.add_argument("--no_audit_log", action="store_true", help="Disable runtime audit log.")
+    parser.add_argument("--strict_runtime", action="store_true", help="Raise on runtime fallback paths such as judge errors, parse failures, empty agent responses, or LlamaGuard fallback.")
     args = parser.parse_args()
+
+    audit_log = None if args.no_audit_log else (args.audit_log or default_audit_log_path(args.output))
+    configure_audit(audit_log, strict_runtime=args.strict_runtime)
+    if audit_log:
+        print(f"Runtime audit log: {audit_log}")
 
     results = run_live_table1_multi(
         runs=args.runs,

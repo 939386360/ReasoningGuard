@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.agent_backbone_proxy import create_proxy_backbone
 from src.evaluation import live_table1
 from src.judge import DEFAULT_LOCAL_JUDGE_MODEL
+from src.runtime_audit import configure_audit, default_audit_log_path
 
 
 DEFAULT_MODELS = "GPT-4o,Claude-3.5-Sonnet,Gemini-1.5-Pro,Llama-3.1-70B"
@@ -50,7 +51,15 @@ def main():
     parser.add_argument("--llamaguard_device", default="auto")
     parser.add_argument("--llamaguard_fail_fast", action="store_true")
     parser.add_argument("--output", default="results/live_multimodel_proxy_results.json")
+    parser.add_argument("--audit_log", default=None, help="JSONL runtime audit log path. Defaults to <output>_audit.jsonl.")
+    parser.add_argument("--no_audit_log", action="store_true", help="Disable runtime audit log.")
+    parser.add_argument("--strict_runtime", action="store_true", help="Raise on runtime fallback paths such as judge errors, parse failures, empty agent responses, or LlamaGuard fallback.")
     args = parser.parse_args()
+
+    audit_log = None if args.no_audit_log else (args.audit_log or default_audit_log_path(args.output))
+    configure_audit(audit_log, strict_runtime=args.strict_runtime)
+    if audit_log:
+        print(f"Runtime audit log: {audit_log}")
 
     try:
         model_map = _parse_model_map(args.agent_model_map)

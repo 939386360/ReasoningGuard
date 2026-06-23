@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Mapping, Optional
 from urllib.parse import urlsplit, urlunsplit
 
 from src.agent_backbone import AgentBackbone
+from src.runtime_audit import audit_event, is_strict_runtime
 
 
 DEFAULT_PROXY_BASE_URL = "https://llm-api.net/v1/chat/completions"
@@ -139,14 +140,48 @@ class ProxyAgentBackbone(AgentBackbone):
             if self.api_style == "responses":
                 payload = self._responses_payload()
                 data = self._post_json(payload)
-                return extract_responses_text(data)
+                text = extract_responses_text(data)
+                return self._checked_response_text(text)
 
             payload = self._chat_payload()
             data = self._post_json(payload)
-            return extract_chat_completion_text(data)
+            text = extract_chat_completion_text(data)
+            return self._checked_response_text(text)
         except Exception as exc:
+            audit_event(
+                "agent",
+                "agent.call_failed",
+                severity="ERROR",
+                message="Proxy agent LLM call failed",
+                provider=self.provider,
+                model=self.model,
+                base_url=self.endpoint_url,
+                api_style=self.api_style,
+                fallback_used=not is_strict_runtime(),
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+            )
             print(f"[ProxyAgentBackbone] LLM call failed: {exc}")
+            if is_strict_runtime():
+                raise
             return ""
+
+    def _checked_response_text(self, text: str) -> str:
+        if not text.strip():
+            audit_event(
+                "agent",
+                "agent.empty_response",
+                severity="WARNING",
+                message="Proxy agent returned an empty response",
+                provider=self.provider,
+                model=self.model,
+                base_url=self.endpoint_url,
+                api_style=self.api_style,
+                fallback_used=True,
+            )
+            if is_strict_runtime():
+                raise RuntimeError("Proxy agent returned an empty response")
+        return text
 
     def _chat_payload(self) -> Dict[str, Any]:
         return {
