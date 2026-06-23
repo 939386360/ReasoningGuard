@@ -365,7 +365,7 @@ if __name__ == "__main__":
 # export LLM_API_KEY="你的中转站 key"
 # python experiments/run_quick_benchmark_by_category.py \
 #   --benchmark mcptox \
-#   --per_category 50 \
+#   --per_category 5 \
 #   --categories "" \
 #   --max_scenarios 200 \
 #   --runs 3 \
