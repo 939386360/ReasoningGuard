@@ -61,8 +61,19 @@ class ReasoningGuard:
 
 
 class AttestMCPBaseline:
+    """AttestMCP (Maloyan & Larionov 2026): protocol-only baseline.
+
+    Performs basic capability attestation only. LACKS the three novel
+    PTG mechanisms: semantic intent attestation, origin-tagged sampling,
+    and intent-aware cross-server isolation.
+    """
+
     def __init__(self):
-        self.ptg = ProtocolAttestedToolGateway()
+        self.ptg = ProtocolAttestedToolGateway(
+            disable_intent_attestation=True,
+            disable_origin_tags=True,
+            cross_server_consent=False,
+        )
 
     def evaluate(self, msg: MCPMessage, intent_summary: str) -> Dict[str, Any]:
         result = self.ptg.verify_invocation(msg, intent_summary)
@@ -74,26 +85,13 @@ class AttestMCPBaseline:
 
 
 class GuardrailBaseline:
-    def __init__(
-        self,
-        action_filter_threshold: float = 0.15,
-        use_llamaguard: bool = True,
-        mock_mode: bool = True,
-        llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
-        llamaguard_device: str = "auto",
-        llamaguard_fail_fast: bool = False,
-    ):
+    def __init__(self, action_filter_threshold: float = 0.15, use_llamaguard: bool = True, mock_mode: bool = True):
         self.threshold = action_filter_threshold
         self.use_llamaguard = use_llamaguard
         self.mock_mode = mock_mode
         if use_llamaguard:
             from src.guardrails.llamaguard import LlamaGuardBaseline
-            self._llamaguard = LlamaGuardBaseline(
-                mock_mode=mock_mode,
-                model=llamaguard_model,
-                device=llamaguard_device,
-                fail_fast=llamaguard_fail_fast,
-            )
+            self._llamaguard = LlamaGuardBaseline(mock_mode=mock_mode)
         else:
             self._llamaguard = None
 
@@ -120,6 +118,12 @@ class GuardrailBaseline:
 
 
 class PTGOnlyBaseline:
+    """PTG-Only: our full Protocol-Attested Tool Gateway without RTV.
+
+    Includes all three novel mechanisms: semantic intent attestation,
+    origin-tagged sampling, and intent-aware cross-server isolation.
+    """
+
     def __init__(self):
         self.ptg = ProtocolAttestedToolGateway()
 
