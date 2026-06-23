@@ -14,6 +14,7 @@ from src.benchmarks.load_agentpi import load_agentpi
 from src.benchmarks.load_mcptox import load_mcptox
 from src.evaluation import live_table1
 from src.judge import DEFAULT_LOCAL_JUDGE_MODEL
+from src.runtime_audit import configure_audit, default_audit_log_path
 
 
 DEFAULT_OUTPUT_DIR = "results/quick_eval"
@@ -213,6 +214,9 @@ def main():
     parser.add_argument("--agentpi_data_dir", default="data/agentpi")
     parser.add_argument("--mcptox_plus_data_dir", default="data/mcptox_plus")
     parser.add_argument("--results_output", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--audit_log", default=None, help="JSONL runtime audit log path. Defaults to <output>_audit.jsonl.")
+    parser.add_argument("--no_audit_log", action="store_true", help="Disable runtime audit log.")
+    parser.add_argument("--strict_runtime", action="store_true", help="Raise on runtime fallback paths such as judge errors, parse failures, empty agent responses, or LlamaGuard fallback.")
     args = parser.parse_args()
 
     model_map = _parse_json_map(args.agent_model_map, "--agent_model_map")
@@ -233,6 +237,8 @@ def main():
 
     results_output = args.results_output or args.output
     records_output = args.records_output
+    audit_log = None if args.no_audit_log else (args.audit_log or default_audit_log_path(results_output))
+    configure_audit(audit_log, strict_runtime=args.strict_runtime)
 
     print("Selected scenarios by benchmark/category:")
     for key, count in summary.items():
@@ -269,6 +275,8 @@ def main():
     print(f"Saved quick results to {results_output}")
     print(f"Saved quick records to {records_output}")
     print(f"Saved quick LaTeX table to {args.tex_output}")
+    if audit_log:
+        print(f"Saved runtime audit log to {audit_log}")
 
 
 def _tag_benchmark(scenarios: Iterable[Mapping[str, Any]], benchmark: str) -> List[Dict[str, Any]]:

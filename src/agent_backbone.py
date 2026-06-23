@@ -9,6 +9,7 @@ from src.mcp_client import (
     Origin, ReasoningStep, ReasoningTrace, ProvenanceLedger,
 )
 from src.attacks.attack_generator import AttackCategory
+from src.runtime_audit import audit_event, is_strict_runtime
 
 
 AGENT_SYSTEM_PROMPT = """You are an AI agent that helps users by invoking tools through the Model Context Protocol (MCP).
@@ -179,7 +180,7 @@ class AgentBackbone:
                     temperature=0.0,
                     max_tokens=1024,
                 )
-                return resp.choices[0].message.content
+                return self._checked_response_text(resp.choices[0].message.content)
             elif self.provider == "anthropic":
                 client = self._get_client()
                 resp = client.messages.create(
@@ -188,7 +189,7 @@ class AgentBackbone:
                     messages=self.conversation_history[1:],
                     system=self.conversation_history[0]["content"],
                 )
-                return resp.content[0].text
+                return self._checked_response_text(resp.content[0].text)
             elif self.provider == "vllm":
                 import requests
                 url = self.base_url or "http://localhost:8000/v1/chat/completions"
@@ -199,10 +200,41 @@ class AgentBackbone:
                     "max_tokens": 1024,
                 }
                 resp = requests.post(url, json=payload, timeout=60)
-                return resp.json()["choices"][0]["message"]["content"]
+                resp.raise_for_status()
+                return self._checked_response_text(resp.json()["choices"][0]["message"]["content"])
         except Exception as e:
+            audit_event(
+                "agent",
+                "agent.call_failed",
+                severity="ERROR",
+                message="Agent LLM call failed",
+                provider=self.provider,
+                model=self.model,
+                base_url=self.base_url,
+                fallback_used=not is_strict_runtime(),
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
             print(f"[AgentBackbone] LLM call failed: {e}")
+            if is_strict_runtime():
+                raise
             return ""
+
+    def _checked_response_text(self, text: str) -> str:
+        if not text.strip():
+            audit_event(
+                "agent",
+                "agent.empty_response",
+                severity="WARNING",
+                message="Agent returned an empty response",
+                provider=self.provider,
+                model=self.model,
+                base_url=self.base_url,
+                fallback_used=True,
+            )
+            if is_strict_runtime():
+                raise RuntimeError("Agent returned an empty response")
+        return text
 
     def _mock_invoke(
         self,

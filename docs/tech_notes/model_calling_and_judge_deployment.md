@@ -260,13 +260,24 @@ scores = judge.score(trace_text, intent_summary, origin_tags)
 |`anthropic`|Anthropic messages API|
 |`vllm`|`requests.post(base_url, json=payload)`|
 
-和 agent 一样，`vllm` 的 `base_url` 在这里也是完整 endpoint 语义：
+`vllm` 的 `base_url` 会经过 `normalize_chat_completions_url()` 归一化，支持传完整 endpoint 或 `/v1` 根路径：
 
 ```python
-url = self.base_url or "http://localhost:8000/v1/chat/completions"
+url = normalize_chat_completions_url(self.base_url or DEFAULT_LOCAL_JUDGE_URL)
 ```
 
-如果传 `http://host:port/v1`，当前代码不会自动追加 `/chat/completions`。
+例如 `http://host:port/v1`、`http://host:port/v1/chat/completions` 和 `http://host:port/chat/completions` 都会归一到 Chat Completions endpoint。当前 `src/judge.py` 发出的实际 payload 是：
+
+```json
+{
+  "model": "qwen2.5-7B-Instruct",
+  "messages": [{"role": "user", "content": "..."}],
+  "temperature": 0.0,
+  "max_tokens": 100
+}
+```
+
+注意：当前项目侧 `_call_vllm()` 没有发送 `do_sample=false`，请求超时硬编码为 30 秒。如果 judge endpoint 抛错或模型返回不可解析文本，runtime audit log 会记录 `judge.call_failed` 或 `judge.parse_failed`；非 strict 模式下仍会记录 `judge.default_scores_used` 并返回 `CAI/OAV/IAD=0.1`，`--strict_runtime` 下会直接抛异常中止。
 
 ### 3.3 LLM judge 如何接入 RTV
 
@@ -396,6 +407,8 @@ qwen2.5-7B-Instruct
 
    当 `temperature=0.0` 或 `do_sample=false` 时强制 greedy decoding，避免 transformers 在采样模式下接收非法 `temperature=0.0`。
 
+   需要区分服务端能力和当前项目侧请求：`/home/liuenguang24/deployed_models` 的 request schema 支持 `do_sample`，但当前 `src/judge.py` 只发送 `temperature=0.0` 和 `max_tokens=100`，没有发送 `do_sample=false`。如果需要强约束 greedy decoding，应在项目侧 payload 中补上 `do_sample=false`，或确认服务端会在 `temperature=0.0` 时自动转为 greedy。
+
 4. **仍缺少 JSON 约束**
 
    `LLMJudgeInterface._parse_response()` 可以从文本中截取 JSON，但如果模型输出不稳定，异常时会回退到：
@@ -415,9 +428,9 @@ qwen2.5-7B-Instruct
 |是否加载 judge 模型名 `qwen2.5-7B-Instruct`|是|满足本地 base judge 调用|
 |是否有 Qwen/Qwen2.5 文本模型 handler|是|满足|
 |是否有 judge 微调权重/LoRA adapter|未使用|不满足论文级 fine-tuned judge|
-|是否默认 deterministic JSON 输出|是|满足基础稳定性要求|
+|是否默认 deterministic JSON 输出|部分满足|项目侧使用 `temperature=0.0`，但未发送 `do_sample=false`，也没有 constrained JSON decoding；需要预检返回格式。|
 
-最终结论：当前 `/home/liuenguang24/deployed_models` 已可作为本地 Qwen base judge 服务使用。若要论文级复现，还需要部署 fine-tuned RTV judge 权重或 LoRA 合并产物，并增强 JSON 输出约束。
+最终结论：当前 `/home/liuenguang24/deployed_models` 已可作为本地 Qwen base judge 服务使用。若要论文级复现，还需要部署 fine-tuned RTV judge 权重或 LoRA 合并产物，并增强 JSON 输出约束。正式实验建议使用 runtime audit log 和 `--strict_runtime`，避免 judge 调用或解析失败时静默返回低风险默认分数。
 
 ## 5. 推荐接入方式
 
@@ -443,6 +456,8 @@ curl http://aias-compute-4:14545/v1/chat/completions \
     "do_sample": false
   }'
 ```
+
+这个 curl 显式传了 `do_sample=false` 用于验证服务端 greedy/JSON 行为；当前 `src/judge.py` 的正式评测请求还没有这个字段，只传 `temperature=0.0` 和 `max_tokens=100`。
 
 live 评测接入：
 
