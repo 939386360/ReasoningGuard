@@ -2,7 +2,7 @@
 
 更新日期：2026-06-23
 
-本文档只记录主表 live evaluation 是否真实运行、哪些地方仍会退化，以及正式实验该如何检查。模型调用与 judge 部署细节见 `docs/tech_notes/model_calling_and_judge_deployment.md`。
+本文档只记录主表 live evaluation 是否真实运行、哪些地方仍会退化，以及正式实验该如何检查。模型调用与 judge 部署细节见 `docs/tech_notes/model_calling_and_judge_deployment.md`；agent 拒绝工具调用、`TOOL_CALL: None` 和 fallback tool call 的语义见 `docs/tech_notes/agent_tool_call_outcome_handling.md`。
 
 ## 1. 当前结论
 
@@ -70,7 +70,7 @@
 |---|---|
 |`agent.call_failed`|agent API 调用异常。|
 |`agent.empty_response`|agent 返回空文本。|
-|`agent.fallback_tool_call_constructed`|agent 没有可解析 tool call，evaluation 用 scenario 构造了 fallback tool call。|
+|`agent.fallback_tool_call_constructed`|agent 没有可解析 tool call，evaluation 用 scenario 构造了 fallback tool call；正式实验应视为 invalid 信号。|
 |`judge.call_failed`|judge endpoint/API 调用异常。|
 |`judge.parse_failed`|judge 返回内容无法解析成 `CAI/OAV/IAD` JSON。|
 |`judge.default_scores_used`|非 strict 模式下使用了低风险默认分数 `0.1`。|
@@ -79,7 +79,7 @@
 |`defense.verdict`|每个 defense 的逐样本 verdict/reason/latency。|
 |`run.summary` / `multi_run.summary`|运行汇总和 audit 计数。|
 
-正式实验建议加 `--strict_runtime`。如果需要先跑通流程，可以不加 strict，但必须检查 audit log 中是否存在 `fallback_used=true`、`mock_used=true` 或 `level=ERROR`。
+正式实验建议加 `--strict_runtime`。如果需要先跑通流程，可以不加 strict，但必须检查 audit log 中是否存在 `fallback_used=true`、`mock_used=true` 或 `level=ERROR`。其中 `agent.fallback_tool_call_constructed` 不能作为正式结果接受；如果 agent 明确输出 `TOOL_CALL: None`，应按 agent 拒绝工具调用处理，而不是构造工具调用继续评估。
 
 ## 5. 推荐正式命令
 
@@ -148,7 +148,7 @@ python experiments/run_quick_benchmark_by_category.py \
 - audit log 中没有 `level=ERROR`。
 - audit log 中没有 `fallback_used=true` 或 `mock_used=true`。
 - audit log 中没有 `judge.default_scores_used`。
-- `records_output` 中 agent response 不是空字符串，且能解析出合理 trace/intent/tool_call。
+- `records_output` 中 agent response 不是空字符串，且能解析出合理 trace/intent/tool_call；若出现 `TOOL_CALL: None` 或 fallback tool call，应按 `agent_tool_call_outcome_handling.md` 的三态语义复核。
 
 可用 Python 快速检查 JSONL：
 
@@ -176,5 +176,6 @@ PY
 1. **fine-tuned RTV judge**：当前接入 base Qwen，不是论文中的 fine-tuned constrained judge。
 2. **真实 MCP capability 接入**：PTG 仍依赖静态 `build_mcp_servers()`，后续应接入真实 server schema、permission 和 attestation metadata。
 3. **T3 memory provenance 链路**：MCPTox+ cross-session T3 需要真实 memory read/write ids 才能完整评估。
-4. **完整 records 输出**：如需离线复核所有 run 的 ASR/TCR，后续可把 audit log 汇总为 per-run/per-defense records。
-5. **AttestMCP/PTG 边界校准**：当前 AttestMCP 已关闭 PTG 新增机制；如果论文 baseline 需要更细协议语义，应继续补齐。
+4. **Agent tool-call outcome 语义**：后续应区分 parsed tool call、明确拒绝工具调用和不可解析输出，避免 `TOOL_CALL: None` 被 fallback 成伪造工具调用。
+5. **完整 records 输出**：如需离线复核所有 run 的 ASR/TCR，后续可把 audit log 汇总为 per-run/per-defense records。
+6. **AttestMCP/PTG 边界校准**：当前 AttestMCP 已关闭 PTG 新增机制；如果论文 baseline 需要更细协议语义，应继续补齐。

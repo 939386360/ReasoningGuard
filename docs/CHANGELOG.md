@@ -6,6 +6,7 @@
 - 接入关键 fallback/错误记录：agent 调用失败或空响应、fallback tool call 构造、judge 调用失败、judge JSON 解析失败、低风险默认 judge 分数、LlamaGuard 加载失败和 mock fallback 都会写入 audit log。
 - 凝练 `docs/tech_notes/defense_implementation_and_experiment_readiness.md`：保留当前真实程度结论、每种 defense 的简要实现说明、audit log 用法、推荐正式命令、运行后检查和剩余工程项。
 - 明确 MCPTox 论文主表全量命令：默认 synthetic 200 attack scenarios，不传 `--official`，使用 `--per_category 55 --max_scenarios 200` 覆盖四类 `55/50/55/40` 分布。
+- 新增 `docs/tech_notes/agent_tool_call_outcome_handling.md`：明确 `TOOL_CALL: None` 应作为 agent 拒绝工具调用记录，不能 fallback 成 scenario 默认 tool call，并说明其对 ASR/TCR 的处理。
 - 更新正式实验 checklist：推荐 `--strict_runtime`，补充 audit log 检查、`Total selected attack scenarios` 样本数检查、`records_output` 只记录第 1 次 run 且不含逐 defense 判定细节的限制。
 - 更正 `docs/tech_notes/model_calling_and_judge_deployment.md` 中 vLLM judge 请求说明：当前 `src/judge.py` 会归一化 `/v1` endpoint，但 payload 只发送 `temperature=0.0` 和 `max_tokens=100`，尚未发送 `do_sample=false` 或启用 constrained JSON decoding。
 
