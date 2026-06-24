@@ -42,7 +42,7 @@ srun python experiments/run_quick_benchmark_by_category.py \
   --llamaguard_device auto \
   --llamaguard_fail_fast \
   --benign_ratio 0.30 \
-  --audit_log "results/0624_run1_5case/table1_gpt4o_qwen_judge_audit.jsonl" \
-  --output "results/0624_run1_5case/table1_gpt4o_qwen_judge_results.json" \
-  --tex_output "results/0624_run1_5case/table1_gpt4o_qwen_judge.tex" \
-  --records_output "results/0624_run1_5case/table1_gpt4o_qwen_judge_records.json"
+  --audit_log "results/0624_run2_5case/table1_gpt4o_qwen_judge_audit.jsonl" \
+  --output "results/0624_run2_5case/table1_gpt4o_qwen_judge_results.json" \
+  --tex_output "results/0624_run2_5case/table1_gpt4o_qwen_judge.tex" \
+  --records_output "results/0624_run2_5case/table1_gpt4o_qwen_judge_records.json"
