@@ -19,6 +19,10 @@
 - 补齐 quick benchmark 的 proxy agent 响应适配：确认 Proxy 继承共享的新版 prompt/parser，并新增 Chat/Responses content parts、显式 refusal、原生 tool-call arguments 的归一化，避免合法代理响应被误记为空响应或 parser failure。
 - 修复真实 agent prompt 格式化：转义 `AGENT_SYSTEM_PROMPT` JSON 示例中的大括号，避免 proxy/default 非 mock 路径在发送请求前因 `str.format()` 抛出 `KeyError: '"server"'`。
 
+- 修正本地 Qwen2.5-7B-Instruct handler 的生成参数语义：接收 judge 请求中的 `temperature`，在 `temperature=0` 时自动使用 greedy decoding，在正温度且允许采样时传递实际温度。
+- Qwen handler 在 greedy 模式显式覆盖模型内置的 `temperature/top_p/top_k` 采样默认值，避免 Transformers 的无效采样参数警告，并拒绝负数、NaN 和 Infinity 温度。
+- 更新 judge 部署文档，说明 `temperature` 与 `do_sample` 的关系以及 Qwen2.5-7B-Instruct 对 greedy decoding 和 sampling 的支持；项目 judge 调用代码保持不变。
+
 ## 2026-06-23
 
 - 新增 runtime audit log：quick/live/multimodel evaluation 支持 `--audit_log`、`--no_audit_log` 和 `--strict_runtime`，将 agent、judge、LlamaGuard 和逐 defense verdict 的关键运行事件写入 JSONL。

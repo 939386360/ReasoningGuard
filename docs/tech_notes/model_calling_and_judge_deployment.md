@@ -1,6 +1,6 @@
 # Agent 基础模型、Judge 调用与本地部署兼容性分析
 
-更新日期：2026-06-21
+更新日期：2026-06-24
 
 本文档整理当前项目如何调用 agent 基础模型、RTV judge 模型如何接入，以及 `/home/liuenguang24/deployed_models` 这种本地部署方式如何承载 judge 调用。结论基于当前仓库代码和部署目录实现。
 
@@ -453,11 +453,27 @@ qwen2.5-7B-Instruct
 
 3. **deterministic generation**
 
-   当 `temperature=0.0` 或 `do_sample=false` 时强制 greedy decoding，避免 transformers 在采样模式下接收非法 `temperature=0.0`。
+   Qwen handler 已接收 OpenAI-compatible 请求中的 `temperature`，并按以下优先级生成：
 
-   需要区分服务端能力和当前项目侧请求：`/home/liuenguang24/deployed_models` 的 request schema 支持 `do_sample`，但当前 `src/judge.py` 只发送 `temperature=0.0` 和 `max_tokens=100`，没有发送 `do_sample=false`。如果需要强约束 greedy decoding，应在项目侧 payload 中补上 `do_sample=false`，或确认服务端会在 `temperature=0.0` 时自动转为 greedy。
+   - `do_sample=false`：使用 greedy decoding，`temperature` 不生效。
+   - `do_sample=true` 且 `temperature>0`：使用 sampling，并将请求温度传给 Transformers。
+   - `temperature=0`：按 OpenAI-compatible 语义强制使用 greedy decoding，即使请求没有显式发送 `do_sample=false`。
 
-4. **仍缺少 JSON 约束**
+   当前 `src/judge.py` 只发送 `temperature=0.0` 和 `max_tokens=100`，不发送 `do_sample`。服务端 request schema 的 `do_sample` 默认值虽然为 `true`，Qwen handler 仍会根据零温度自动切换为 greedy，因此不需要修改 judge 调用代码。
+
+   Qwen2.5-7B-Instruct 自带的 `generation_config.json` 默认配置为 `do_sample=true`、`temperature=0.7`、`top_p=0.8`、`top_k=20`。如果只把 `do_sample` 覆盖为 `false`，Transformers 会提示这些采样参数在 greedy 模式下无效。handler 因此会在 greedy 模式显式使用中性值 `temperature=1.0`、`top_p=1.0`、`top_k=50`，避免继承模型的采样配置和产生误导性警告。服务还会拒绝负数、NaN 和 Infinity 温度。
+
+4. **温度与采样的关系**
+
+   `do_sample` 决定解码模式，`temperature` 只在采样模式下调整 token 概率分布：
+
+   - `do_sample=false` 时，每一步选择概率最高的 token，属于 greedy decoding；温度不会影响结果。
+   - `do_sample=true` 时，模型按概率分布采样；较低的正温度使分布更集中，较高温度使分布更平坦、输出随机性更高。
+   - `temperature=0` 不能作为 Transformers 的有效采样温度，因此服务将其解释为关闭采样。
+
+   当前本地 Qwen2.5-7B-Instruct 及 Transformers `generate()` 均支持 greedy decoding 和 sampling，也支持在 sampling 模式下设置正数 `temperature`。
+
+5. **仍缺少 JSON 约束**
 
    `LLMJudgeInterface._parse_response()` 可以从文本中截取 JSON，但如果模型输出不稳定，异常时会回退到：
 
@@ -476,7 +492,7 @@ qwen2.5-7B-Instruct
 |是否加载 judge 模型名 `qwen2.5-7B-Instruct`|是|满足本地 base judge 调用|
 |是否有 Qwen/Qwen2.5 文本模型 handler|是|满足|
 |是否有 judge 微调权重/LoRA adapter|未使用|不满足论文级 fine-tuned judge|
-|是否默认 deterministic JSON 输出|部分满足|项目侧使用 `temperature=0.0`，但未发送 `do_sample=false`，也没有 constrained JSON decoding；需要预检返回格式。|
+|是否默认 deterministic JSON 输出|部分满足|项目侧的 `temperature=0.0` 会由服务端转换为 greedy decoding，但仍没有 constrained JSON decoding；需要预检返回格式。|
 
 最终结论：当前 `/home/liuenguang24/deployed_models` 已可作为本地 Qwen base judge 服务使用。若要论文级复现，还需要部署 fine-tuned RTV judge 权重或 LoRA 合并产物，并增强 JSON 输出约束。正式实验建议使用 runtime audit log、`--strict_runtime` 和 `--judge_failure_policy raise`；若为了收集失败响应而使用 `fallback`，结果会明确标记 `metrics_valid=false`。
 
@@ -500,12 +516,11 @@ curl http://aias-compute-4:14545/v1/chat/completions \
     "model": "qwen2.5-7B-Instruct",
     "messages": [{"role": "user", "content": "Respond only JSON: {\"CAI\":0.0,\"OAV\":0.0,\"IAD\":0.0}"}],
     "max_tokens": 100,
-    "temperature": 0.0,
-    "do_sample": false
+    "temperature": 0.0
   }'
 ```
 
-这个 curl 显式传了 `do_sample=false` 用于验证服务端 greedy/JSON 行为；当前 `src/judge.py` 的正式评测请求还没有这个字段，只传 `temperature=0.0` 和 `max_tokens=100`。
+这个请求与当前 `src/judge.py` 的正式评测 payload 一致：只传 `temperature=0.0`，不传 `do_sample`。Qwen handler 会将其解释为 greedy decoding。
 
 live 评测接入：
 
