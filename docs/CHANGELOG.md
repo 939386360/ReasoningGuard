@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-06-24
+
+- 明确 agent 响应协议：保留 `REASONING`、`INTENT`、`TOOL_CALL` 三段格式，为正常工具调用增加完整 JSON 示例，并规定拒绝或无需调用时输出 `TOOL_CALL: None`。
+- 增强 agent response parser：支持标准/编号/Markdown 标题、同行内容、fenced JSON、全局 tool-call JSON、`arguments`/`parameters` 别名和自然语言拒绝识别，同时要求正式调用具备完整 `server/method/params`。
+- 将 live evaluation 改为 `parsed_tool_call`、`explicit_no_tool_call`、`unparseable_output` 三态处理，删除 scenario fallback tool call；拒绝样本进入 ASR/TCR 分母但不运行 defense，invalid 样本不进入指标并设置 `metrics_valid=false`。
+- records、audit 和汇总结果新增 agent outcome、parse error、tool-call source、defense invocation、invalid/refusal 计数等字段。
+- 精简 `AGENTS.md` 项目概要：只保留项目定位、PTG/RTV 核心机制、三类实验路径区别、正式实验入口和关键工程限制。
+- 新增 `docs/tech_notes/project_architecture_and_code_flow.md`：集中记录 benchmark 加载、agent 调用与解析、judge/RTV、PTG、ReasoningGuard、Guardrail、指标、audit、judge 微调和结果生成的文件与关键函数链路。
+- 更新 `AGENTS.md` 技术文档索引，加入项目架构与代码链路文档。
+- 扩充 `docs/tech_notes/agent_tool_call_outcome_handling.md`：收录 live 实验实际使用的 agent attack/benign、RTV LLM judge、judge 微调和 LlamaGuard 提示词，并标注各自源码与请求结构。
+- 梳理提示词导致的实验风险：agent 缺少原始 benign 任务和工具参数 schema、自定义输出协议未定义 no-tool 状态、runtime judge 缺少真实 tool call/provenance、judge 训练与推理模板不一致，以及 MCPTox 原始 system prompt 未进入当前 live 链路。
+- 补充提示词改进优先级：统一三态输出协议、采用原生 tool-calling 或 constrained JSON、结构化隔离不可信内容、补齐 judge 输入并禁止低风险静默 fallback。
+- 为 RTV LLM judge 增加 `inherit/fallback/raise` 失败策略；允许在 strict runtime 下显式选择 `fallback`，记录失败后使用 `CAI/OAV/IAD=0.1` 继续实验。
+- 为每次 judge 调用保存完整 prompt、原始响应、解析状态、分数、fallback 原因、异常和 latency，并通过 `RTVResult` 快照写入逐样本 `defenses` records 与 `judge.call_record` audit。
+- 汇总指标新增 `num_judge_failures` 和 `judge_fallback_rate`；fallback 样本继续参与 ASR/TCR，但对应 defense 设置 `metrics_valid=false`。
+- 明确历史 `results/quick_eval/table1_gpt4o_qwen_judge_records.json` 不含 RTV judge 结果；新 records 可从 `defenses.RTV-Only.rtv.judge_record` 和 ReasoningGuard 对应路径复核。
+- 补齐 quick benchmark 的 proxy agent 响应适配：确认 Proxy 继承共享的新版 prompt/parser，并新增 Chat/Responses content parts、显式 refusal、原生 tool-call arguments 的归一化，避免合法代理响应被误记为空响应或 parser failure。
+- 修复真实 agent prompt 格式化：转义 `AGENT_SYSTEM_PROMPT` JSON 示例中的大括号，避免 proxy/default 非 mock 路径在发送请求前因 `str.format()` 抛出 `KeyError: '"server"'`。
+
 ## 2026-06-23
 
 - 新增 runtime audit log：quick/live/multimodel evaluation 支持 `--audit_log`、`--no_audit_log` 和 `--strict_runtime`，将 agent、judge、LlamaGuard 和逐 defense verdict 的关键运行事件写入 JSONL。

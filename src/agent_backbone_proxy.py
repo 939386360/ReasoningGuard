@@ -80,34 +80,148 @@ def extract_chat_completion_text(data: Mapping[str, Any]) -> str:
         return ""
     message = first.get("message") or {}
     if isinstance(message, Mapping):
-        content = message.get("content")
-        if isinstance(content, str):
-            return content
+        content = _content_to_text(message.get("content"))
+        tool_calls = _native_tool_call_payloads(message)
+        refusal = _content_to_text(message.get("refusal"))
+        if content or tool_calls or refusal:
+            return _compose_agent_response(content, tool_calls, refusal)
     text = first.get("text")
     return text if isinstance(text, str) else ""
 
 
 def extract_responses_text(data: Mapping[str, Any]) -> str:
     output_text = data.get("output_text")
-    if isinstance(output_text, str):
-        return output_text
-
-    chunks: List[str] = []
+    chunks: List[str] = [output_text] if isinstance(output_text, str) else []
+    tool_calls: List[str] = []
+    refusals: List[str] = []
     for item in data.get("output") or []:
         if not isinstance(item, Mapping):
+            continue
+        item_type = str(item.get("type") or "").lower()
+        if item_type in ("function_call", "tool_call"):
+            tool_calls.extend(_native_tool_call_payloads(item))
+            continue
+        if item_type == "refusal":
+            refusal = _content_to_text(item.get("refusal") or item.get("content"))
+            if refusal:
+                refusals.append(refusal)
+            continue
+        if chunks and isinstance(output_text, str):
+            tool_calls.extend(_native_tool_call_payloads(item))
+            refusal = _content_to_text(item.get("refusal"))
+            if refusal:
+                refusals.append(refusal)
             continue
         for content in item.get("content") or []:
             if not isinstance(content, Mapping):
                 continue
-            text = content.get("text")
-            if isinstance(text, str):
+            content_type = str(content.get("type") or "").lower()
+            if content_type == "refusal":
+                refusal = _content_to_text(
+                    content.get("refusal") or content.get("text")
+                )
+                if refusal:
+                    refusals.append(refusal)
+                continue
+            text = _content_to_text(content)
+            if text:
                 chunks.append(text)
-            elif isinstance(text, Mapping) and isinstance(text.get("value"), str):
-                chunks.append(text["value"])
-    if chunks:
-        return "".join(chunks)
+        tool_calls.extend(_native_tool_call_payloads(item))
+        refusal = _content_to_text(item.get("refusal"))
+        if refusal:
+            refusals.append(refusal)
+    if chunks or tool_calls or refusals:
+        return _compose_agent_response(
+            "".join(chunks),
+            tool_calls,
+            "\n".join(refusals),
+        )
 
     return extract_chat_completion_text(data)
+
+
+def _content_to_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(_content_to_text(part) for part in content)
+    if not isinstance(content, Mapping):
+        return ""
+
+    text = content.get("text")
+    if isinstance(text, str):
+        return text
+    if isinstance(text, Mapping):
+        value = text.get("value")
+        if isinstance(value, str):
+            return value
+
+    value = content.get("value")
+    if isinstance(value, str):
+        return value
+
+    nested_content = content.get("content")
+    if nested_content is not content:
+        nested_text = _content_to_text(nested_content)
+        if nested_text:
+            return nested_text
+
+    if any(
+        key in content
+        for key in (
+            "tool_call",
+            "server",
+            "method",
+            "params",
+            "arguments",
+            "parameters",
+        )
+    ):
+        return json.dumps(dict(content), ensure_ascii=False)
+    return ""
+
+
+def _native_tool_call_payloads(container: Mapping[str, Any]) -> List[str]:
+    payloads: List[str] = []
+    candidates: List[Any] = []
+
+    tool_calls = container.get("tool_calls")
+    if isinstance(tool_calls, list):
+        candidates.extend(tool_calls)
+
+    function_call = container.get("function_call")
+    if isinstance(function_call, Mapping):
+        candidates.append(function_call)
+
+    if str(container.get("type") or "").lower() in ("function_call", "tool_call"):
+        candidates.append(container)
+
+    for candidate in candidates:
+        if not isinstance(candidate, Mapping):
+            continue
+        function = candidate.get("function")
+        source = function if isinstance(function, Mapping) else candidate
+        arguments = source.get("arguments")
+        if isinstance(arguments, str) and arguments.strip():
+            payloads.append(arguments.strip())
+        elif isinstance(arguments, Mapping):
+            payloads.append(json.dumps(dict(arguments), ensure_ascii=False))
+    return payloads
+
+
+def _compose_agent_response(
+    content: str,
+    tool_calls: List[str],
+    refusal: str,
+) -> str:
+    parts: List[str] = []
+    if content.strip():
+        parts.append(content.strip())
+    for payload in tool_calls:
+        parts.append(f"TOOL_CALL:\n{payload}")
+    if refusal.strip() and not tool_calls:
+        parts.append(f"TOOL_CALL:\nNone\n\nPROVIDER_REFUSAL:\n{refusal.strip()}")
+    return "\n\n".join(parts)
 
 
 class ProxyAgentBackbone(AgentBackbone):
@@ -141,12 +255,10 @@ class ProxyAgentBackbone(AgentBackbone):
                 payload = self._responses_payload()
                 data = self._post_json(payload)
                 text = extract_responses_text(data)
-                return self._checked_response_text(text)
-
-            payload = self._chat_payload()
-            data = self._post_json(payload)
-            text = extract_chat_completion_text(data)
-            return self._checked_response_text(text)
+            else:
+                payload = self._chat_payload()
+                data = self._post_json(payload)
+                text = extract_chat_completion_text(data)
         except Exception as exc:
             audit_event(
                 "agent",
@@ -165,6 +277,7 @@ class ProxyAgentBackbone(AgentBackbone):
             if is_strict_runtime():
                 raise
             return ""
+        return self._checked_response_text(text)
 
     def _checked_response_text(self, text: str) -> str:
         if not text.strip():

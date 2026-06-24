@@ -164,5 +164,7 @@ class RTVOnlyBaseline:
             "verdict": Verdict.APPROVE if result.approved else Verdict.ESCALATE,
             "latency_ms": result.latency_ms,
             "flagged": result.flagged_anomalies,
+            "anomaly_scores": result.anomaly_scores,
+            "rtv": result,
             "reason": result.escalation_reason or "No anomalies detected",
         }

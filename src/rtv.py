@@ -1,3 +1,4 @@
+import copy
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -20,6 +21,7 @@ class RTVResult:
     flagged_anomalies: List[str]
     latency_ms: float = 0.0
     escalation_reason: Optional[str] = None
+    judge_record: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -151,6 +153,7 @@ class ReasoningTraceVerifier:
         t1 = time.perf_counter()
         scores = self.judge.score_trace(trace, intent_summary, origin_tags)
         self.latency_profile["judge_scoring_ms"] = (time.perf_counter() - t1) * 1000
+        judge_record = self._judge_record(scores)
 
         t2 = time.perf_counter()
         flagged = [
@@ -184,7 +187,22 @@ class ReasoningTraceVerifier:
             flagged_anomalies=flagged,
             latency_ms=latency,
             escalation_reason=escalation,
+            judge_record=judge_record,
         )
+
+    def _judge_record(self, scores: Dict[str, float]) -> Dict[str, Any]:
+        getter = getattr(self.judge, "get_last_call_record", None)
+        if callable(getter):
+            record = getter()
+            if record is not None:
+                return copy.deepcopy(record)
+        return {
+            "parse_status": "heuristic",
+            "fallback_used": False,
+            "fallback_reason": None,
+            "parsed_scores": dict(scores),
+            "final_scores": dict(scores),
+        }
 
     def record_memory(
         self,

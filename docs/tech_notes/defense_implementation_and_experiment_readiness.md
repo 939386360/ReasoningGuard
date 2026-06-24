@@ -47,7 +47,7 @@
 
 ### 3.5 RTV-Only
 
-`RTVOnlyBaseline` 只运行 `ReasoningTraceVerifier`。`--judge_mode heuristic` 使用规则化 `ConstrainedJudgeModel`；`--judge_mode llm` 使用 `ExternalJudgeAdapter` 调用外部 judge endpoint。当前接入的是 base Qwen judge，不是 fine-tuned RTV verifier；judge 调用失败、解析失败和默认 `0.1` 分数都会进入 audit log。
+`RTVOnlyBaseline` 只运行 `ReasoningTraceVerifier`。`--judge_mode heuristic` 使用规则化 `ConstrainedJudgeModel`；`--judge_mode llm` 使用 `ExternalJudgeAdapter` 调用外部 judge endpoint。当前接入的是 base Qwen judge，不是 fine-tuned RTV verifier；judge 调用失败、解析失败和默认 `0.1` 分数都会进入 audit log，并随 `RTVResult.judge_record` 写入 records。
 
 ### 3.6 ReasoningGuard
 
@@ -70,16 +70,19 @@
 |---|---|
 |`agent.call_failed`|agent API 调用异常。|
 |`agent.empty_response`|agent 返回空文本。|
-|`agent.fallback_tool_call_constructed`|agent 没有可解析 tool call，evaluation 用 scenario 构造了 fallback tool call；正式实验应视为 invalid 信号。|
+|`agent.explicit_no_tool_call`|agent 明确拒绝或决定不调用工具；不运行 defense，但按失败结果计入 ASR/TCR 分母。|
+|`agent.unparseable_output`|agent response 既无合法 tool call，也无明确 no-tool；strict 下中断，非 strict 下记为 invalid。|
+|`defense.skipped`|因为 agent 没有形成真实工具调用，所以该 defense 未运行。|
 |`judge.call_failed`|judge endpoint/API 调用异常。|
 |`judge.parse_failed`|judge 返回内容无法解析成 `CAI/OAV/IAD` JSON。|
-|`judge.default_scores_used`|非 strict 模式下使用了低风险默认分数 `0.1`。|
+|`judge.default_scores_used`|按 failure policy 使用了低风险默认分数 `0.1`。|
+|`judge.call_record`|单次 judge 调用的完整 prompt、原始响应、解析状态、最终分数、fallback 与异常信息。|
 |`llamaguard.load_failed`|LlamaGuard 模型加载失败。|
 |`llamaguard.mock_fallback_used`|LlamaGuard fallback 到关键词 mock。|
 |`defense.verdict`|每个 defense 的逐样本 verdict/reason/latency。|
 |`run.summary` / `multi_run.summary`|运行汇总和 audit 计数。|
 
-正式实验建议加 `--strict_runtime`。如果需要先跑通流程，可以不加 strict，但必须检查 audit log 中是否存在 `fallback_used=true`、`mock_used=true` 或 `level=ERROR`。其中 `agent.fallback_tool_call_constructed` 不能作为正式结果接受；如果 agent 明确输出 `TOOL_CALL: None`，应按 agent 拒绝工具调用处理，而不是构造工具调用继续评估。
+正式实验建议加 `--strict_runtime --judge_failure_policy raise`。如果需要先记录失败、跑完整个实验，再改 judge prompt/parser，可使用 `--strict_runtime --judge_failure_policy fallback`。后者不会因 judge 调用或解析失败中止，但必须检查 audit log 中的 `judge.call_record`，并检查结果中的 `metrics_valid`、`num_invalid`、`num_judge_failures` 和 `judge_fallback_rate`。agent 明确 no-tool 时不会再构造工具调用，也不会运行 defense。
 
 ## 5. 推荐正式命令
 
@@ -115,6 +118,7 @@ python experiments/run_quick_benchmark_by_category.py \
   --judge_provider vllm \
   --judge_model qwen2.5-7B-Instruct \
   --judge_base_url "http://aias-compute-4:14545/v1/chat/completions" \
+  --judge_failure_policy raise \
   --llamaguard_model "/home/liuenguang24/models/Llama-Guard-3-8B" \
   --llamaguard_device auto \
   --llamaguard_fail_fast \
@@ -148,7 +152,9 @@ python experiments/run_quick_benchmark_by_category.py \
 - audit log 中没有 `level=ERROR`。
 - audit log 中没有 `fallback_used=true` 或 `mock_used=true`。
 - audit log 中没有 `judge.default_scores_used`。
-- `records_output` 中 agent response 不是空字符串，且能解析出合理 trace/intent/tool_call；若出现 `TOOL_CALL: None` 或 fallback tool call，应按 `agent_tool_call_outcome_handling.md` 的三态语义复核。
+- `records_output` 中检查 `agent_outcome`、`tool_call_source`、`agent_parse_error`、`raw_response`；`explicit_no_tool_call` 的 `tool_call` 应为 `null`。
+- `records_output` 中的 `defenses.RTV-Only.rtv.judge_record` 应记录 judge prompt、原始响应、解析状态和分数；ReasoningGuard 仅在 PTG 通过后存在对应记录。
+- 主表结果应满足 `metrics_valid=true`、`num_invalid=0`、`num_judge_failures=0` 且 `judge_fallback_rate=0`。
 
 可用 Python 快速检查 JSONL：
 
@@ -169,13 +175,22 @@ for row in bad[:20]:
 PY
 ```
 
-注意：`--runs 3` 时，`records_output` 仍主要保存第 1 次 run 的 agent records；逐 defense 判定应以 audit log 的 `defense.verdict` 为准。
+注意：`--runs 3` 时，`records_output` 仍主要保存第 1 次 run 的详细 records；所有 run 的 judge 调用应以 audit log 中的 `judge.call_record` 为准。
+
+如果当前目标是先跑完并收集 judge 格式问题，把正式命令中的策略改为：
+
+```bash
+--strict_runtime \
+--judge_failure_policy fallback
+```
+
+此时 judge 失败样本仍使用 `0.1` 继续计算，但对应 defense 的 `metrics_valid=false`。这些结果只能用于定位 prompt/parser 问题，修复后需要重新运行正式实验。
 
 ## 7. 仍未补齐的工程项
 
 1. **fine-tuned RTV judge**：当前接入 base Qwen，不是论文中的 fine-tuned constrained judge。
 2. **真实 MCP capability 接入**：PTG 仍依赖静态 `build_mcp_servers()`，后续应接入真实 server schema、permission 和 attestation metadata。
 3. **T3 memory provenance 链路**：MCPTox+ cross-session T3 需要真实 memory read/write ids 才能完整评估。
-4. **Agent tool-call outcome 语义**：后续应区分 parsed tool call、明确拒绝工具调用和不可解析输出，避免 `TOOL_CALL: None` 被 fallback 成伪造工具调用。
+4. **Agent tool-call outcome 语义**：三态 outcome 和指标处理已接入；后续重点是继续观察不同模型的格式漂移与 invalid rate。
 5. **完整 records 输出**：如需离线复核所有 run 的 ASR/TCR，后续可把 audit log 汇总为 per-run/per-defense records。
 6. **AttestMCP/PTG 边界校准**：当前 AttestMCP 已关闭 PTG 新增机制；如果论文 baseline 需要更细协议语义，应继续补齐。

@@ -140,6 +140,7 @@ def run_quick_evaluation(
     judge_provider: str = "vllm",
     judge_model: str = DEFAULT_LOCAL_JUDGE_MODEL,
     judge_base_url: Optional[str] = None,
+    judge_failure_policy: str = "inherit",
     llamaguard_mock: bool = False,
     llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
     llamaguard_device: str = "auto",
@@ -167,6 +168,7 @@ def run_quick_evaluation(
         judge_provider=judge_provider,
         judge_model=judge_model,
         judge_base_url=judge_base_url,
+        judge_failure_policy=judge_failure_policy,
         llamaguard_mock=llamaguard_mock,
         llamaguard_model=llamaguard_model,
         llamaguard_device=llamaguard_device,
@@ -193,6 +195,12 @@ def main():
     parser.add_argument("--judge_provider", default="vllm")
     parser.add_argument("--judge_model", default=DEFAULT_LOCAL_JUDGE_MODEL)
     parser.add_argument("--judge_base_url", default=live_table1.default_judge_base_url())
+    parser.add_argument(
+        "--judge_failure_policy",
+        choices=["inherit", "fallback", "raise"],
+        default="inherit",
+        help="Judge failure handling: inherit strict runtime, always fallback, or always raise.",
+    )
     parser.add_argument("--llamaguard_mock", action="store_true")
     parser.add_argument("--llamaguard_model", default="meta-llama/LlamaGuard-3-8B")
     parser.add_argument("--llamaguard_device", default="auto")
@@ -261,6 +269,7 @@ def main():
         judge_provider=args.judge_provider,
         judge_model=args.judge_model,
         judge_base_url=args.judge_base_url,
+        judge_failure_policy=args.judge_failure_policy,
         llamaguard_mock=args.llamaguard_mock,
         llamaguard_model=args.llamaguard_model,
         llamaguard_device=args.llamaguard_device,
@@ -390,6 +399,7 @@ if __name__ == "__main__":
 #   --judge_provider vllm \
 #   --judge_model qwen2.5-7B-Instruct \
 #   --judge_base_url http://aias-compute-4:14545/v1/chat/completions \
+#   --judge_failure_policy fallback \
 #   --llamaguard_model /home/liuenguang24/models/LlamaGuard-3-8B \
 #   --llamaguard_device auto \
 #   --llamaguard_fail_fast \

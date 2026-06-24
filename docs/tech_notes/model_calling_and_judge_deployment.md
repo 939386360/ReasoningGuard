@@ -38,8 +38,10 @@ agent 入口是 `src/agent_backbone.py`：
   - `REASONING`
   - `INTENT`
   - `TOOL_CALL`
-- `_parse_agent_response(response)`：从模型文本中解析 reasoning trace、intent summary 和 tool call JSON。
+- `_parse_agent_response_detailed(response)`：增强解析 reasoning trace、intent summary 和 tool call JSON，并区分 parsed tool call、明确 no-tool 和不可解析输出。
+- `_parse_agent_response(response)`：保留原三元组返回接口，用于兼容已有调用。
 - 如果解析出 `TOOL_CALL`，会包装成 `MCPMessage`，供 PTG/RTV/ReasoningGuard 后续验证。
+- 如果 agent 明确输出 no-tool，不会构造 `MCPMessage`，也不会运行 defense。
 
 ### 2.2 mock 与真实调用
 
@@ -277,7 +279,13 @@ url = normalize_chat_completions_url(self.base_url or DEFAULT_LOCAL_JUDGE_URL)
 }
 ```
 
-注意：当前项目侧 `_call_vllm()` 没有发送 `do_sample=false`，请求超时硬编码为 30 秒。如果 judge endpoint 抛错或模型返回不可解析文本，runtime audit log 会记录 `judge.call_failed` 或 `judge.parse_failed`；非 strict 模式下仍会记录 `judge.default_scores_used` 并返回 `CAI/OAV/IAD=0.1`，`--strict_runtime` 下会直接抛异常中止。
+注意：当前项目侧 `_call_vllm()` 没有发送 `do_sample=false`，请求超时硬编码为 30 秒。judge endpoint 抛错或模型返回不可解析文本时，runtime audit log 会记录 `judge.call_failed` 或 `judge.parse_failed`。失败行为由 `--judge_failure_policy` 控制：
+
+- `inherit`：继承 `--strict_runtime`；strict 下抛异常，非 strict 下使用 `CAI/OAV/IAD=0.1`。
+- `fallback`：无论是否 strict 都记录失败并使用 `0.1`，用于先跑完实验、后续离线分析。
+- `raise`：无论是否 strict 都抛异常。
+
+每次调用还会写入 `judge.call_record`，包含完整 prompt、原始响应、解析状态、解析分数、最终分数、fallback 原因、异常和 latency。`ReasoningTraceVerifier` 会立即快照该记录，避免 RTV-Only 与 ReasoningGuard 共用 judge 对象时互相覆盖。
 
 ### 3.3 LLM judge 如何接入 RTV
 
@@ -311,7 +319,47 @@ ReasoningGuard(rtv=ReasoningTraceVerifier(judge=judge))
 
 这条链路才会真实调用 LLM judge。
 
-### 3.4 Judge 微调路径
+### 3.4 Judge 结果记录与 fallback 指标
+
+历史文件 `results/quick_eval/table1_gpt4o_qwen_judge_records.json` 是本次改造前生成的，只包含 agent response/tool call 等字段，不包含 RTV judge prompt、原始响应、CAI/OAV/IAD 分数或解析状态，无法仅依靠该文件判断 judge 是否调用成功。
+
+新生成的 `records_output` 会在逐样本的 `defenses` 下保存逐 defense 结果。RTV-Only 的典型路径为：
+
+```text
+record.defenses["RTV-Only"].rtv.judge_record
+```
+
+ReasoningGuard 在 PTG 通过并实际运行 RTV 时使用：
+
+```text
+record.defenses["ReasoningGuard"].rtv.judge_record
+```
+
+`judge_record` 主要字段：
+
+```json
+{
+  "call_id": "...",
+  "provider": "vllm",
+  "model": "qwen2.5-7B-Instruct",
+  "endpoint": "http://.../v1/chat/completions",
+  "failure_policy": "fallback",
+  "prompt": "...",
+  "raw_response": "...",
+  "parse_status": "parsed | parse_failed | call_failed",
+  "parsed_scores": null,
+  "final_scores": {"CAI": 0.1, "OAV": 0.1, "IAD": 0.1},
+  "fallback_used": true,
+  "fallback_reason": "parse_failed",
+  "error_type": "JudgeResponseParseError",
+  "error_message": "...",
+  "latency_ms": 12.3
+}
+```
+
+使用 fallback 的样本仍参与 ASR/TCR 计算，便于先获得完整运行结果，但对应 defense 的结果会增加 `num_judge_failures`、`judge_fallback_rate`，并设置 `metrics_valid=false`，不能直接作为正式主表结果。
+
+### 3.5 Judge 微调路径
 
 项目提供了 judge 微调数据和训练脚本：
 
@@ -430,7 +478,7 @@ qwen2.5-7B-Instruct
 |是否有 judge 微调权重/LoRA adapter|未使用|不满足论文级 fine-tuned judge|
 |是否默认 deterministic JSON 输出|部分满足|项目侧使用 `temperature=0.0`，但未发送 `do_sample=false`，也没有 constrained JSON decoding；需要预检返回格式。|
 
-最终结论：当前 `/home/liuenguang24/deployed_models` 已可作为本地 Qwen base judge 服务使用。若要论文级复现，还需要部署 fine-tuned RTV judge 权重或 LoRA 合并产物，并增强 JSON 输出约束。正式实验建议使用 runtime audit log 和 `--strict_runtime`，避免 judge 调用或解析失败时静默返回低风险默认分数。
+最终结论：当前 `/home/liuenguang24/deployed_models` 已可作为本地 Qwen base judge 服务使用。若要论文级复现，还需要部署 fine-tuned RTV judge 权重或 LoRA 合并产物，并增强 JSON 输出约束。正式实验建议使用 runtime audit log、`--strict_runtime` 和 `--judge_failure_policy raise`；若为了收集失败响应而使用 `fallback`，结果会明确标记 `metrics_valid=false`。
 
 ## 5. 推荐接入方式
 
@@ -501,7 +549,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 4. 增加 judge 输出严格性。
 
-   至少应加入非法 JSON 重试、分数范围裁剪、缺字段报错或显式 fallback 标记，避免静默回退到低风险分数。
+   缺字段、非数字、空响应和越界分数当前已报解析错误，fallback 也已显式记录。后续仍应加入非法 JSON 重试、JSON schema/constrained decoding，并评估越界分数应直接失败还是裁剪。
 
 5. 给 live 模型调用增加 smoke test。
 

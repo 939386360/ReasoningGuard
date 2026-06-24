@@ -46,6 +46,11 @@ def main():
     parser.add_argument("--judge_provider", default="vllm")
     parser.add_argument("--judge_model", default=DEFAULT_LOCAL_JUDGE_MODEL)
     parser.add_argument("--judge_base_url", default=live_table1.default_judge_base_url())
+    parser.add_argument(
+        "--judge_failure_policy",
+        choices=["inherit", "fallback", "raise"],
+        default="inherit",
+    )
     parser.add_argument("--llamaguard_mock", action="store_true")
     parser.add_argument("--llamaguard_model", default="meta-llama/LlamaGuard-3-8B")
     parser.add_argument("--llamaguard_device", default="auto")
@@ -94,6 +99,7 @@ def main():
             judge_provider=args.judge_provider,
             judge_model=args.judge_model,
             judge_base_url=args.judge_base_url,
+            judge_failure_policy=args.judge_failure_policy,
             llamaguard_mock=args.llamaguard_mock,
             llamaguard_model=args.llamaguard_model,
             llamaguard_device=args.llamaguard_device,
