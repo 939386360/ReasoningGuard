@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-24
+
+- 修正本地 Qwen2.5-7B-Instruct handler 的生成参数语义：接收 judge 请求中的 `temperature`，在 `temperature=0` 时自动使用 greedy decoding，在正温度且允许采样时传递实际温度。
+- Qwen handler 在 greedy 模式显式覆盖模型内置的 `temperature/top_p/top_k` 采样默认值，避免 Transformers 的无效采样参数警告，并拒绝负数、NaN 和 Infinity 温度。
+- 更新 judge 部署文档，说明 `temperature` 与 `do_sample` 的关系以及 Qwen2.5-7B-Instruct 对 greedy decoding 和 sampling 的支持；项目 judge 调用代码保持不变。
+
 ## 2026-06-23
 
 - 新增 runtime audit log：quick/live/multimodel evaluation 支持 `--audit_log`、`--no_audit_log` 和 `--strict_runtime`，将 agent、judge、LlamaGuard 和逐 defense verdict 的关键运行事件写入 JSONL。
