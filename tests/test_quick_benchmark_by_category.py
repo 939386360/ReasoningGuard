@@ -103,7 +103,13 @@ class TestQuickBenchmarkByCategory(unittest.TestCase):
                     ]
                 }, f)
 
-            scenarios = load_benchmark_scenarios("mcptox", mcptox_data_dir=tmp, official=True, seed=42)
+            scenarios = load_benchmark_scenarios(
+                "mcptox",
+                mcptox_data_dir=tmp,
+                official=True,
+                official_variant="legacy",
+                seed=42,
+            )
 
         self.assertEqual(len(scenarios), 1)
         self.assertEqual(scenarios[0]["scenario_id"], "official-1")

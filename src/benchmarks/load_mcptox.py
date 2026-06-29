@@ -27,17 +27,55 @@ MCPTOX_DISTRIBUTION = {
     "capability_escalation": 40,
 }
 
+MCPTOX_DERIVED_OFFICIAL_FILENAME = "mcptox_official_derived_table1_200.json"
+MCPTOX_CURATED_OFFICIAL_FILENAME = "mcptox_official_derived_table1_200_curated.json"
+MCPTOX_LEGACY_OFFICIAL_FILENAME = "mcptox_official.json"
+
 
 def load_mcptox(
     data_dir: str = "data/mcptox",
     use_official: bool = True,
     seed: int = 42,
+    official_variant: str = "derived",
 ) -> List[Dict[str, Any]]:
-    official_path = os.path.join(data_dir, "mcptox_official.json")
-    if use_official and os.path.exists(official_path):
+    if use_official:
+        filenames = {
+            "derived": MCPTOX_DERIVED_OFFICIAL_FILENAME,
+            "curated": MCPTOX_CURATED_OFFICIAL_FILENAME,
+            "legacy": MCPTOX_LEGACY_OFFICIAL_FILENAME,
+        }
+        if official_variant not in filenames:
+            raise ValueError(
+                f"official_variant must be one of {sorted(filenames)}, got {official_variant!r}"
+            )
+        filename = filenames[official_variant]
+        official_path = os.path.join(data_dir, filename)
+        if not os.path.exists(official_path):
+            raise FileNotFoundError(
+                f"Requested MCPTox {official_variant} dataset not found: {official_path}"
+            )
         with open(official_path, encoding="utf-8") as f:
             data = json.load(f)
-        print(f"Loaded official MCPTox: {len(data['scenarios'])} scenarios from {official_path}")
+        if official_variant in {"derived", "curated"}:
+            if data.get("schema_revision") != 2:
+                raise ValueError(
+                    "The MCPTox-derived dataset is not schema revision 2. "
+                    "Regenerate it with: python -m "
+                    "src.benchmarks.adapt_mcptox_benchmark "
+                    "--variant derived_table1 --count 200 --seed 42"
+                )
+            from src.benchmarks.validate_mcptox_derived import validate_dataset
+
+            validate_dataset(data)
+        if official_variant == "curated":
+            from src.benchmarks.curate_mcptox_derived import validate_curated_dataset
+
+            validate_curated_dataset(data)
+        variant = data.get("variant", "legacy_adapted")
+        print(
+            f"Loaded official MCPTox ({variant}): "
+            f"{len(data['scenarios'])} scenarios from {official_path}"
+        )
         return data["scenarios"]
 
     return _generate_synthetic_mcptox(seed=seed)
@@ -81,9 +119,19 @@ To obtain the official MCPTox dataset:
    or refer to: Wang et al., "MCPTox: A Benchmark for Tool Poisoning
    on Real-World MCP Servers", AAAI-26, doi:10.1609/aaai.v40i42.40895
 
-2. Download the dataset and place it at: data/mcptox/mcptox_official.json
+2. Download the dataset and place it under third/MCPTox-Benchmark-main/
 
-3. Expected format:
+3. Generate the project-compatible derived Table 1 set:
+
+   python -m src.benchmarks.adapt_mcptox_benchmark --variant derived_table1
+
+   This writes: data/mcptox/mcptox_official_derived_table1_200.json
+
+   The legacy flattened adapter remains available with:
+
+   python -m src.benchmarks.adapt_mcptox_benchmark --variant legacy
+
+4. Expected format:
    {
      "scenarios": [
        {

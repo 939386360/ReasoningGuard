@@ -490,3 +490,23 @@ experiments/calibrate_thresholds.py::calibrate_thresholds()
 6. T3 memory provenance、真实 memory read IDs 和部分 origin tag 传递尚未完整接入 live 主链路。
 7. `run_all.py` 的 mock 数字和 `eval_runner.py` 的 simulation 不能证明 live defense 效果。
 8. 正式实验必须检查 audit log，而不能只看最终 results JSON。
+
+## MCPTox-derived v2 场景级目录（2026-06-27）
+
+quick/live 加载 schema revision 2 后，每条场景从 `template.clean_servers` 反序列化自己的
+agent catalog。进入 attack/benign 评估前，所有带 PTG 的 defense 都通过
+`replace_registry()` 清空旧能力并注册当前 clean catalog，防止跨场景残留。
+
+TDP/PI/CE 的 attack catalog 由 clean catalog 复制后叠加攻击能力；PTG 仍只持有 clean
+版本。RM 通过 `ToolResponseInjection` 传入 payload、server origin 和允许的首调用集合，
+只有首调用匹配后才进入第二轮。指标层使用多个 expected calls，详细 records 同时保存
+单数主引用、复数引用和 response injection 状态。
+
+## Codex curation 数据流（2026-06-27）
+
+`curate_mcptox_derived.py` 将生成文件映射为 200 个稳定 slot，每批按四类轮询导出 8 条。
+Codex 在 batch 中填写检查、决定和理由；import 对 accept/edit/replace 做结构校验，并将
+替换项重新置为 pending。finalize 只有在所有 slot 终审后才写 curated 文件。
+
+`load_mcptox(..., official_variant=...)` 现在显式区分 `derived`、`curated` 和 `legacy`。
+quick/live 的 `--official_variant` 透传该选择，不再根据多个文件的存在顺序猜测实验口径。

@@ -25,6 +25,7 @@ def load_benchmark_scenarios(
     benchmark: str,
     seed: int = 42,
     official: bool = False,
+    official_variant: str = "derived",
     mcptox_data_dir: str = "data/mcptox",
     agentpi_data_dir: str = "data/agentpi",
     mcptox_plus_data_dir: str = "data/mcptox_plus",
@@ -37,6 +38,7 @@ def load_benchmark_scenarios(
                 name,
                 seed=seed,
                 official=official,
+                official_variant=official_variant,
                 mcptox_data_dir=mcptox_data_dir,
                 agentpi_data_dir=agentpi_data_dir,
                 mcptox_plus_data_dir=mcptox_plus_data_dir,
@@ -45,7 +47,12 @@ def load_benchmark_scenarios(
 
     if selected == "mcptox":
         return _tag_benchmark(
-            load_mcptox(data_dir=mcptox_data_dir, use_official=official, seed=seed),
+            load_mcptox(
+                data_dir=mcptox_data_dir,
+                use_official=official,
+                seed=seed,
+                official_variant=official_variant,
+            ),
             "MCPTox",
         )
     if selected == "agentpi":
@@ -189,7 +196,19 @@ def main():
     parser.add_argument("--max_scenarios", type=int, default=200)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--data_dir", default="data/mcptox")
-    parser.add_argument("--official", action="store_true", help="Use official/adapted benchmark files when available; default is synthetic.")
+    parser.add_argument(
+        "--official",
+        action="store_true",
+        help=(
+            "Use the explicitly selected official/adapted benchmark variant."
+        ),
+    )
+    parser.add_argument(
+        "--official_variant",
+        choices=["derived", "curated", "legacy"],
+        default="derived",
+        help="MCPTox dataset selected when --official is enabled.",
+    )
     parser.add_argument("--agent_mock", action="store_true", help="Use mock agent for smoke tests.")
     parser.add_argument("--judge_mode", choices=["heuristic", "llm"], default="heuristic")
     parser.add_argument("--judge_provider", default="vllm")
@@ -233,6 +252,7 @@ def main():
         args.benchmark,
         seed=args.seed,
         official=args.official,
+        official_variant=args.official_variant,
         mcptox_data_dir=args.mcptox_data_dir or args.data_dir,
         agentpi_data_dir=args.agentpi_data_dir,
         mcptox_plus_data_dir=args.mcptox_plus_data_dir,
@@ -376,9 +396,10 @@ if __name__ == "__main__":
 #   --per_category 1 `
 #   --model GPT-4o
 #
-# 5. 使用中转站 GPT-4o agent + 自部署 Qwen judge 跑 MCPTox synthetic 主表链路（Linux/bash）。
+# 5. 使用中转站 GPT-4o agent + 自部署 Qwen judge 跑 MCPTox 主表链路（Linux/bash）。
 # judge 服务地址参数是 --judge_base_url。
-# 数据集默认使用 synthetic 200 条；只有显式加 --official 才会读取 adapted official。
+# 数据集默认使用 synthetic 200 条；显式加 --official 后优先读取 MCPTox-derived 200 条，
+# 缺失时再回退到 legacy adapted official。
 # export LLM_API_KEY="你的中转站 key"
 # python experiments/run_quick_benchmark_by_category.py \
 #   --benchmark mcptox \
@@ -417,7 +438,7 @@ if __name__ == "__main__":
 #   --llamaguard_model: LlamaGuard 的 Hugging Face model id 或 transformers-compatible 本地目录。
 #   --llamaguard_device: 传给 transformers device_map 的值，例如 auto、cuda:0、cpu。
 #   --llamaguard_fail_fast: LlamaGuard 加载失败时直接报错，正式实验建议加。
-#   --official: 调试/对比 adapted official 时才加；主表 synthetic 口径不要加。
+#   --official: 使用 MCPTox-derived 200 条时加；不加则保持 synthetic 200 口径。
 #   --per_category / --max_scenarios / --runs / --seed: 控制抽样规模、总样本数、多次运行和随机种子。
 #   --benign_ratio: 每个 attack scenario 附带 benign case 的概率；主表默认 0.30。
 #   --output / --tex_output / --records_output: JSON 结果、LaTeX 表格和逐样本记录输出路径。

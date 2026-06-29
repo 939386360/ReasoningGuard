@@ -27,6 +27,7 @@ class MCPCapability:
     description: str
     methods: List[str]
     permissions: List[str]
+    input_schema: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

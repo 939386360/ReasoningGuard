@@ -54,6 +54,12 @@ class ProtocolAttestedToolGateway:
     def register_server(self, server: MCPServer):
         self.server_capabilities[server.server_id] = server.capabilities
 
+    def replace_registry(self, servers: List[MCPServer]) -> None:
+        """Replace trusted capabilities for a scenario without retaining stale entries."""
+        self.server_capabilities = {
+            server.server_id: server.capabilities for server in servers
+        }
+
     def verify_invocation(
         self,
         msg: MCPMessage,
