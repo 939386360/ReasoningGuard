@@ -22,7 +22,7 @@
 
 正式实验应使用 quick/live 主链路，不启用 agent 或 LlamaGuard mock；需要真实 judge 时显式使用 `--judge_mode llm`，并启用 `--strict_runtime` 和 audit log。
 
-当前项目仍是研究原型：MCP capability 来自静态配置，agent 使用自定义文本 tool-call 协议，base Qwen judge 不等于论文 fine-tuned verifier，T3 memory provenance 和真实 MCP schema 尚未完整接入。详细目录职责、函数调用链和数据流见 `docs/tech_notes/project_architecture_and_code_flow.md`。
+当前项目仍是研究原型：MCP capability 来自静态配置，agent 使用自定义文本 tool-call 协议，base Qwen judge 不等于论文 fine-tuned verifier，T3 memory provenance 和真实 MCP schema 尚未完整接入。详细目录职责、函数调用链和数据流见 `docs/tech_notes/project_architecture_and_data_flow.md`。
 
 ## 2. 项目文档设置
 
@@ -40,15 +40,13 @@
 
 |技术文档|内容|什么时候查看|
 |---|---|---|
-|`docs/tech_notes/project_architecture_and_code_flow.md`|项目组件、实验入口、关键文件与函数调用链、数据和输出流|理解整体架构、选择实验入口、排查跨模块调用或新增链路时|
-|`docs/tech_notes/dataset_format.md`|数据集格式说明|处理数据读取、样本结构、标注格式时|
-|`docs/tech_notes/model_calling_and_judge_deployment.md`|agent 基础模型、RTV judge 调用链路与本地部署兼容性分析|排查真实模型调用、接入 vLLM/OpenAI-compatible endpoint、部署 judge 模型时|
-|`docs/tech_notes/defense_implementation_and_experiment_readiness.md`|防御方法实现、mock 风险与真实实验就绪性梳理|梳理 No Defense、AttestMCP、Guardrail、PTG、RTV、ReasoningGuard 是否真实运行及正式实验前检查项时|
-|`docs/tech_notes/agent_tool_call_outcome_handling.md`|agent 工具调用结果语义：`TOOL_CALL: None`、解析失败、fallback tool call、提示词与 ASR/TCR 处理|排查 agent response parsing、工具调用拒绝、提示词或 fallback 污染正式实验结果时|
-|`docs/tech_notes/collab_code3_integration_decision.md`|`collab_code3` 整合决策：采纳项、拒绝项、数据流和剩余限制|整合同事候选代码、排查 attack template/context 语义或复核 ASR/TCR expected-call 改动时|
-|`docs/tech_notes/mcptox_derived_table1_dataset.md`|MCPTox-derived 200 条四类主表数据集：抽取规则、派生边界、生成命令和 loader 优先级|处理 `data/mcptox/mcptox_official_derived_table1_200.json`、解释 response/capability 派生语义或复现实验数据口径时|
-|`docs/tech_notes/mcptox_manual_curation_workflow.md`|MCPTox-derived 的 Codex 逐条语义审查、批次状态、编辑/替换边界与 curated 文件生成流程|逐批审查 case、恢复审查状态、替换问题样本或使用 curated 数据运行正式实验时|
-|`docs/tech_notes/mcptox_dataset_construction_sop.md`|MCPTox-derived 从确定性转换、静态校验到 LLM-assisted 语义审查、GPT 提示模板和论文报告的完整 SOP|复现数据构建、设计新的 LLM 审查运行、撰写论文 Dataset Construction 或质量控制部分时|
+|`docs/tech_notes/project_architecture_and_data_flow.md`|项目目标、攻击位置、三类评估路径、代码组件、核心数据对象及完整生命周期|第一次理解项目，或定位数据从 benchmark 到 results/audit 的流向时|
+|`docs/tech_notes/defense_method.md`|PTG、RTV、ReasoningGuard、六种 defense 的真实判定逻辑、结果对象和论文/代码边界|解释 `BLOCK/ESCALATE/APPROVE`、设计消融或核对防御实现时|
+|`docs/tech_notes/evaluation_method.md`|抽样、攻击投递、agent outcome、expected-call matcher、ASR/TCR/Latency、CI 和有效性规则|解释实验设计、指标分母、records 或论文 Evaluation 口径时|
+|`docs/tech_notes/experiment_runbook.md`|实验入口、模型与 judge 配置、smoke/formal 命令、CLI 参数、输出检查和故障排查|实际启动 quick/live 实验、部署 endpoint 或检查正式结果时|
+|`docs/tech_notes/dataset_construction_sop.md`|MCPTox-derived 的确定性转换、结构校验、逐条语义审查、curated 发布门禁与论文表述|构建、继续审查或复现正式数据集时|
+
+`docs/tech_notes/archive/` 保存重组前历史长文和设计决策，不属于当前默认阅读路径。
 
 ## 3. 相关资料位置
 

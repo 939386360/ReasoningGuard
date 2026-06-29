@@ -2,6 +2,9 @@
 
 ## 2026-06-29
 
+- 重组技术文档为五份当前权威文档：项目架构与数据链路、核心防御方法、核心评估方法、实验运行手册和数据集构建 SOP；删除旧顶层文档，历史长文和整合决策统一移入 `docs/tech_notes/archive/`。
+- 防御文档明确记录 PTG cross-server 检查恒通过、intent 关键词启发式、普通 REQUEST origin 检查范围和 T3 memory provenance 未进入 live 主链路等实现边界；评估文档集中定义 agent outcome、expected-call matcher、指标分母、CI 和 `metrics_valid`。
+
 - 完成 MCPTox-derived 200 条数据的 Codex 逐条语义审查并生成 `mcptox_official_derived_table1_200_curated.json`：74 条直接接受、126 条审计后编辑、60 次候选替换；删除 111 条无效 benign reference 和 22 条无效 malicious reference。
 - 最终 curated 分布保持 TDP/RM/PI/CE = 55/55/50/40，`validate-curated` 通过；逐例 rationale、编辑前后 payload、删除引用及 27 个批次审计记录保存在 `data/mcptox/curation/`。
 - 新增 `mcptox_dataset_construction_sop.md`，统一记录确定性转换、静态门禁、LLM-assisted 语义审查、GPT/Codex 提示模板、复现元数据和论文中文描述；明确该流程不是人工标注或 MCPTox 官方四类协议。
