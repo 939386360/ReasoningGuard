@@ -2,6 +2,7 @@
 
 ## 2026-06-29
 
+- 在实验运行手册中补充 MCPTox-derived curated 200 条正式 Linux 命令：显式使用 `--official --official_variant curated`、四类过滤、`per_category=55`、真实 agent/judge/LlamaGuard、strict runtime 和独立结果目录，并说明三轮聚合、第一轮 records 与全轮 audit 的产物语义。
 - 重组技术文档为五份当前权威文档：项目架构与数据链路、核心防御方法、核心评估方法、实验运行手册和数据集构建 SOP；删除旧顶层文档，历史长文和整合决策统一移入 `docs/tech_notes/archive/`。
 - 防御文档明确记录 PTG cross-server 检查恒通过、intent 关键词启发式、普通 REQUEST origin 检查范围和 T3 memory provenance 未进入 live 主链路等实现边界；评估文档集中定义 agent outcome、expected-call matcher、指标分母、CI 和 `metrics_valid`。
 

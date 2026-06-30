@@ -85,27 +85,53 @@ python experiments/run_quick_benchmark_by_category.py --benchmark mcptox --offic
 
 预期选择四类各一条 attack scenario，并生成 results、records、audit 和 LaTeX。数值不能用于论文。
 
-## 5. 正式单模型实验
+## 5. Curated 200 条正式单模型实验
 
-```powershell
-python experiments/run_quick_benchmark_by_category.py `
-  --benchmark mcptox --official --official_variant curated `
-  --per_category 200 --max_scenarios 200 `
-  --model GPT-4o --runs 3 --seed 42 --benign_ratio 0.30 `
-  --agent_backend proxy --agent_base_url $env:LLM_API_BASE_URL `
-  --agent_api_style chat `
-  --judge_mode llm --judge_provider vllm `
-  --judge_model qwen2.5-7B-Instruct --judge_base_url $env:JUDGE_BASE_URL `
-  --judge_failure_policy inherit `
-  --llamaguard_model meta-llama/LlamaGuard-3-8B `
-  --llamaguard_device auto --llamaguard_fail_fast --strict_runtime `
-  --output results/formal_gpt4o/results.json `
-  --records_output results/formal_gpt4o/records.json `
-  --tex_output results/formal_gpt4o/table.tex `
-  --audit_log results/formal_gpt4o/audit.jsonl
+先在 shell 中设置 agent relay 密钥：
+
+```bash
+export LLM_API_KEY=<your-api-key>
 ```
 
-不要添加 `--agent_mock` 或 `--llamaguard_mock`。`per_category=200` 是每类上限；现有四类合计 200，再由 `max_scenarios` 限制总数。
+完整 Linux 命令如下：
+
+```bash
+python experiments/run_quick_benchmark_by_category.py \
+  --benchmark mcptox \
+  --official \
+  --official_variant curated \
+  --categories tool_description_poisoning,parameter_injection,response_manipulation,capability_escalation \
+  --per_category 55 \
+  --max_scenarios 200 \
+  --runs 3 \
+  --seed 42 \
+  --data_dir data/mcptox \
+  --model GPT-4o \
+  --agent_backend proxy \
+  --agent_base_url https://llm-api.net/v1/chat/completions \
+  --agent_api_style chat \
+  --agent_api_key_env LLM_API_KEY \
+  --agent_model_map '{GPT-4o:gpt-4o}' \
+  --agent_timeout 60 \
+  --judge_mode llm \
+  --judge_provider vllm \
+  --judge_model qwen2.5-7B-Instruct \
+  --judge_base_url http://aias-compute-2:14545/v1/chat/completions \
+  --judge_failure_policy inherit \
+  --llamaguard_model /home/liuenguang24/models/Llama-Guard-3-8B \
+  --llamaguard_device auto \
+  --llamaguard_fail_fast \
+  --benign_ratio 0.30 \
+  --strict_runtime \
+  --audit_log results/quick_eval/curated200/table1_gpt4o_qwen_judge_audit.jsonl \
+  --output results/quick_eval/curated200/table1_gpt4o_qwen_judge_results.json \
+  --tex_output results/quick_eval/curated200/table1_gpt4o_qwen_judge.tex \
+  --records_output results/quick_eval/curated200/table1_gpt4o_qwen_judge_records.json
+```
+
+该命令显式加载 `data/mcptox/mcptox_official_derived_table1_200_curated.json`。`per_category=55` 覆盖四类最大规模，最终选择 TDP/PI/RM/CE = 55/50/55/40，共 200 条 attack scenario；`per_category=5` 只会选择 20 条。
+
+`runs=3` 的 results 和 LaTeX 是三轮聚合结果；records 只保存第一轮，audit 保存全部三轮并以 `run_idx` 区分。不要添加 `--agent_mock`、`--llamaguard_mock` 或 `--no_audit_log`。
 
 多模型正式实验应逐模型重复该命令并修改模型映射和输出目录。当前 multimodel CLI 没有 curated variant 和 records 接口，不作为 curated 主表入口。
 
@@ -116,6 +142,7 @@ python experiments/run_quick_benchmark_by_category.py `
 |参数|默认值|作用|
 |---|---:|---|
 |`--benchmark`|`mcptox`|选择 `mcptox/agentpi/mcptox_plus/all`|
+|`--data_dir`|`data/mcptox`|MCPTox 数据目录；本命令从这里读取 curated 文件|
 |`--official`|关闭|加载显式 official/adapted 文件；关闭时可能使用 synthetic 数据|
 |`--official_variant`|`derived`|选择 `derived/curated/legacy`|
 |`--per_category`|2|每个 benchmark/category 的抽样上限|
@@ -131,11 +158,19 @@ python experiments/run_quick_benchmark_by_category.py `
 |`--model`|`GPT-4o`|显示名及默认模型映射 key|
 |`--agent_backend`|`proxy`|relay 或 provider-specific backend|
 |`--agent_mock`|关闭|mock agent，正式实验不得使用|
+|`--agent_base_url`|环境变量或默认 relay|agent OpenAI-compatible endpoint|
 |`--agent_api_style`|`chat`|chat/responses/auto|
+|`--agent_api_key_env`|`LLM_API_KEY`|读取 relay API key 的环境变量名|
+|`--agent_model_map`|空|显示模型名到 endpoint 模型名的 JSON 映射|
 |`--agent_timeout`|60|relay 请求超时秒数|
 |`--judge_mode`|`heuristic`|规则或外部 LLM judge|
+|`--judge_provider`|`vllm`|judge provider|
+|`--judge_model`|本地 Qwen 默认值|judge endpoint 的 served model 名|
+|`--judge_base_url`|环境变量或项目默认值|judge chat-completions endpoint|
 |`--judge_failure_policy`|`inherit`|继承 strict、固定 fallback 或固定 raise|
 |`--llamaguard_mock`|关闭|关键词 mock，只用于 smoke|
+|`--llamaguard_model`|LlamaGuard-3-8B|Hugging Face ID 或本地模型目录|
+|`--llamaguard_device`|`auto`|Transformers device map|
 |`--llamaguard_fail_fast`|关闭|模型加载失败立即终止|
 
 ### 输出与完整性
@@ -151,6 +186,8 @@ python experiments/run_quick_benchmark_by_category.py `
 |`--strict_runtime`|agent 解析、judge 和 LlamaGuard fallback 时失败|
 
 完整参数以 `python <entry> --help` 为准。
+
+本命令刻意不传 `--agent_mock`、`--llamaguard_mock` 和 `--no_audit_log`。`--agentpi_data_dir`、`--mcptox_plus_data_dir` 对 `benchmark=mcptox` 不生效；`--mcptox_data_dir` 与已指定的 `--data_dir` 重复；隐藏兼容参数 `--results_output` 会覆盖 `--output`，因此也不使用。
 
 ## 7. 运行后检查
 
