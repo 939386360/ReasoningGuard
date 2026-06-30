@@ -1,0 +1,7 @@
+Loaded official MCPTox (derived_table1_curated): 200 scenarios from data/mcptox/mcptox_official_derived_table1_200_curated.json
+Selected scenarios by benchmark/category:
+  MCPTox-derived::capability_escalation: 5
+  MCPTox-derived::parameter_injection: 5
+  MCPTox-derived::response_manipulation: 5
+  MCPTox-derived::tool_description_poisoning: 5
+Total selected attack scenarios: 20
