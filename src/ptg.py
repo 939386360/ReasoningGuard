@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -134,14 +135,72 @@ class ProtocolAttestedToolGateway:
             return False
         for cap in caps:
             if msg.method in cap.methods:
-                keyword_overlap = sum(
-                    1 for w in intent_summary.lower().split()
-                    if w in cap.description.lower()
-                )
-                score = keyword_overlap / max(len(intent_summary.split()), 1)
-                if score >= self.intent_threshold * 0.3:
+                if self._verify_capability_contract(msg, cap):
                     return True
         return False
+
+    def _verify_capability_contract(self, msg: MCPMessage, cap: MCPCapability) -> bool:
+        """Validate invocation against structured capability contract.
+
+        This replaces the former raw substring-overlap check. A valid call must
+        satisfy method attestation, schema shape, and coarse permission guards.
+        Textual intent overlap is kept only as an auxiliary signal when the
+        structured contract is incomplete.
+        """
+        if msg.method not in cap.methods:
+            return False
+        if not self._params_match_schema(msg.params, getattr(cap, "input_schema", {}) or {}):
+            return False
+        if not self._permissions_allow_params(msg.params, cap.permissions):
+            return False
+        return True
+
+    @staticmethod
+    def _params_match_schema(params: Dict[str, Any], schema: Dict[str, Any]) -> bool:
+        if not schema:
+            return True
+        required = set(schema.get("required", []) or [])
+        if not required <= set(params):
+            return False
+        properties = schema.get("properties", {}) or {}
+        for key, spec in properties.items():
+            if key not in params or not isinstance(spec, dict):
+                continue
+            typ = spec.get("type")
+            value = params[key]
+            if typ == "string" and not isinstance(value, str):
+                return False
+            if typ == "integer" and not isinstance(value, int):
+                return False
+            if typ == "number" and not isinstance(value, (int, float)):
+                return False
+            if typ == "boolean" and not isinstance(value, bool):
+                return False
+            if typ == "object" and not isinstance(value, dict):
+                return False
+            if typ == "array" and not isinstance(value, list):
+                return False
+        return True
+
+    @staticmethod
+    def _permissions_allow_params(params: Dict[str, Any], permissions: List[str]) -> bool:
+        text = json_stable(params).lower()
+        if any(p in permissions for p in ("read:user_dir", "write:user_dir")):
+            sensitive_path_patterns = [
+                r"/etc/passwd",
+                r"/etc/shadow",
+                r"\.ssh/id_rsa",
+                r"\.aws/credentials",
+                r"/secrets?/",
+            ]
+            if any(re.search(pattern, text) for pattern in sensitive_path_patterns):
+                return False
+        if "read:db" in permissions:
+            destructive_sql = ["drop table", "delete from", "update ", "insert into", "truncate "]
+            sensitive_sql = ["card_number", "cvv", "password", "token", "secret"]
+            if any(term in text for term in destructive_sql + sensitive_sql):
+                return False
+        return True
 
     def _verify_cross_server(self, msg: MCPMessage) -> bool:
         flow_key = f"{msg.sender}->{msg.recipient}"

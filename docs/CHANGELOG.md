@@ -2,6 +2,9 @@
 
 ## 2026-07-03
 
+- 针对 `table1_0629_run1_5case_analysis.md` 的修复落地：live matcher 新增 server/method alias、JSON 标量归一化和 optional-param canonicalization，新增 agent/delivery/defense 条件漏斗指标，并将 PTG 改为基于 capability schema、参数和 permission 的结构化 contract 校验。
+- RTV/ReasoningGuard 增加 invocation context：judge 现在可观察 user query、实际 recipient/method/params、expected benign/malicious call、capability 和 server response evidence；judge prompt 明确 IAD 必须优先比较真实 invocation，而非仅依赖 agent 自述 intent。
+- 新增 `docs/tech_notes/table1_0629_code_improvements_summary.md`，记录本次代码修复、验证命令和后续正式重跑检查项；相关测试扩展到 87 个，quick smoke benchmark 通过。
 - 新增 `table1_0629_run1_5case_analysis.md`：基于三轮 audit 和第一轮 records 分解 No Defense 45.9% ASR、PTG/ReasoningGuard 53.3% TCR，量化 RM 投递、exact matcher、PTG check 和 RTV 增量，并明确该次运行因超时 invalid 且未启用 strict runtime，只能作为诊断结果。
 - 明确当前实验与原始 MCPTox 在模型、200 条 derived/curated 数据、RM/CE 攻击面、自定义 reasoning/tool-call 协议和成功标签上的差异；原始 `gpt-4o-mini` 结果、mock 论文 72.8% 与当前 GPT-4o live 结果不可直接比较。
 - 在防御、评估、运行和数据集 SOP 中补充通用解释边界：PTG 字面 intent overlap 同时造成攻击拦截和 benign false block，RTV judge 未观察实际调用参数，curated validator 尚未约束 description 语言/空值和 identifier canonicalization。
