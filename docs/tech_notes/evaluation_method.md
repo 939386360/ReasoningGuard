@@ -242,3 +242,15 @@ metrics_valid = (num_invalid == 0) AND (num_judge_failures == 0)
 
 正式结果必须同时保留 results、records 和 audit。具体命令与检查步骤见 [experiment_runbook.md](experiment_runbook.md)。
 
+## 11. 低 ASR/TCR 的归因顺序
+
+解释主表结果时应依次区分四层，不能只看最终百分比：
+
+1. **Attack delivery**：catalog 是否实际被替换，RM 首次调用是否匹配且 response 是否注入。
+2. **Agent outcome**：模型是否拒绝、输出是否可解析、产生的是 benign、malicious 还是其他调用。
+3. **Expected-call matcher**：server/method alias、JSON 标量类型、optional default 和多参考调用是否影响 exact match。
+4. **Defense verdict**：对 agent 已正确生成的 benign/malicious candidate，各 check 分别造成多少批准或阻断。
+
+TCR 应至少同时检查 No Defense 的 agent-only completion ceiling，以及 defense 对这些已正确调用的 conditional approval。ASR 与其他工作对比前，必须确认数据子集、模型、攻击载体、system prompt、输出协议和成功标签完全一致；MCPTox-derived 不能直接套用原始 MCPTox 或 mock 论文数字。
+
+`results/0629_run1_5case` 的完整归因示例见 [table1_0629_run1_5case_analysis.md](table1_0629_run1_5case_analysis.md)。

@@ -195,3 +195,10 @@ return APPROVE
 
 正式实验审计要求和命令见 [experiment_runbook.md](experiment_runbook.md)，成功判定和指标分母见 [evaluation_method.md](evaluation_method.md)。
 
+## 8. 实测结果的解释边界
+
+PTG 的 ASR 降幅与 TCR 损失必须按具体 check 分解，不能把所有 `BLOCK` 都解释为 protocol attestation 成功。当前 `intent_entailment` 是语言敏感的字面重叠启发式；capability description 为空、字面 `None`、与 intent 语言不同或使用同义表达时，都可能误拦合法调用。同一机制也可能阻断恶意调用，因此需要同时报告 attack true block 和 benign false block。
+
+RTV 的当前 LLM judge prompt 只观察 reasoning trace、intent 和 origin tags，不包含实际 `MCPMessage` 的 recipient、method 和 params。若 trace 已把恶意动作自洽化，judge 无法仅根据声明 intent 判断真实 invocation 是否偏离。RTV 结果应报告在 PTG 已通过调用上的增量检出率，而不只比较 RTV-Only 与 No Defense 的总 ASR。
+
+`results/0629_run1_5case` 的实测分解、数据描述质量、PTG check 统计和 RTV 增量见 [table1_0629_run1_5case_analysis.md](table1_0629_run1_5case_analysis.md)。

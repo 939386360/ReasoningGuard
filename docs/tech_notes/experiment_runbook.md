@@ -239,3 +239,7 @@ defense.error
 |`num_benign=0`|benign ratio、seed 和样本数；TCR=0 不是有效测量|
 |数据数量不对|`--official`、variant、per-category 和 max-scenarios|
 |多模型没有 curated 数据|逐模型使用 quick 命令；当前 multimodel CLI 无 variant 参数|
+
+### 结果诊断案例
+
+若出现“No Defense ASR 明显低于参考值”或“PTG/ReasoningGuard TCR 偏低”，不要先调阈值。应按 attack delivery、agent outcome、exact matcher、defense check 的顺序拆分，并核对参考实验是否使用相同模型、数据和 prompt。`results/0629_run1_5case` 的逐层分析见 [table1_0629_run1_5case_analysis.md](table1_0629_run1_5case_analysis.md)。该次运行因 `strict_runtime=false` 且存在一次超时空响应而 `metrics_valid=false`，只能作为诊断案例。

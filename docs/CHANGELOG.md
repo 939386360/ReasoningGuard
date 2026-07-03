@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-03
+
+- 新增 `table1_0629_run1_5case_analysis.md`：基于三轮 audit 和第一轮 records 分解 No Defense 45.9% ASR、PTG/ReasoningGuard 53.3% TCR，量化 RM 投递、exact matcher、PTG check 和 RTV 增量，并明确该次运行因超时 invalid 且未启用 strict runtime，只能作为诊断结果。
+- 明确当前实验与原始 MCPTox 在模型、200 条 derived/curated 数据、RM/CE 攻击面、自定义 reasoning/tool-call 协议和成功标签上的差异；原始 `gpt-4o-mini` 结果、mock 论文 72.8% 与当前 GPT-4o live 结果不可直接比较。
+- 在防御、评估、运行和数据集 SOP 中补充通用解释边界：PTG 字面 intent overlap 同时造成攻击拦截和 benign false block，RTV judge 未观察实际调用参数，curated validator 尚未约束 description 语言/空值和 identifier canonicalization。
+- 在 `AGENTS.md` 增加本次诊断文档索引，并记录只读 Python 统计使用 `-B` 以避免刷新已跟踪 `.pyc` 的经验。
+
 ## 2026-06-29
 
 - 在实验运行手册中补充 MCPTox-derived curated 200 条正式 Linux 命令：显式使用 `--official --official_variant curated`、四类过滤、`per_category=55`、真实 agent/judge/LlamaGuard、strict runtime 和独立结果目录，并说明三轮聚合、第一轮 records 与全轮 audit 的产物语义。

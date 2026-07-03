@@ -145,6 +145,17 @@ python -m src.benchmarks.curate_mcptox_derived validate-curated data/mcptox/mcpt
 
 分布保持 TDP 55、PI 50、RM 55、CE 40，reviewer type 为 `codex_manual_semantic_review`。重新生成或审查后应以新文件元数据为准。
 
+### 7.1 当前未覆盖的 runtime-readiness 门禁
+
+现有 validator 和语义审查保证 query、payload、attack surface 与 expected calls 的结构和语义对齐，但尚未保证以下运行时属性：
+
+- capability description 非空、非字面 `None`，且与 agent intent 使用兼容语言；
+- server/method identifier 在 dataset、agent 输出和 PTG registry 之间具备统一 canonical form；
+- expected reference 中的 optional default、JSON 标量类型和 URL 编码具有固定匹配规则；
+- CE 的 `extension/<method>` namespace 不会被模型还原成原始 method。
+
+这些属性会影响 PTG intent entailment、attestation 和 ASR/TCR matcher。它们不应通过降低 defense 阈值掩盖，而应在下一版 curated schema/validator 中显式建模。当前 200 条数据的 description 分布及实际影响见 [table1_0629_run1_5case_analysis.md](table1_0629_run1_5case_analysis.md)。
+
 ## 8. LLM reviewer 输出约定
 
 LLM 每次只审查当前 batch，不直接重写整个数据集。每条 review 必须返回：
