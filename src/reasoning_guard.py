@@ -25,6 +25,7 @@ class ReasoningGuard:
         intent_summary: str,
         trace: ReasoningTrace,
         memory_read_ids: Optional[List[str]] = None,
+        invocation_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         ptg_result = self.ptg.verify_invocation(msg, intent_summary, trace)
 
@@ -38,7 +39,13 @@ class ReasoningGuard:
             }
 
         origin_tags = msg.provenance_tags if msg.msg_type.value == "sampling" else None
-        rtv_result = self.rtv.verify(trace, intent_summary, origin_tags, memory_read_ids)
+        rtv_result = self.rtv.verify(
+            trace,
+            intent_summary,
+            origin_tags,
+            memory_read_ids,
+            invocation_context=invocation_context,
+        )
 
         total_latency = ptg_result.latency_ms + rtv_result.latency_ms
 
@@ -158,8 +165,14 @@ class RTVOnlyBaseline:
         trace: ReasoningTrace,
         intent_summary: str,
         origin_tags: Optional[List[Dict[str, str]]] = None,
+        invocation_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        result = self.rtv.verify(trace, intent_summary, origin_tags)
+        result = self.rtv.verify(
+            trace,
+            intent_summary,
+            origin_tags,
+            invocation_context=invocation_context,
+        )
         return {
             "verdict": Verdict.APPROVE if result.approved else Verdict.ESCALATE,
             "latency_ms": result.latency_ms,
