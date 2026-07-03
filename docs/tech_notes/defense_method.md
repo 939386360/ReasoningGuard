@@ -170,6 +170,34 @@ return APPROVE
 
 `Guardrail` 默认 `llamaguard_mock=False`。模型加载失败时，非 strict 模式会自动退化为关键词 mock 并写 audit；正式实验应使用 `--strict_runtime` 或 `--llamaguard_fail_fast` 防止静默退化。
 
+### 5.1 AttestMCP 与 PTG-Only 的区别
+
+两者都复用 `ProtocolAttestedToolGateway`，但启用的检查不同。AttestMCP 是基础 capability attestation baseline；PTG-Only 启用当前 PTG 的全部检查，但不运行 RTV。两者失败都返回 `BLOCK`，通过都返回 `APPROVE`，不会产生 `ESCALATE`。
+
+|能力|AttestMCP|PTG-Only 当前实现|
+|---|---|---|
+|可信 server/method attestation|启用|启用|
+|intent attestation|关闭|启用；capability description 与 intent 的字面 token 重叠|
+|cross-server consent|关闭|调用检查，但当前实现恒定通过|
+|origin tagging|关闭|启用，但只约束 `SAMPLING`；普通 REQUEST 直接通过|
+|参数/schema/permissions 校验|无|无|
+|reasoning trace 验证|无|无；这是 RTV/ReasoningGuard 的职责|
+|intent signature 对 verdict 的约束|无|无；底层只生成本地 HMAC，不验证上游签名|
+
+典型判定如下：
+
+1. **未注册 method**：可信 registry 只有 `read_file`，agent 调用 `extension/shell_exec`。两者都会因 attestation 失败而 `BLOCK`。
+2. **已注册 method 携带恶意参数**：agent 调用已注册的 `write_file`，但路径或内容被攻击者替换。AttestMCP 通常 `APPROVE`；PTG-Only 只有在 agent 声明的 intent 与 capability description 字面重叠不足时才会 `BLOCK`。若 intent 检查通过，PTG-Only 也会放行，因为当前实现不验证参数语义。
+
+因此，对当前代码最准确的简化是：
+
+```text
+AttestMCP ≈ server/method 白名单
+PTG-Only ≈ server/method 白名单 + intent 字面过滤
+```
+
+该简化描述的是当前有效防御能力，不是论文设计目标。PTG 接口中虽然存在 cross-server、origin 和 signature 机制，但在当前 quick/live 主链路上尚未形成完整的额外 verdict 约束。
+
 ## 6. 如何预测一个 verdict
 
 |输入情况|PTG|RTV|ReasoningGuard|

@@ -6,6 +6,7 @@
 - 明确当前实验与原始 MCPTox 在模型、200 条 derived/curated 数据、RM/CE 攻击面、自定义 reasoning/tool-call 协议和成功标签上的差异；原始 `gpt-4o-mini` 结果、mock 论文 72.8% 与当前 GPT-4o live 结果不可直接比较。
 - 在防御、评估、运行和数据集 SOP 中补充通用解释边界：PTG 字面 intent overlap 同时造成攻击拦截和 benign false block，RTV judge 未观察实际调用参数，curated validator 尚未约束 description 语言/空值和 identifier canonicalization。
 - 在 `AGENTS.md` 增加本次诊断文档索引，并记录只读 Python 统计使用 `-B` 以避免刷新已跟踪 `.pyc` 的经验。
+- 在防御方法文档中增加 AttestMCP 与 PTG-Only 的直接对比：前者当前近似 server/method 白名单，后者增加 intent 字面过滤；同时明确 cross-server、origin、signature 和参数校验的实际边界及典型 verdict。
 
 ## 2026-06-29
 
