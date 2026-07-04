@@ -1,0 +1,10 @@
+PTG embedding model: /home/liuenguang24/models/paraphrase-multilingual-MiniLM-L12-v2
+PTG embedding threshold: 0.45
+Effect source: derived from curated benign/malicious calls
+Loaded official MCPTox (derived_table1_curated): 200 scenarios from data/mcptox/mcptox_official_derived_table1_200_curated.json
+Selected scenarios by benchmark/category:
+  MCPTox-derived::capability_escalation: 40
+  MCPTox-derived::parameter_injection: 50
+  MCPTox-derived::response_manipulation: 55
+  MCPTox-derived::tool_description_poisoning: 55
+Total selected attack scenarios: 200

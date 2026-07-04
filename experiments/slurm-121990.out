@@ -1,0 +1,5 @@
+PTG embedding model: /home/liuenguang24/models/paraphrase-multilingual-MiniLM-L12-v2
+PTG embedding threshold: 0.45
+WARNING: PTG_EMBEDDING_THRESHOLD=0.45 is provisional; this run is for smoke/diagnostic use until the threshold is independently calibrated.
+Effect source: derived from curated benign/malicious calls
+slurmstepd-aias-compute-4: error: *** JOB 121990 ON aias-compute-4 CANCELLED AT 2026-07-04T13:52:08 ***

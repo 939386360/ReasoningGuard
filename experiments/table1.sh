@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 #SBATCH --job-name=table1
 #SBATCH --output=/home/liuenguang24/ReasoningGuard/experiments/slurm_log/table1_info_%j.txt

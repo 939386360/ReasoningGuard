@@ -1,0 +1,30 @@
+{
+  "git_commit": null,
+  "scenario_sha256": "f663d30683d46d69af271532008573baf09c7251612ab0c99f04fdd40f9da687",
+  "effect_sidecar": null,
+  "effect_sidecar_sha256": null,
+  "benchmark": "mcptox",
+  "official": true,
+  "official_variant": "curated",
+  "model": "GPT-4o",
+  "runs": 3,
+  "seed": 42,
+  "strict_runtime": true,
+  "judge": {
+    "provider": "vllm",
+    "model": "qwen2.5-7B-Instruct",
+    "base_url": "http://aias-compute-2:14545/v1/chat/completions",
+    "failure_policy": "record_invalid"
+  },
+  "ptg": {
+    "embedding_model": "/home/liuenguang24/models/paraphrase-multilingual-MiniLM-L12-v2",
+    "embedding_device": "auto",
+    "embedding_threshold": 0.45,
+    "embedding_fail_fast": true
+  },
+  "llamaguard": {
+    "model": "/home/liuenguang24/models/Llama-Guard-3-8B",
+    "device": "auto",
+    "fail_fast": true
+  }
+}
