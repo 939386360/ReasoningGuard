@@ -2,11 +2,15 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from src.runtime_audit import audit_event, is_strict_runtime
+from src.runtime_audit import audit_event
 
 
 DEFAULT_LLAMAGUARD_MODEL = "meta-llama/LlamaGuard-3-8B"
 DEFAULT_LLAMAGUARD_DEVICE = "auto"
+
+
+class LlamaGuardResponseParseError(ValueError):
+    pass
 
 
 LLAMAGUARD_PROMPT = """<|begin_of_text|><|start_header_id|>user<|end_header_id|>
@@ -39,13 +43,12 @@ class LlamaGuardWrapper:
         self.fail_fast = fail_fast
         self._model = None
         self._tokenizer = None
-        self._fallback_logged = False
 
-    def _load_model(self):
+    def load_or_raise(self):
         if self._model is not None:
-            return
+            return self._model
         if self.mock_mode:
-            return
+            return None
         try:
             from transformers import AutoModelForCausalLM, AutoTokenizer
             import torch
@@ -55,8 +58,8 @@ class LlamaGuardWrapper:
                 torch_dtype=torch.float16,
                 device_map=self.device,
             )
+            return self._model
         except Exception as e:
-            should_raise = self.fail_fast or is_strict_runtime()
             audit_event(
                 "llamaguard",
                 "llamaguard.load_failed",
@@ -64,15 +67,18 @@ class LlamaGuardWrapper:
                 message="Failed to load LlamaGuard model",
                 model=self.model_name,
                 device=self.device,
-                fallback_used=not should_raise,
+                fallback_used=False,
                 error_type=type(e).__name__,
                 error_message=str(e),
             )
-            if should_raise:
-                raise RuntimeError(f"[LlamaGuard] Failed to load model {self.model_name}: {e}") from e
-            print(f"[LlamaGuard] Failed to load model: {e}")
-            self.mock_mode = True
-            self._log_mock_fallback()
+            raise RuntimeError(f"[LlamaGuard] Failed to load model {self.model_name}: {e}") from e
+
+    # Backward-compatible alias.
+    def _load_model(self):
+        return self.load_or_raise()
+
+    def preflight(self) -> None:
+        self.load_or_raise()
 
     def check(
         self,
@@ -83,31 +89,49 @@ class LlamaGuardWrapper:
         if self.mock_mode:
             return self._mock_check(method, params, server)
 
-        self._load_model()
-        if self.mock_mode:
-            self._log_mock_fallback()
-            return self._mock_check(method, params, server)
+        self.load_or_raise()
 
         prompt = LLAMAGUARD_PROMPT.format(method=method, params=json.dumps(params), server=server)
-        inputs = self._tokenizer(prompt, return_tensors="pt").to(self._model.device)
-        outputs = self._model.generate(**inputs, max_new_tokens=128, temperature=0.0)
-        response = self._tokenizer.decode(outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
-        return self._parse_response(response)
+        try:
+            inputs = self._tokenizer(prompt, return_tensors="pt").to(self._model.device)
+            outputs = self._model.generate(**inputs, max_new_tokens=128, temperature=0.0)
+            response = self._tokenizer.decode(
+                outputs[0][inputs["input_ids"].shape[1]:],
+                skip_special_tokens=True,
+            )
+        except Exception as exc:
+            audit_event(
+                "llamaguard",
+                "llamaguard.inference_failed",
+                severity="ERROR",
+                message="LlamaGuard inference failed",
+                model=self.model_name,
+                device=self.device,
+                fallback_used=False,
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+            )
+            return self._runtime_failure("call_failed", "inference", exc)
 
-    def _log_mock_fallback(self):
-        if self._fallback_logged:
-            return
-        self._fallback_logged = True
-        audit_event(
-            "llamaguard",
-            "llamaguard.mock_fallback_used",
-            severity="WARNING",
-            message="Using keyword mock fallback for LlamaGuard",
-            model=self.model_name,
-            device=self.device,
-            mock_used=True,
-            fallback_used=True,
-        )
+        try:
+            result = self._parse_response(response)
+            result["runtime_status"] = "ok"
+            result["parse_format"] = result.get("parse_format", "json")
+            return result
+        except LlamaGuardResponseParseError as exc:
+            audit_event(
+                "llamaguard",
+                "llamaguard.parse_failed",
+                severity="ERROR",
+                message="LlamaGuard response did not match a supported output format",
+                model=self.model_name,
+                device=self.device,
+                raw_response=response,
+                fallback_used=False,
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+            )
+            return self._runtime_failure("parse_failed", "parse", exc)
 
     def _mock_check(self, method: str, params: Dict[str, Any], server: str) -> Dict[str, Any]:
         dangerous_patterns = [
@@ -124,17 +148,65 @@ class LlamaGuardWrapper:
             "is_unsafe": is_unsafe,
             "category": "security_violation" if is_unsafe else None,
             "explanation": f"Matched dangerous patterns: {matched}" if is_unsafe else "No unsafe content detected",
+            "runtime_status": "ok",
+            "parse_format": "mock",
         }
 
     @staticmethod
     def _parse_response(text: str) -> Dict[str, Any]:
+        if not isinstance(text, str) or not text.strip():
+            raise LlamaGuardResponseParseError("Response must be non-empty text")
         try:
             start = text.index("{")
             end = text.rindex("}") + 1
-            return json.loads(text[start:end])
-        except (ValueError, json.JSONDecodeError):
-            is_unsafe = "unsafe" in text.lower() or "true" in text.lower()
-            return {"is_unsafe": is_unsafe, "category": None, "explanation": text[:100]}
+            parsed = json.loads(text[start:end])
+            if not isinstance(parsed, dict):
+                raise TypeError("LlamaGuard JSON must be an object")
+            if not isinstance(parsed.get("is_unsafe"), bool):
+                raise TypeError("is_unsafe must be a boolean")
+            category = parsed.get("category")
+            if category is not None and not isinstance(category, str):
+                raise TypeError("category must be a string or null")
+            explanation = parsed.get("explanation", "")
+            if not isinstance(explanation, str):
+                raise TypeError("explanation must be a string")
+            return {
+                "is_unsafe": parsed["is_unsafe"],
+                "category": category,
+                "explanation": explanation,
+                "parse_format": "json",
+            }
+        except (ValueError, json.JSONDecodeError, TypeError):
+            pass
+
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        label = lines[0].casefold() if lines else ""
+        if label in {"safe", "unsafe"}:
+            categories = ", ".join(lines[1:]) or None
+            return {
+                "is_unsafe": label == "unsafe",
+                "category": categories if label == "unsafe" else None,
+                "explanation": text[:100],
+                "parse_format": "native",
+            }
+        raise LlamaGuardResponseParseError(
+            "Expected valid assessment JSON or an exact safe/unsafe first line"
+        )
+
+    @staticmethod
+    def _runtime_failure(status: str, stage: str, exc: Exception) -> Dict[str, Any]:
+        return {
+            "is_unsafe": None,
+            "category": None,
+            "explanation": "LlamaGuard runtime unavailable",
+            "runtime_status": status,
+            "runtime_component": "llamaguard",
+            "runtime_stage": stage,
+            "runtime_error": {
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            },
+        }
 
 
 class LlamaGuardBaseline:
@@ -154,6 +226,9 @@ class LlamaGuardBaseline:
         )
         self.threshold = threshold
 
+    def preflight(self) -> None:
+        self.guard.preflight()
+
     def evaluate(self, msg) -> Dict[str, Any]:
         import time
         t0 = time.perf_counter()
@@ -163,10 +238,24 @@ class LlamaGuardBaseline:
             server=msg.recipient,
         )
         latency = (time.perf_counter() - t0) * 1000
-        is_unsafe = result.get("is_unsafe", False)
+        runtime_status = result.get("runtime_status", "ok")
+        if runtime_status != "ok":
+            return {
+                "verdict": None,
+                "latency_ms": latency,
+                "reason": result.get("explanation", "LlamaGuard runtime unavailable"),
+                "runtime_status": runtime_status,
+                "runtime_component": result.get("runtime_component", "llamaguard"),
+                "runtime_stage": result.get("runtime_stage"),
+                "runtime_error": result.get("runtime_error"),
+                "llamaguard": result,
+            }
+        is_unsafe = result["is_unsafe"]
         from src.reasoning_guard import Verdict
         return {
             "verdict": Verdict.BLOCK if is_unsafe else Verdict.APPROVE,
             "latency_ms": latency,
             "reason": result.get("explanation", ""),
+            "runtime_status": "ok",
+            "llamaguard": result,
         }

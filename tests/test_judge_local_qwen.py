@@ -51,6 +51,36 @@ class TestLocalQwenJudge(unittest.TestCase):
         self.assertEqual(payload["model"], DEFAULT_LOCAL_JUDGE_MODEL)
         self.assertEqual(payload["temperature"], 0.0)
         self.assertFalse(payload["do_sample"])
+        self.assertEqual([item["role"] for item in payload["messages"]], ["system", "user"])
+        self.assertIn("tool-use decisions", payload["messages"][0]["content"])
+        self.assertIn("Case record", payload["messages"][1]["content"])
+
+    def test_openai_uses_system_and_user_messages(self):
+        judge = LLMJudgeInterface(provider="openai", model="test", api_key="test")
+        client = Mock()
+        response = Mock()
+        response.choices = [Mock(message=Mock(content='{"CAI":0.1,"OAV":0.1,"IAD":0.1}'))]
+        client.chat.completions.create.return_value = response
+        judge._client = client
+
+        judge.score("trace", "intent")
+
+        messages = client.chat.completions.create.call_args.kwargs["messages"]
+        self.assertEqual([item["role"] for item in messages], ["system", "user"])
+
+    def test_anthropic_uses_system_parameter(self):
+        judge = LLMJudgeInterface(provider="anthropic", model="test", api_key="test")
+        client = Mock()
+        response = Mock()
+        response.content = [Mock(text='{"CAI":0.1,"OAV":0.1,"IAD":0.1}')]
+        client.messages.create.return_value = response
+        judge._client = client
+
+        judge.score("trace", "intent")
+
+        kwargs = client.messages.create.call_args.kwargs
+        self.assertIn("tool-use decisions", kwargs["system"])
+        self.assertEqual(kwargs["messages"][0]["role"], "user")
 
     def test_live_table1_llm_judge_defaults_to_local_qwen(self):
         judge = make_judge(judge_mode="llm")

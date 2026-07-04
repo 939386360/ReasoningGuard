@@ -72,6 +72,7 @@ class ToolResponseInjection:
     content: str
     expected_calls: List[Dict[str, Any]]
     server_id: str
+    scenario: Optional[Dict[str, Any]] = None
 
 
 _SECTION_RE = re.compile(
@@ -207,17 +208,18 @@ def _coerce_tool_response_injection(
 
 
 def _tool_call_matches_expected(
-    actual: Dict[str, Any], expected: Dict[str, Any]
+    actual: Dict[str, Any], expected: Dict[str, Any], scenario: Optional[Dict[str, Any]] = None
 ) -> bool:
-    if actual.get("server") != expected.get("server"):
-        return False
-    if actual.get("method") != expected.get("method"):
-        return False
-    actual_params = actual.get("params", {})
-    expected_params = expected.get("params", {})
-    if not isinstance(actual_params, dict) or not isinstance(expected_params, dict):
-        return False
-    return all(actual_params.get(key) == value for key, value in expected_params.items())
+    from src.evaluation.effect_matcher import match_reference
+
+    msg = MCPMessage(
+        msg_type=MCPMessageType.REQUEST,
+        sender="agent",
+        recipient=str(actual.get("server", "")),
+        method=str(actual.get("method", "")),
+        params=actual.get("params", {}) if isinstance(actual.get("params", {}), dict) else {},
+    )
+    return match_reference(msg, expected, scenario)
 
 
 def _extract_response_sections(text: str) -> Dict[str, List[str]]:
@@ -447,6 +449,8 @@ class AgentBackbone:
                     "agent_outcome": parsed.agent_outcome,
                     "tool_call_source": parsed.tool_call_source,
                     "agent_parse_error": parsed.parse_error,
+                    "tool_calls": [],
+                    "delivered_tool_responses": [],
                 }
 
             server_id = tool_call.get("server", "")
@@ -471,6 +475,8 @@ class AgentBackbone:
                 "agent_outcome": parsed.agent_outcome,
                 "tool_call_source": parsed.tool_call_source,
                 "agent_parse_error": parsed.parse_error,
+                "tool_calls": [msg],
+                "delivered_tool_responses": [],
             }
 
         return {
@@ -481,6 +487,8 @@ class AgentBackbone:
             "agent_outcome": AGENT_OUTCOME_UNPARSEABLE_OUTPUT,
             "tool_call_source": "none",
             "agent_parse_error": "max_turns_exhausted",
+            "tool_calls": [],
+            "delivered_tool_responses": [],
         }
 
     def invoke_with_tool_responses(
@@ -516,6 +524,8 @@ class AgentBackbone:
         response_texts = []
         response_idx = 0
         injection_count = 0
+        tool_calls: List[MCPMessage] = []
+        delivered_tool_responses: List[Dict[str, Any]] = []
 
         for turn in range(max_turns):
             response_text = self._call_llm()
@@ -543,6 +553,8 @@ class AgentBackbone:
                     "tool_response_injected": injection_count > 0,
                     "tool_response_injection_count": injection_count,
                     "injection_skip_reason": "no_tool_call" if injection_count == 0 else None,
+                    "tool_calls": tool_calls,
+                    "delivered_tool_responses": delivered_tool_responses,
                 }
 
             server_id = tool_call.get("server", "")
@@ -558,6 +570,7 @@ class AgentBackbone:
                 intent_summary=intent,
             )
             final_tool_call = msg
+            tool_calls.append(msg)
 
             if response_idx < len(tool_responses):
                 injection = _coerce_tool_response_injection(
@@ -565,7 +578,7 @@ class AgentBackbone:
                 )
                 response_idx += 1
                 if injection.expected_calls and not any(
-                    _tool_call_matches_expected(tool_call, expected)
+                    _tool_call_matches_expected(tool_call, expected, injection.scenario)
                     for expected in injection.expected_calls
                 ):
                     return {
@@ -580,6 +593,8 @@ class AgentBackbone:
                         "tool_response_injected": injection_count > 0,
                         "tool_response_injection_count": injection_count,
                         "injection_skip_reason": "unexpected_tool_call",
+                        "tool_calls": tool_calls,
+                        "delivered_tool_responses": delivered_tool_responses,
                     }
                 response_server = injection.server_id or server_id
                 envelope = (
@@ -594,6 +609,12 @@ class AgentBackbone:
                     {"role": "user", "content": envelope}
                 )
                 injection_count += 1
+                delivered_tool_responses.append({
+                    "server_id": response_server,
+                    "turn": turn,
+                    "content": injection.content,
+                    "provenance": {"origin": "server", "server_id": response_server},
+                })
             else:
                 return {
                     "trace": combined_trace,
@@ -607,6 +628,8 @@ class AgentBackbone:
                     "tool_response_injected": injection_count > 0,
                     "tool_response_injection_count": injection_count,
                     "injection_skip_reason": None,
+                    "tool_calls": tool_calls,
+                    "delivered_tool_responses": delivered_tool_responses,
                 }
 
         return {
@@ -621,6 +644,8 @@ class AgentBackbone:
             "tool_response_injected": injection_count > 0,
             "tool_response_injection_count": injection_count,
             "injection_skip_reason": None,
+            "tool_calls": tool_calls,
+            "delivered_tool_responses": delivered_tool_responses,
         }
 
     def _mock_invoke_multi(
@@ -695,6 +720,19 @@ class AgentBackbone:
             "tool_response_injected": bool(tool_responses),
             "tool_response_injection_count": len(tool_responses),
             "injection_skip_reason": None,
+            "tool_calls": [final_tool_call] if final_tool_call is not None else [],
+            "delivered_tool_responses": [
+                {
+                    "server_id": _coerce_tool_response_injection(item, "").server_id,
+                    "turn": index,
+                    "content": _coerce_tool_response_injection(item, "").content,
+                    "provenance": {
+                        "origin": "server",
+                        "server_id": _coerce_tool_response_injection(item, "").server_id,
+                    },
+                }
+                for index, item in enumerate(tool_responses)
+            ],
         }
 
     def _call_llm(self) -> str:
@@ -808,6 +846,8 @@ class AgentBackbone:
             ),
             "tool_call_source": "mock" if tool_call is not None else "none",
             "agent_parse_error": None if tool_call is not None else "mock_no_tool_call",
+            "tool_calls": [tool_call] if tool_call is not None else [],
+            "delivered_tool_responses": [],
         }
 
 

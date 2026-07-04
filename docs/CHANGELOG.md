@@ -1,6 +1,20 @@
 # Changelog
 
+## 2026-07-04
+
+- 统一防御模型失败策略：Embedding/LlamaGuard 本地模型在场景循环前加载且失败立即终止；Embedding、Qwen judge、LlamaGuard 的单样本推理或解析失败写入结构化 runtime 状态，相关 defense row 无 verdict、排除 ASR/TCR，并令 `metrics_valid=false`。
+- LlamaGuard 解析器保留严格 JSON 和原生首行 `safe`/`unsafe` 两种格式，删除任意 `unsafe`/`true` 子串猜测；正式 `table1.sh` 改用 `--judge_failure_policy record_invalid`。
+- `table1.sh` 补全 MiniLM 本地路径 `/home/liuenguang24/models/paraphrase-multilingual-MiniLM-L12-v2`，临时使用 `PTG_EMBEDDING_THRESHOLD=0.45` 并输出非正式结果警告。
+- 修正 PTG MiniLM 输入：`paraphrase-multilingual-MiniLM-L12-v2` 现在直接编码原始 query/action，不再使用 E5 风格的 `query:`/`passage:` 前缀；旧 embedding 阈值需重新校准。
+- `table1.sh` 不再强制 `MALICIOUS_EFFECT_SIDECAR`：未设置时使用 curated calls 自动推导 effect，设置时仍加载 reviewed sidecar，并在启动日志中记录 effect source。
+- 将 RTV judge 从评测导向的单段 prompt 改为自然的 system rubric + case record：删除 benchmark/label/expected-call 暗示，OpenAI/vLLM 使用 system+user messages，Anthropic 使用独立 system 参数；审计继续保存完整消息和 evidence。
+
 ## 2026-07-03
+
+- 重构 quick/live Table 1：主 ASR 改为可审计的 malicious-effect matching，并保留 `Exact_ASR/Effect_ASR`；RM 门控复用统一 matcher，Agent 保存完整 tool-call/response 序列。
+- PTG 增加完整 JSON Schema、运行时 `CapabilitySemanticView`、英文 overlap 快速路径和多语言 MiniLM；原始中英文 description 与 clean catalog 保持不变，并新增独立阈值校准工具。
+- RTV 改用无评测标签的结构化 `RTVContext`，REQUEST provenance 与实际 server response 进入现有 Qwen judge；删除 synthetic trace/intent 注入，增加 evidence coverage 门禁。
+- 正式 `table1.sh` 移除明文 key，强制 reviewed effect sidecar、strict runtime、judge/Embedding/LlamaGuard fail-fast 和独立输出目录；三轮运行现在保存全部 records 与 metadata。
 
 - 针对 `table1_0629_run1_5case_analysis.md` 的修复落地：live matcher 新增 server/method alias、JSON 标量归一化和 optional-param canonicalization，新增 agent/delivery/defense 条件漏斗指标，并将 PTG 改为基于 capability schema、参数和 permission 的结构化 contract 校验。
 - RTV/ReasoningGuard 增加 invocation context：judge 现在可观察 user query、实际 recipient/method/params、expected benign/malicious call、capability 和 server response evidence；judge prompt 明确 IAD 必须优先比较真实 invocation，而非仅依赖 agent 自述 intent。

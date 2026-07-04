@@ -166,15 +166,21 @@ class TestQuickBenchmarkByCategory(unittest.TestCase):
                 "attack_layer": "L4",
             }
         ]
-        results = run_quick_evaluation(
-            scenarios,
-            runs=2,
-            agent_mock=True,
-            llamaguard_mock=True,
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            records_path = os.path.join(tmp, "all_runs.json")
+            results = run_quick_evaluation(
+                scenarios,
+                runs=2,
+                agent_mock=True,
+                llamaguard_mock=True,
+                output_records=records_path,
+            )
+            with open(records_path, encoding="utf-8") as f:
+                records = json.load(f)
 
         self.assertIn("ASR_ci", results["ReasoningGuard"])
         self.assertIn("TCR_ci", results["ReasoningGuard"])
+        self.assertEqual({row["run_idx"] for row in records}, {0, 1})
 
     def test_quick_defaults_use_local_qwen_judge(self):
         results = run_quick_evaluation(

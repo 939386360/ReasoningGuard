@@ -48,8 +48,8 @@ def main():
     parser.add_argument("--judge_base_url", default=live_table1.default_judge_base_url())
     parser.add_argument(
         "--judge_failure_policy",
-        choices=["inherit", "fallback", "raise"],
-        default="inherit",
+        choices=["record_invalid", "inherit", "fallback", "raise"],
+        default="record_invalid",
     )
     parser.add_argument("--llamaguard_mock", action="store_true")
     parser.add_argument("--llamaguard_model", default="meta-llama/LlamaGuard-3-8B")
@@ -58,7 +58,7 @@ def main():
     parser.add_argument("--output", default="results/live_multimodel_proxy_results.json")
     parser.add_argument("--audit_log", default=None, help="JSONL runtime audit log path. Defaults to <output>_audit.jsonl.")
     parser.add_argument("--no_audit_log", action="store_true", help="Disable runtime audit log.")
-    parser.add_argument("--strict_runtime", action="store_true", help="Raise on runtime fallback paths such as judge errors, parse failures, empty agent responses, or LlamaGuard fallback.")
+    parser.add_argument("--strict_runtime", action="store_true", help="Enable strict handling for agent failures and legacy inherit/fallback paths; record_invalid still excludes defense-model failures per row.")
     args = parser.parse_args()
 
     audit_log = None if args.no_audit_log else (args.audit_log or default_audit_log_path(args.output))

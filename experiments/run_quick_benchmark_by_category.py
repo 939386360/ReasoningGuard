@@ -1,7 +1,9 @@
 import argparse
+import hashlib
 import json
 import os
 import random
+import subprocess
 import sys
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
@@ -147,7 +149,7 @@ def run_quick_evaluation(
     judge_provider: str = "vllm",
     judge_model: str = DEFAULT_LOCAL_JUDGE_MODEL,
     judge_base_url: Optional[str] = None,
-    judge_failure_policy: str = "inherit",
+    judge_failure_policy: str = "record_invalid",
     llamaguard_mock: bool = False,
     llamaguard_model: str = "meta-llama/LlamaGuard-3-8B",
     llamaguard_device: str = "auto",
@@ -155,6 +157,10 @@ def run_quick_evaluation(
     benign_ratio: float = 0.30,
     output_results: Optional[str] = None,
     output_records: Optional[str] = None,
+    ptg_embedding_model: Optional[str] = None,
+    ptg_embedding_device: str = "auto",
+    ptg_embedding_threshold: float = 0.45,
+    ptg_embedding_fail_fast: bool = False,
 ) -> Dict[str, Dict[str, float]]:
     agent_factory = _make_agent_factory(
         backend=agent_backend,
@@ -183,6 +189,10 @@ def run_quick_evaluation(
         benign_ratio=benign_ratio,
         output_records=output_records,
         agent_factory=agent_factory,
+        ptg_embedding_model=ptg_embedding_model,
+        ptg_embedding_device=ptg_embedding_device,
+        ptg_embedding_threshold=ptg_embedding_threshold,
+        ptg_embedding_fail_fast=ptg_embedding_fail_fast,
     )
     if output_results:
         _write_json(output_results, results)
@@ -216,9 +226,9 @@ def main():
     parser.add_argument("--judge_base_url", default=live_table1.default_judge_base_url())
     parser.add_argument(
         "--judge_failure_policy",
-        choices=["inherit", "fallback", "raise"],
-        default="inherit",
-        help="Judge failure handling: inherit strict runtime, always fallback, or always raise.",
+        choices=["record_invalid", "inherit", "fallback", "raise"],
+        default="record_invalid",
+        help="Judge failure handling; record_invalid logs and excludes only the affected defense row.",
     )
     parser.add_argument("--llamaguard_mock", action="store_true")
     parser.add_argument("--llamaguard_model", default="meta-llama/LlamaGuard-3-8B")
@@ -237,13 +247,22 @@ def main():
     parser.add_argument("--agent_api_key_env", default="LLM_API_KEY")
     parser.add_argument("--agent_model_map", default=None)
     parser.add_argument("--agent_timeout", type=int, default=60)
+    parser.add_argument("--ptg_embedding_model", default=os.environ.get("PTG_EMBEDDING_MODEL"))
+    parser.add_argument("--ptg_embedding_device", default="auto")
+    parser.add_argument("--ptg_embedding_threshold", type=float, default=0.45)
+    parser.add_argument("--ptg_embedding_fail_fast", action="store_true")
+    parser.add_argument(
+        "--effect_sidecar",
+        default=os.environ.get("MALICIOUS_EFFECT_SIDECAR"),
+        help="Reviewed scenario_id -> malicious_effects JSON; omitted uses deterministic derivation from references.",
+    )
     parser.add_argument("--mcptox_data_dir", default=None)
     parser.add_argument("--agentpi_data_dir", default="data/agentpi")
     parser.add_argument("--mcptox_plus_data_dir", default="data/mcptox_plus")
     parser.add_argument("--results_output", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--audit_log", default=None, help="JSONL runtime audit log path. Defaults to <output>_audit.jsonl.")
     parser.add_argument("--no_audit_log", action="store_true", help="Disable runtime audit log.")
-    parser.add_argument("--strict_runtime", action="store_true", help="Raise on runtime fallback paths such as judge errors, parse failures, empty agent responses, or LlamaGuard fallback.")
+    parser.add_argument("--strict_runtime", action="store_true", help="Enable strict handling for agent failures and legacy inherit/fallback paths; record_invalid still excludes defense-model failures per row.")
     args = parser.parse_args()
 
     model_map = _parse_json_map(args.agent_model_map, "--agent_model_map")
@@ -257,6 +276,8 @@ def main():
         agentpi_data_dir=args.agentpi_data_dir,
         mcptox_plus_data_dir=args.mcptox_plus_data_dir,
     )
+    if args.effect_sidecar:
+        scenarios = _apply_effect_sidecar(scenarios, args.effect_sidecar)
     selected, summary = select_per_category(scenarios, args.per_category, seed=args.seed, categories=categories)
     selected = selected[:args.max_scenarios]
     summary = summarize_selected(selected)
@@ -297,7 +318,45 @@ def main():
         benign_ratio=args.benign_ratio,
         output_results=results_output,
         output_records=records_output,
+        ptg_embedding_model=args.ptg_embedding_model,
+        ptg_embedding_device=args.ptg_embedding_device,
+        ptg_embedding_threshold=args.ptg_embedding_threshold,
+        ptg_embedding_fail_fast=args.ptg_embedding_fail_fast,
     )
+
+    metadata = {
+        "git_commit": _git_commit(),
+        "scenario_sha256": hashlib.sha256(
+            json.dumps(selected, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest(),
+        "effect_sidecar": args.effect_sidecar,
+        "effect_sidecar_sha256": _file_sha256(args.effect_sidecar),
+        "benchmark": args.benchmark,
+        "official": args.official,
+        "official_variant": args.official_variant,
+        "model": args.model,
+        "runs": args.runs,
+        "seed": args.seed,
+        "strict_runtime": args.strict_runtime,
+        "judge": {
+            "provider": args.judge_provider,
+            "model": args.judge_model,
+            "base_url": args.judge_base_url,
+            "failure_policy": args.judge_failure_policy,
+        },
+        "ptg": {
+            "embedding_model": args.ptg_embedding_model,
+            "embedding_device": args.ptg_embedding_device,
+            "embedding_threshold": args.ptg_embedding_threshold,
+            "embedding_fail_fast": args.ptg_embedding_fail_fast,
+        },
+        "llamaguard": {
+            "model": args.llamaguard_model,
+            "device": args.llamaguard_device,
+            "fail_fast": args.llamaguard_fail_fast,
+        },
+    }
+    _write_json(f"{results_output}.metadata.json", metadata)
 
     live_table1.write_table1_tex(results, args.tex_output, include_ci=args.runs > 1)
     print(json.dumps(results, indent=2, ensure_ascii=False))
@@ -362,6 +421,52 @@ def _write_json(path: str, data: Any):
         json.dump(data, f, indent=2, ensure_ascii=False, default=str)
 
 
+def _git_commit() -> Optional[str]:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _file_sha256(path: Optional[str]) -> Optional[str]:
+    if not path:
+        return None
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def _apply_effect_sidecar(
+    scenarios: List[Dict[str, Any]], path: str
+) -> List[Dict[str, Any]]:
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    mapping = raw.get("effects", raw) if isinstance(raw, dict) else None
+    if not isinstance(mapping, dict):
+        raise ValueError("Effect sidecar must be an object keyed by scenario_id")
+    enriched = []
+    missing = []
+    for scenario in scenarios:
+        item = dict(scenario)
+        scenario_id = str(item.get("scenario_id") or item.get("original_id") or "")
+        entry = mapping.get(scenario_id)
+        reviewed = entry.get("reviewed") if isinstance(entry, dict) else False
+        effects = entry.get("effects") if isinstance(entry, dict) else entry
+        if reviewed is not True or not isinstance(effects, list) or not effects:
+            missing.append(scenario_id)
+        else:
+            template = dict(item.get("template", {}) or {})
+            template["malicious_effects"] = effects
+            item["template"] = template
+        enriched.append(item)
+    if missing:
+        raise ValueError(
+            f"Effect sidecar has {len(missing)} missing or unreviewed scenarios; first={missing[0]}"
+        )
+    return enriched
+
+
 if __name__ == "__main__":
     main()
 
@@ -420,7 +525,7 @@ if __name__ == "__main__":
 #   --judge_provider vllm \
 #   --judge_model qwen2.5-7B-Instruct \
 #   --judge_base_url http://aias-compute-4:14545/v1/chat/completions \
-#   --judge_failure_policy fallback \
+#   --judge_failure_policy record_invalid \
 #   --llamaguard_model /home/liuenguang24/models/LlamaGuard-3-8B \
 #   --llamaguard_device auto \
 #   --llamaguard_fail_fast \

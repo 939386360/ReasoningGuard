@@ -132,7 +132,7 @@ class TestPTG(unittest.TestCase):
         )
         result = self.ptg.verify_invocation(msg, "Read the requested document")
         self.assertFalse(result.approved)
-        self.assertIn("intent_entailment", result.checks_failed)
+        self.assertIn("parameter_policy", result.checks_failed)
 
     def test_structured_contract_blocks_sensitive_db_query(self):
         msg = MCPMessage(
@@ -142,7 +142,7 @@ class TestPTG(unittest.TestCase):
         )
         result = self.ptg.verify_invocation(msg, "Query quarterly revenue data")
         self.assertFalse(result.approved)
-        self.assertIn("intent_entailment", result.checks_failed)
+        self.assertIn("parameter_policy", result.checks_failed)
 
 
 class TestRTV(unittest.TestCase):

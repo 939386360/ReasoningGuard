@@ -45,6 +45,7 @@
 |`docs/tech_notes/evaluation_method.md`|抽样、攻击投递、agent outcome、expected-call matcher、ASR/TCR/Latency、CI 和有效性规则|解释实验设计、指标分母、records 或论文 Evaluation 口径时|
 |`docs/tech_notes/experiment_runbook.md`|实验入口、模型与 judge 配置、smoke/formal 命令、CLI 参数、输出检查和故障排查|实际启动 quick/live 实验、部署 endpoint 或检查正式结果时|
 |`docs/tech_notes/dataset_construction_sop.md`|MCPTox-derived 的确定性转换、结构校验、逐条语义审查、curated 发布门禁与论文表述|构建、继续审查或复现正式数据集时|
+|`docs/tech_notes/table1_effect_ptg_rtv_fix_20260703.md`|effect-based ASR、PTG 三阶段语义检查、RTVContext、校准和正式运行门禁|修改或复核当前 quick/live Table 1 成功判定与防御输入时|
 |`docs/tech_notes/table1_0629_run1_5case_analysis.md`|0629 三轮主表结果的 ASR/TCR 分层诊断、原始 MCPTox 对比边界、PTG/RTV 失效原因和修复优先级|解释该次结果、设计后续消融或重跑正式主表时|
 
 `docs/tech_notes/archive/` 保存重组前历史长文和设计决策，不属于当前默认阅读路径。
@@ -62,4 +63,5 @@
 每次踩坑或发现可复用经验时，Agent 应建议写入 `AGENTS.md`。
 
 - 整合 `collab_code*` 候选代码时不要整文件覆盖；先做 import smoke，核对当前主链路依赖的 parser/outcome/audit 字段，再按功能 cherry-pick。
+- 仓库当前跟踪部分 `__pycache__/*.pyc`；只读检查和测试使用 `python -B`，不要运行会重写已跟踪字节码的 `py_compile/compileall`。
 - 仓库当前跟踪了部分 `__pycache__/*.pyc`；只读统计脚本应使用 `python -B`，避免导入模块时产生无关字节码改动。
