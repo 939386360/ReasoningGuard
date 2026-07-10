@@ -166,7 +166,7 @@ Agent 使用项目自定义文本协议返回 `REASONING`、`INTENT` 和 `TOOL_C
 |---|---|---|
 |detailed records JSON|每个 scenario 的 attack/benign agent 调用|模型实际输出了什么、匹配了什么、各防御为何判定|
 |results JSON|每个 defense 的聚合指标|论文表格所需的 ASR/TCR/Latency 等|
-|audit JSONL|每次运行中的事件|是否发生模型初始化失败、单样本调用/解析失败或显式 legacy fallback|
+|audit JSONL|每次运行中的事件|是否发生模型失败、解析失败、judge fallback 或 LlamaGuard fallback|
 |LaTeX|聚合指标|主表展示|
 
 字段和指标的权威定义见 [evaluation_method.md](evaluation_method.md)。
@@ -179,3 +179,4 @@ Agent 使用项目自定义文本协议返回 `REASONING`、`INTENT` 和 `TOOL_C
 - `judge_mode=heuristic` 不是论文中的 fine-tuned Qwen verifier；`judge_mode=llm` 也只有在加载对应训练产物时才可这样表述。
 - T3 的 `MemoryProvenanceGraph` 已存在，但 quick/live 不会自动建立跨会话持久 provenance。
 - `run_all.py`、旧图表脚本的预置结果不能作为真实运行证据。
+

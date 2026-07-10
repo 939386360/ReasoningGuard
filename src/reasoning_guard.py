@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 from src.mcp_client import MCPMessage, Origin, ReasoningTrace
 from src.ptg import ProtocolAttestedToolGateway, PTGResult
-from src.rtv import RTVContext, ReasoningTraceVerifier, RTVResult, AnomalyClass
+from src.rtv import ReasoningTraceVerifier, RTVResult, AnomalyClass
 
 
 class Verdict:
@@ -19,10 +19,6 @@ class ReasoningGuard:
         self.ptg = ptg or ProtocolAttestedToolGateway()
         self.rtv = rtv or ReasoningTraceVerifier()
 
-    def preflight(self) -> None:
-        self.ptg.preflight()
-        self.rtv.preflight()
-
     def evaluate(
         self,
         msg: MCPMessage,
@@ -30,25 +26,8 @@ class ReasoningGuard:
         trace: ReasoningTrace,
         memory_read_ids: Optional[List[str]] = None,
         invocation_context: Optional[Dict[str, Any]] = None,
-        user_query: Optional[str] = None,
-        rtv_context: Optional[RTVContext] = None,
     ) -> Dict[str, Any]:
-        ptg_result = self.ptg.verify_invocation(
-            msg, intent_summary, user_query=user_query, trace=trace
-        )
-
-        if ptg_result.runtime_status != "ok":
-            return {
-                "verdict": None,
-                "ptg": ptg_result,
-                "rtv": None,
-                "total_latency_ms": ptg_result.latency_ms,
-                "reason": "PTG runtime unavailable",
-                "runtime_status": ptg_result.runtime_status,
-                "runtime_component": ptg_result.runtime_component,
-                "runtime_stage": ptg_result.runtime_stage,
-                "runtime_error": ptg_result.runtime_error,
-            }
+        ptg_result = self.ptg.verify_invocation(msg, intent_summary, trace)
 
         if not ptg_result.approved:
             return {
@@ -59,30 +38,16 @@ class ReasoningGuard:
                 "reason": f"PTG blocked: {ptg_result.reason}",
             }
 
-        origin_tags = msg.provenance_tags
+        origin_tags = msg.provenance_tags if msg.msg_type.value == "sampling" else None
         rtv_result = self.rtv.verify(
             trace,
             intent_summary,
             origin_tags,
             memory_read_ids,
             invocation_context=invocation_context,
-            rtv_context=rtv_context,
         )
 
         total_latency = ptg_result.latency_ms + rtv_result.latency_ms
-
-        if rtv_result.runtime_status != "ok":
-            return {
-                "verdict": None,
-                "ptg": ptg_result,
-                "rtv": rtv_result,
-                "total_latency_ms": total_latency,
-                "reason": "RTV runtime unavailable",
-                "runtime_status": rtv_result.runtime_status,
-                "runtime_component": rtv_result.runtime_component,
-                "runtime_stage": rtv_result.runtime_stage,
-                "runtime_error": rtv_result.runtime_error,
-            }
 
         if not rtv_result.approved:
             return {
@@ -117,15 +82,12 @@ class AttestMCPBaseline:
             cross_server_consent=False,
         )
 
-    def evaluate(
-        self, msg: MCPMessage, intent_summary: str, user_query: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def evaluate(self, msg: MCPMessage, intent_summary: str, **kwargs) -> Dict[str, Any]:
         result = self.ptg.verify_invocation(msg, intent_summary)
         return {
             "verdict": Verdict.APPROVE if result.approved else Verdict.BLOCK,
             "latency_ms": result.latency_ms,
             "reason": result.reason,
-            "ptg": result,
         }
 
 
@@ -153,11 +115,7 @@ class GuardrailBaseline:
         else:
             self._llamaguard = None
 
-    def preflight(self) -> None:
-        if self.use_llamaguard and self._llamaguard is not None:
-            self._llamaguard.preflight()
-
-    def evaluate(self, msg: MCPMessage) -> Dict[str, Any]:
+    def evaluate(self, msg: MCPMessage, **kwargs) -> Dict[str, Any]:
         if self.use_llamaguard and self._llamaguard is not None:
             return self._llamaguard.evaluate(msg)
 
@@ -186,34 +144,15 @@ class PTGOnlyBaseline:
     origin-tagged sampling, and intent-aware cross-server isolation.
     """
 
-    def __init__(self, ptg: Optional[ProtocolAttestedToolGateway] = None):
-        self.ptg = ptg or ProtocolAttestedToolGateway()
+    def __init__(self):
+        self.ptg = ProtocolAttestedToolGateway()
 
-    def preflight(self) -> None:
-        self.ptg.preflight()
-
-    def evaluate(
-        self, msg: MCPMessage, intent_summary: str, user_query: Optional[str] = None
-    ) -> Dict[str, Any]:
-        result = self.ptg.verify_invocation(
-            msg, intent_summary, user_query=user_query
-        )
-        if result.runtime_status != "ok":
-            return {
-                "verdict": None,
-                "latency_ms": result.latency_ms,
-                "reason": "PTG runtime unavailable",
-                "ptg": result,
-                "runtime_status": result.runtime_status,
-                "runtime_component": result.runtime_component,
-                "runtime_stage": result.runtime_stage,
-                "runtime_error": result.runtime_error,
-            }
+    def evaluate(self, msg: MCPMessage, intent_summary: str, **kwargs) -> Dict[str, Any]:
+        result = self.ptg.verify_invocation(msg, intent_summary)
         return {
             "verdict": Verdict.APPROVE if result.approved else Verdict.BLOCK,
             "latency_ms": result.latency_ms,
             "reason": result.reason,
-            "ptg": result,
         }
 
 
@@ -221,38 +160,19 @@ class RTVOnlyBaseline:
     def __init__(self):
         self.rtv = ReasoningTraceVerifier()
 
-    def preflight(self) -> None:
-        self.rtv.preflight()
-
     def evaluate(
         self,
         trace: ReasoningTrace,
         intent_summary: str,
         origin_tags: Optional[List[Dict[str, str]]] = None,
         invocation_context: Optional[Dict[str, Any]] = None,
-        user_query: Optional[str] = None,
-        rtv_context: Optional[RTVContext] = None,
     ) -> Dict[str, Any]:
         result = self.rtv.verify(
             trace,
             intent_summary,
             origin_tags,
             invocation_context=invocation_context,
-            rtv_context=rtv_context,
         )
-        if result.runtime_status != "ok":
-            return {
-                "verdict": None,
-                "latency_ms": result.latency_ms,
-                "flagged": [],
-                "anomaly_scores": {},
-                "rtv": result,
-                "reason": "RTV runtime unavailable",
-                "runtime_status": result.runtime_status,
-                "runtime_component": result.runtime_component,
-                "runtime_stage": result.runtime_stage,
-                "runtime_error": result.runtime_error,
-            }
         return {
             "verdict": Verdict.APPROVE if result.approved else Verdict.ESCALATE,
             "latency_ms": result.latency_ms,

@@ -1,7 +1,5 @@
 # 核心防御方法
 
-> 2026-07-03 更新：PTG 三阶段语义检查和 RTVContext 的当前实现以 [table1_effect_ptg_rtv_fix_20260703.md](table1_effect_ptg_rtv_fix_20260703.md) 为准；下文涉及旧 intent overlap 或 expected-call RTV context 的内容属于历史实现。
-
 |项目|说明|
 |---|---|
 |职责|解释 PTG、RTV、ReasoningGuard 和五种对照方法的判定逻辑与实现边界|
@@ -112,12 +110,11 @@ checks_failed     失败的检查名
 
 |`judge_failure_policy`|行为|
 |---|---|
-|`record_invalid`|默认；记录调用/解析失败，返回无 verdict 的运行失败结果，只排除对应 defense row|
 |`raise`|立即抛出异常|
 |`fallback`|使用 `CAI/OAV/IAD=0.1` 并记录 fallback|
 |`inherit`|`--strict_runtime` 时抛出，否则 fallback|
 
-正式 quick/live 实验使用 `record_invalid`，不再用低风险分数替代失败结果。`fallback` 和 `raise` 仅为兼容旧调用保留；任何 judge 运行失败都会计入 `num_judge_failures`，并令 `metrics_valid=False`。
+低风险 fallback 分数通常会批准调用，因此发生 fallback 的结果不能视为有效正式结果。评估层会把它计入 `num_judge_failures`，并令 `metrics_valid=False`。
 
 ### 3.3 Memory provenance
 
@@ -134,10 +131,6 @@ flagged_anomalies  超阈值类别列表
 latency_ms         judge、阈值和可选 memory 检查总耗时
 escalation_reason  异常说明
 judge_record       provider、endpoint、原始响应、解析和 fallback 审计信息
-runtime_status     ok/call_failed/parse_failed；失败时 approved=None
-runtime_component  发生失败的模型组件
-runtime_stage      initialization/inference/parse
-runtime_error      error_type 与 error_message
 ```
 
 ## 4. ReasoningGuard 组合规则
@@ -146,14 +139,10 @@ runtime_error      error_type 与 error_message
 
 ```python
 ptg = verify_invocation(message, intent, trace)
-if ptg.runtime_status != "ok":
-    return NO_VERDICT
 if not ptg.approved:
     return BLOCK
 
 rtv = verify(trace, intent, origin_tags, memory_read_ids)
-if rtv.runtime_status != "ok":
-    return NO_VERDICT
 if not rtv.approved:
     return ESCALATE
 
@@ -179,35 +168,7 @@ return APPROVE
 |RTV-Only|trace、intent、origin tags|运行 RTV；异常返回 `ESCALATE`|
 |ReasoningGuard|message、intent、trace|PTG 后串联 RTV|
 
-`Guardrail` 默认 `llamaguard_mock=False`。本地 LlamaGuard 在场景循环前加载，加载失败始终终止实验，不再自动退化为关键词 mock。单样本推理失败或输出无法解析时记录运行失败并排除对应行。解析器只接受合法 JSON，或首个非空行精确为 `safe`/`unsafe` 的 LlamaGuard 原生格式；`"unsafe" in text` 一类子串猜测已禁用。
-
-### 5.1 AttestMCP 与 PTG-Only 的区别
-
-两者都复用 `ProtocolAttestedToolGateway`，但启用的检查不同。AttestMCP 是基础 capability attestation baseline；PTG-Only 启用当前 PTG 的全部检查，但不运行 RTV。两者失败都返回 `BLOCK`，通过都返回 `APPROVE`，不会产生 `ESCALATE`。
-
-|能力|AttestMCP|PTG-Only 当前实现|
-|---|---|---|
-|可信 server/method attestation|启用|启用|
-|intent attestation|关闭|启用；capability description 与 intent 的字面 token 重叠|
-|cross-server consent|关闭|调用检查，但当前实现恒定通过|
-|origin tagging|关闭|启用，但只约束 `SAMPLING`；普通 REQUEST 直接通过|
-|参数/schema/permissions 校验|无|无|
-|reasoning trace 验证|无|无；这是 RTV/ReasoningGuard 的职责|
-|intent signature 对 verdict 的约束|无|无；底层只生成本地 HMAC，不验证上游签名|
-
-典型判定如下：
-
-1. **未注册 method**：可信 registry 只有 `read_file`，agent 调用 `extension/shell_exec`。两者都会因 attestation 失败而 `BLOCK`。
-2. **已注册 method 携带恶意参数**：agent 调用已注册的 `write_file`，但路径或内容被攻击者替换。AttestMCP 通常 `APPROVE`；PTG-Only 只有在 agent 声明的 intent 与 capability description 字面重叠不足时才会 `BLOCK`。若 intent 检查通过，PTG-Only 也会放行，因为当前实现不验证参数语义。
-
-因此，对当前代码最准确的简化是：
-
-```text
-AttestMCP ≈ server/method 白名单
-PTG-Only ≈ server/method 白名单 + intent 字面过滤
-```
-
-该简化描述的是当前有效防御能力，不是论文设计目标。PTG 接口中虽然存在 cross-server、origin 和 signature 机制，但在当前 quick/live 主链路上尚未形成完整的额外 verdict 约束。
+`Guardrail` 默认 `llamaguard_mock=False`。模型加载失败时，非 strict 模式会自动退化为关键词 mock 并写 audit；正式实验应使用 `--strict_runtime` 或 `--llamaguard_fail_fast` 防止静默退化。
 
 ## 6. 如何预测一个 verdict
 
