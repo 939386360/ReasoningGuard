@@ -1,7 +1,22 @@
 # Changelog
 
+## 2026-07-05
+
+- 新增 `mcptox_attestmcp_reasoningguard_attack_gap_analysis.md`：逐项对齐 MCPTox P1/P2/P3、AttestMCP/ProtoAMP 四类攻击和当前 quick/live 六类攻击，明确 native、derived、部分覆盖与缺失边界。
+- 扩写三方攻击分析：将 AttestMCP 的协议弱点、ProtoAMP 攻击和防御机制分层，补全 resource/tool-response/cross-server/sampling 事件生命周期、当前数据从 scenario 到 effect/verdict/metrics 的完整流转，以及 ReasoningGuard 特有方法、实际优势和六项攻击补充优先级。
+- 复核 curated 200 条来源分布：TDP 55 条由 P1 2 条、P2 53 条组成，PI 50 条全部来自 P3；RM 由 P2 24 条、P3 31 条派生，CE 由 P2 21 条、P3 19 条派生。
+- 确认当前 55 条 RM 和 40 条 CE 均为 same-server，正式主表尚未覆盖 resource indirect injection、真实 sampling injection、cross-server propagation、post-init capability escalation、message forgery 和 replay。
+- 记录论文修订边界：当前 `AttestMCPBaseline` 只是 capability allowlist approximation，MCPTox 的 72.8% 与 ProtoAMP 的 12.4%/8.3ms 不能作为当前 200 条主表的同口径实测值。
+
 ## 2026-07-04
 
+- 深化 0704 结果案例分析：290 个 defense runtime-failure rows 对应 223 个唯一 agent cases；分阶段复核 evidence 引用后，明确 root alias、field map、实际 invocation 子路径分别可完整解析 217/235/270 个 rows，剩余 17 行需要 constrained output 或纠错重试。
+- 分解 `Effect_ASR=0`：290 个 exact calls 全部同时满足 effect 但被 exact-first 优先返回；310 个 NO_MATCH 中有 167 个 selector 相同但关键参数不符，并记录 SQL 分号、JavaScript 格式、SSH 路径和正确 benign 参数四类具体边界案例。
+- 新增 `table1_20260704_140115_analysis.md`：复核三轮 600 个 attack、177 个 benign 和全部 defense records/audit，确认 ReasoningGuard 62.7% TCR 的 29 个 false blocks 全部来自 PTG，conditional FBR 为 20.7%。
+- 确认本次 RTV-Only/ReasoningGuard `metrics_valid=false`：287 次 evidence ID 无法解析和 3 次 JSON 解析失败产生 290 个 runtime-failure rows；ReasoningGuard 10.1% ASR 不能作为正式点估计，固定 600 攻击分母下诊断边界为 9.0%–19.2%。
+- 记录 RTV evidence 契约缺陷：context 使用 `actual-invocation` 等 canonical IDs，而 base Qwen 大量返回 `actual_invocation` 等字段名；后续应集中 canonicalize 明确别名、枚举允许 ID，并使用 constrained JSON 或确定性纠错重试。
+- 加强正式结果门禁：所有 defense 必须零 invalid/runtime failure，evidence coverage 覆盖全部 judge 调用，metadata 保存非空 git commit 和独立 PTG calibration artifact；无效 defense 禁止继续输出可引用的主表数值。
+- 补充论文 TCR/latency 口径：正式主表使用完整 benign counterparts，并同时报告 agent completion ceiling、conditional FBR、整体 p50/p95 和 PTG-pass 条件 latency。
 - 统一防御模型失败策略：Embedding/LlamaGuard 本地模型在场景循环前加载且失败立即终止；Embedding、Qwen judge、LlamaGuard 的单样本推理或解析失败写入结构化 runtime 状态，相关 defense row 无 verdict、排除 ASR/TCR，并令 `metrics_valid=false`。
 - LlamaGuard 解析器保留严格 JSON 和原生首行 `safe`/`unsafe` 两种格式，删除任意 `unsafe`/`true` 子串猜测；正式 `table1.sh` 改用 `--judge_failure_policy record_invalid`。
 - `table1.sh` 补全 MiniLM 本地路径 `/home/liuenguang24/models/paraphrase-multilingual-MiniLM-L12-v2`，临时使用 `PTG_EMBEDDING_THRESHOLD=0.45` 并输出非正式结果警告。

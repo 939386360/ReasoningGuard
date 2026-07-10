@@ -21,7 +21,7 @@
 |预置论文表格|`run_all.py`|硬编码 mock，不是实测|
 |防御组件 simulation|`eval_runner.py`|不调用真实 agent|
 
-正式主表推荐 quick 入口：它能选择 curated 数据、记录分类数量，并在多次运行时保留第一轮 records。
+正式主表推荐 quick 入口：它能选择 curated 数据、记录分类数量，并在多次运行时保存全部 records 和对应 `run_idx`。
 
 ## 2. 环境准备
 
@@ -133,7 +133,7 @@ python experiments/run_quick_benchmark_by_category.py \
 
 该命令显式加载 `data/mcptox/mcptox_official_derived_table1_200_curated.json`。`per_category=55` 覆盖四类最大规模，最终选择 TDP/PI/RM/CE = 55/50/55/40，共 200 条 attack scenario；`per_category=5` 只会选择 20 条。
 
-`runs=3` 的 results 和 LaTeX 是三轮聚合结果；records 只保存第一轮，audit 保存全部三轮并以 `run_idx` 区分。不要添加 `--agent_mock`、`--llamaguard_mock` 或 `--no_audit_log`。
+`runs=3` 的 results 和 LaTeX 是三轮聚合结果；records 和 audit 均保存全部三轮并以 `run_idx` 区分。不要添加 `--agent_mock`、`--llamaguard_mock` 或 `--no_audit_log`。
 
 多模型正式实验应逐模型重复该命令并修改模型映射和输出目录。当前 multimodel CLI 没有 curated variant 和 records 接口，不作为 curated 主表入口。
 
@@ -181,7 +181,7 @@ python experiments/run_quick_benchmark_by_category.py \
 |---|---|
 |`--runs`|重复运行次数，多 run 使用递增 seed|
 |`--output`|聚合 results JSON|
-|`--records_output`|第一轮 detailed records JSON|
+|`--records_output`|全部 runs 的 detailed records JSON，以 `run_idx` 区分|
 |`--tex_output`|LaTeX 主表|
 |`--audit_log`|audit JSONL；未指定时由 results 路径派生|
 |`--no_audit_log`|关闭审计，正式实验不得使用|
@@ -204,6 +204,19 @@ num_runtime_failures == 0
 metrics_valid == true
 ```
 
+以上条件必须对**每个 defense**成立。任一主表 defense 无效时，整张 Table 1 不得作为正式结果；即使 results/LaTeX 已写出 ASR/TCR，也只能标记为 `INVALID`。同时核对各 defense 的 attack/benign 分母与共同 agent outcome 基础分母一致，防止按 defense 排除不同 invalid rows 后继续横向比较。
+
+正式 metadata 还必须满足：
+
+```text
+git_commit != null
+scenario_sha256 != null
+PTG calibration artifact/path/hash != null
+agent served model mapping 已记录
+```
+
+脚本中的 provisional `PTG_EMBEDDING_THRESHOLD=0.45` 不能满足正式主表要求。
+
 ### Records
 
 每类至少抽查一条 attack 和 benign：
@@ -224,6 +237,7 @@ agent.unparseable_output
 judge.call_failed
 judge.parse_failed
 judge.default_scores_used
+rtv.evidence_missing
 llamaguard.load_failed
 llamaguard.inference_failed
 llamaguard.parse_failed
@@ -233,7 +247,18 @@ defense.runtime_failed
 defense.error
 ```
 
-同时核对 `run.start` 中的 model、seed、scenario 数、judge 配置和 `strict_runtime=true`。
+同时核对 `run.start` 中的 model、seed、scenario 数、judge 配置和 `strict_runtime=true`。`rtv_evidence_coverage=100%` 必须覆盖全部 judge 调用；不能只读取排除 invalid rows 后的聚合值。
+
+### TCR 与 latency 的论文口径
+
+TCR 是主表核心 utility 指标时，正式运行使用每个 attack scenario 对应的完整 benign counterpart，推荐 `benign_ratio=1.0`，而不是 0.30 抽样。结果同时报告全部 benign 分母上的 TCR、agent-only completion ceiling，以及 agent-correct benign calls 上的 defense conditional FBR。
+
+ReasoningGuard 的整体 latency 中位数可能被 PTG 快速 `BLOCK` 路径主导。论文至少同时报告：
+
+- 全部 defense calls 的端到端 p50/p95；
+- PTG-block 快速路径的 p50/p95；
+- PTG-pass 且实际运行 RTV 的条件 p50/p95；
+- 两条路径各自的样本数或占比。
 
 ## 8. 常见故障
 
@@ -242,6 +267,7 @@ defense.error
 |大量 `explicit_no_tool_call`|agent prompt、catalog schema、relay 模型映射和模型拒绝|
 |大量 `unparseable_output`|raw response 是否满足 `REASONING/INTENT/TOOL_CALL` 协议|
 |judge fallback|endpoint、模型名、返回 JSON 和 `judge.call_record`|
+|大量 `rtv.evidence_missing`|context 中的 canonical evidence IDs、judge 返回的 ID 拼写、prompt 允许列表和 validator alias 规则|
 |Guardrail 退化|是否误加 mock，或 LlamaGuard 加载失败|
 |`num_benign=0`|benign ratio、seed 和样本数；TCR=0 不是有效测量|
 |数据数量不对|`--official`、variant、per-category 和 max-scenarios|
@@ -250,3 +276,5 @@ defense.error
 ### 结果诊断案例
 
 若出现“No Defense ASR 明显低于参考值”或“PTG/ReasoningGuard TCR 偏低”，不要先调阈值。应按 attack delivery、agent outcome、exact matcher、defense check 的顺序拆分，并核对参考实验是否使用相同模型、数据和 prompt。`results/0629_run1_5case` 的逐层分析见 [table1_0629_run1_5case_analysis.md](table1_0629_run1_5case_analysis.md)。该次运行因 `strict_runtime=false` 且存在一次超时空响应而 `metrics_valid=false`，只能作为诊断案例。
+
+`results/table1_20260704_140115` 的分析见 [table1_20260704_140115_analysis.md](table1_20260704_140115_analysis.md)。该次运行确认 RTV 输入和 PTG 语义表示已有明显改进，但 RTV/ReasoningGuard 因 evidence ID 契约和 JSON 解析失败而无效，且 PTG conditional FBR 为 20.7%，同样只能作为诊断案例。

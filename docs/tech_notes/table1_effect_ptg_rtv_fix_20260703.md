@@ -72,7 +72,10 @@ Qwen judge 使用自然的两段式消息：system message 说明工具调用审
 - judge fallback rate 为 0；
 - parse success rate 为 100%；
 - 所有超阈值 anomaly 都至少引用一个可解析 evidence ID；
-- `rtv_evidence_coverage=100%`。
+- evidence coverage 以**全部 judge-invoked rows** 为分母达到 100%，不能只对排除 invalid 后的 rows 求平均；
+- audit 中 `rtv.evidence_missing=0`，且对应 defense 的 `num_invalid=0`。
+
+2026-07-04 的正式运行暴露了 evidence ID 契约不一致：context 声明的 canonical ID 使用 `actual-invocation`、`reasoning-trace` 等连字符形式，base Qwen 大量返回 `actual_invocation`、`reasoning_trace` 等字段名形式，导致高分 anomaly 被记为 runtime invalid。详细统计和修复要求见 [table1_20260704_140115_analysis.md](table1_20260704_140115_analysis.md)。在 canonicalization、prompt 允许列表和输出约束修复并重跑前，不得把该次 RTV/ReasoningGuard 数字用于论文。
 
 ## 5. 正式运行门禁
 
@@ -85,6 +88,8 @@ export PTG_EMBEDDING_MODEL=/home/liuenguang24/models/paraphrase-multilingual-Min
 export MALICIOUS_EFFECT_SIDECAR=data/mcptox/mcptox_official_derived_table1_200_curated_effects.json
 ```
 
-脚本强制 strict runtime、judge raise、MiniLM/LlamaGuard fail-fast，并拒绝覆盖已有结果目录。三轮运行保存全部 records，每条包含 `run_idx`；benign 子集按 category 分层选定一次并在三轮复用。结果旁保存 metadata，包括 git commit、scenario/effect hash、judge、PTG 和 LlamaGuard 配置。
+脚本强制 strict runtime、`judge_failure_policy=record_invalid`、MiniLM/LlamaGuard fail-fast，并拒绝覆盖已有结果目录。judge 单样本失败会保留审计信息并令对应 defense 和整张主表无效，而不是静默 fallback。三轮运行保存全部 records，每条包含 `run_idx`；benign 子集按 category 分层选定一次并在三轮复用。结果旁保存 metadata，包括 git commit、scenario/effect hash、judge、PTG 和 LlamaGuard 配置。
 
 当前 `table1.sh` 内置 `PTG_EMBEDDING_THRESHOLD=0.45` 仅用于 smoke/诊断，并会在启动时打印警告。正式主表必须先用独立 calibration set 重新校准并更新该值。
+
+正式主表还必须满足：所有 defense 均 `metrics_valid=true`；任何 defense runtime invalid 都令整张表无效；metadata 的 git commit 和 calibration artifact/hash 非空。TCR 作为核心 utility 指标时使用全量 benign counterparts，而不是 30% 抽样。运行后完整门禁见 [experiment_runbook.md](experiment_runbook.md)。
