@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Defense & ASR (\%) & TCR (\%) & Latency (ms) \\
+\midrule
+No Defense & 2.3 $\pm$ 0.4 & 21.4 $\pm$ 7.1 & --- \\
+AttestMCP & 2.3 $\pm$ 0.4 & 21.4 $\pm$ 7.1 & --- \\
+Guardrail & 2.3 $\pm$ 0.4 & 21.4 $\pm$ 7.1 & --- \\
+PTG-Only & 0.0 $\pm$ 0.0 & 21.4 $\pm$ 7.1 & --- \\
+RTV-Only & 2.3 $\pm$ 0.4 & 21.4 $\pm$ 7.1 & 0.1 \\
+\textsc{ReasoningGuard} & \textbf{0.0 $\pm$ 0.0} & \textbf{21.4 $\pm$ 7.1} & 0.1 \\
+\bottomrule
+\end{tabular}
+\caption{Main results on MCPTox. Lower ASR and higher TCR are better.}
+\label{tab:main}
+\end{table}
