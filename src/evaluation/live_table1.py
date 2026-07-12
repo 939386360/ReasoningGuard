@@ -1015,7 +1015,7 @@ def _evaluate_all_defenses(
                     verdict = Verdict.APPROVE
                     latency_ms = 0.0
                     reason = "No defense applied"
-                elif name in ("AttestMCP", "PTG-Only") or getattr(defense, "ptg", None) is not None:
+                elif name in ("AttestMCP", "PTG-Only"):
                     result = defense.evaluate(msg, intent)
                     verdict = result["verdict"]
                     latency_ms = result.get("latency_ms", 0.0)

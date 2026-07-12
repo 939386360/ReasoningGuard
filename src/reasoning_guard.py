@@ -115,7 +115,7 @@ class GuardrailBaseline:
         else:
             self._llamaguard = None
 
-    def evaluate(self, msg: MCPMessage, **kwargs) -> Dict[str, Any]:
+    def evaluate(self, msg: MCPMessage) -> Dict[str, Any]:
         if self.use_llamaguard and self._llamaguard is not None:
             return self._llamaguard.evaluate(msg)
 
