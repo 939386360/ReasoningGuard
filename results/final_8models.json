@@ -1,0 +1,28 @@
+{
+  "main_table_8models": {
+    "GPT-4o":          {"no_defense": {"ASR": 70.8, "L4": 91.7, "L2": 50.0, "TCR": 75.0}, "reasoning_guard": {"ASR": 19.2, "L4": 3.3, "L2": 35.0, "TCR": 58.3}},
+    "GPT-4-Turbo":     {"no_defense": {"ASR": 63.3, "L4": 46.7, "L2": 80.0, "TCR": 91.7}, "reasoning_guard": {"ASR": 26.7, "L4": 0.0, "L2": 53.3, "TCR": 91.7}},
+    "GPT-4o-mini":     {"no_defense": {"ASR": 56.7, "L4": 26.7, "L2": 86.7, "TCR": 91.7}, "reasoning_guard": {"ASR": 29.2, "L4": 5.0, "L2": 53.3, "TCR": 66.7}},
+    "DeepSeek-V4-Pro": {"no_defense": {"ASR": 50.8, "L4": 51.7, "L2": 50.0, "TCR": 83.3}, "reasoning_guard": {"ASR": 19.2, "L4": 0.0, "L2": 38.3, "TCR": 66.7}},
+    "GPT-3.5-Turbo":   {"no_defense": {"ASR": 50.0, "L4": 38.3, "L2": 61.7, "TCR": 83.3}, "reasoning_guard": {"ASR": 20.0, "L4": 0.0, "L2": 40.0, "TCR": 75.0}},
+    "Qwen3.5-397B":    {"no_defense": {"ASR": 36.7, "L4": 36.7, "L2": 36.7, "TCR": 75.0}, "reasoning_guard": {"ASR": 19.2, "L4": 0.0, "L2": 38.3, "TCR": 75.0}},
+    "Gemini-3.5-Flash":{"no_defense": {"ASR": 30.0, "L4": 30.0, "L2": 30.0, "TCR": 75.0}, "reasoning_guard": {"ASR": 10.0, "L4": 0.0, "L2": 20.0, "TCR": 58.3}},
+    "Claude-Sonnet-5": {"no_defense": {"ASR": 10.8, "L4": 6.7, "L2": 15.0, "TCR": 66.7}, "reasoning_guard": {"ASR": 0.8, "L4": 0.0, "L2": 1.7, "TCR": 50.0}}
+  },
+  "ablation_GPT-4o": {
+    "reasoning_guard": {"ASR": 20.0},
+    "rg_minus_intent": {"ASR": 38.3},
+    "rg_minus_origin": {"ASR": 14.2},
+    "rg_minus_memory": {"ASR": 15.8},
+    "ptg_only": {"ASR": 30.8},
+    "rtv_only": {"ASR": 49.2}
+  },
+  "totals": {
+    "models": 8,
+    "profiles_per_model": 6,
+    "scenarios_per_model": 132,
+    "episodes_per_model": 792,
+    "total_episodes": 6336,
+    "all_valid": true
+  }
+}
