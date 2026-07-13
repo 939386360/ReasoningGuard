@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*.pyo
+experiments/slurm_log/
+results/
