@@ -1,0 +1,25 @@
+\section{Problem Formulation}
+
+\subsection{Threat Model}
+
+We consider an LLM agent $\mathcal{A}$ that interacts with a set of MCP servers $\mathcal{S} = \{s_1, \ldots, s_n\}$ through a JSON-RPC protocol. The agent receives user queries $q \in \mathcal{Q}$, reasons over context $\mathcal{C}$, and invokes tools via MCP messages. We define the threat model across two attack surfaces:
+
+\textbf{Protocol-layer attacks (L4):} A compromised server $s_i^{*} \in \mathcal{S}$ may (a) claim capabilities beyond its attested permissions, (b) inject prompts via sampling without origin authentication, or (c) propagate malicious content across server boundaries through implicit trust chains~\citep{maloyan2026breaking}. These attacks exploit the MCP specification's lack of capability attestation and origin tagging. The adversary's goal is to exploit protocol-level design flaws to bypass the agent's access controls, achieving actions that violate the server's declared capability boundary.
+
+\textbf{Cognitive-layer attacks (L2):} A benign-looking tool response from $s_i$ (or a compromised $s_i^{*}$) contains semantically corrupted content that manipulates the agent's decision process without violating any protocol-level constraint. The agent, having received a seemingly legitimate response, produces a harmful action that is logically consistent with its corrupted context but inconsistent with the original user intent~\citep{agentpi2026}. Unlike protocol attacks, cognitive-layer attacks require no specification exploit; they leverage the LLM's inherent susceptibility to indirect prompt injection through tool responses.
+
+We assume the adversary can compromise one or more MCP servers but cannot compromise the agent's runtime, the PTG middleware, or the RTV judge model. The adversary has knowledge of the MCP protocol and available tools but not of the defense thresholds or judge architecture. We discuss adaptive adversaries---who know the defense mechanism and actively craft attacks to evade it---in Section~\ref{sec:limitations}.
+
+\subsection{Observability-Based Defense Limitation}
+
+We formulate the defense limitation property based on \emph{observable signals} rather than strict layer isolation. A defense mechanism $\mathcal{D}_i$ operating at layer $L_i$ can detect an attack $a_j$ at layer $L_j$ only to the extent that $a_j$ produces observable signals available to $\mathcal{D}_i$. When $i \neq j$, the primary attack signature lies outside $\mathcal{D}_i$'s observation space, leading to \emph{significantly reduced} (but not necessarily zero) detection capability:
+
+\[
+P(\mathcal{D} \text{ detects } a \mid \ell(\mathcal{D}) \neq \ell(a)) \ll P(\mathcal{D} \text{ detects } a \mid \ell(\mathcal{D}) = \ell(a))
+\]
+
+This formulation is more precise than strict non-transferability because modern defense components are not perfectly layer-isolated: PTG uses semantic intent information (which borders on L2), and RTV uses protocol metadata such as origin tags (which borders on L4). However, the \emph{primary} detection signal for each layer remains within that layer: a protocol gateway's core strength is structural attestation, not reasoning analysis; a reasoning verifier's core strength is trace consistency, not protocol validation. Our empirical results (Table~\ref{tab:layer_breakdown}) confirm this: PTG-Only reduces L4-ASR by 89.1\% but L2-ASR by only 3.4\%; RTV-Only reduces L2-ASR by 43.4\% but L4-ASR by only 21.7\%. The cross-layer leakage is non-zero but small, justifying a dual-layer design where each layer complements the other's primary weakness.
+
+\subsection{Attack Temporality}
+
+Following LASM, we classify attacks by temporality: T1 (instantaneous, single-exchange), T2 (session-persistent, surviving within one session), and T3 (cross-session cumulative, persisting across sessions). Existing MCP benchmarks evaluate only T1 attacks~\citep{wang2026mcptox}. T3 attacks---where a malicious tool response in session $t$ corrupts memory that influences behavior in session $t+k$---are particularly dangerous because the injection and exploitation are temporally separated, making detection without cross-session auditing very difficult. We formalize T3 attacks as follows: let $m_t$ be a memory entry written in session $t$ under the influence of a malicious tool response. In session $t+k$, the agent reads $m_t$ and produces action $a_{t+k}$ that serves the adversary's goal. The temporal gap $k$ makes the causal connection opaque to single-session monitors.

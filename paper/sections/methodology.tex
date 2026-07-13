@@ -1,0 +1,97 @@
+\section{Methodology}
+
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.98\textwidth]{Figures/2.pdf}
+    \caption{Dual-layer protection in ReasoningGuard. ReasoningGuard combines PTG for protocol-level attestation and intent verification with RTV for reasoning-trace consistency checking. PTG blocks unauthorized tool calls, while RTV detects reasoning corruption before harmful actions are executed.}
+    \label{fig:architecture}
+\end{figure*}
+
+
+\subsection{Overview}
+
+\textsc{ReasoningGuard} comprises two complementary components: the Protocol-Attested Tool Gateway (PTG) at L4 and the Reasoning Trace Verifier (RTV) at L2. PTG intercepts all MCP messages between the agent and servers, enforcing attestation and intent verification before forwarding. RTV monitors the agent's reasoning process, detecting anomalies that indicate cognitive-layer manipulation. The components communicate through a shared provenance ledger that records every tool invocation with its attested intent and verified reasoning trace. Figure~\ref{fig:architecture} illustrates the system architecture.
+
+\subsection{Protocol-Attested Tool Gateway (PTG)}
+
+PTG extends AttestMCP~\citep{maloyan2026breaking} with three novel mechanisms:
+
+\subsubsection{Semantic Intent Attestation}
+
+For each tool invocation $v = (s_i, m, \text{args})$ where $s_i$ is the target server, $m$ is the method, and args are the arguments, PTG requires the agent to produce an \emph{intent summary} $I_v$: a natural language description of why the tool is being invoked, derived from the agent's reasoning trace. The intent summary is cryptographically bound to the invocation:
+
+\[
+\sigma_v = \text{HMAC-SHA256}(K_{\text{PTG}}, \; I_v \| s_i \| m \| \text{args} \| t_v)
+\]
+
+where $K_{\text{PTG}}$ is a session key established at connection time and $t_v$ is a monotonic timestamp. PTG verifies that $I_v$ is consistent with the attested capabilities of $s_i$ using a lightweight entailment check: if server $s_i$ attests to capability $C_i = \{c_1, \ldots, c_m\}$, then $I_v$ must be entailed by at least one $c_j \in C_i$. This prevents capability escalation where a server is invoked for a purpose outside its attested scope. The entailment check operates on keyword overlap with a calibrated threshold, avoiding the overhead of a full NLI model while maintaining sufficient precision for capability boundary enforcement.
+
+We emphasize that intent attestation is a \emph{necessary but not sufficient} condition for security. The HMAC binding proves that the intent was not modified after generation, and the entailment check verifies that the intent falls within the server's attested capability scope. However, intent attestation alone does not constitute a full authorization model---it does not verify that the user explicitly authorized the action, that the resource is permitted, or that the purpose is legitimate in a broader policy context. A complete authorization system would require a formal model of the form $(subject, action, resource, purpose, constraints)$, which is complementary to our defense-in-depth approach. PTG's contribution is to add an \emph{intent-aware capability boundary} that catches protocol-level escalation attempts---attacks where a server is invoked for a purpose inconsistent with its declared capabilities---which existing protocol attestation (e.g., AttestMCP) cannot detect.
+
+\subsubsection{Origin-Tagged Sampling with Intent Propagation}
+
+MCP's sampling mechanism allows servers to request LLM completions, creating a bidirectional attack surface~\citep{maloyan2026breaking}. PTG enforces origin tagging on all sampling requests: every sampling response includes a provenance tag $(s_i, \text{origin=server})$ that is propagated into the agent's context. This enables RTV to distinguish server-originated content from user-originated input when verifying reasoning consistency. Without origin tags, the agent cannot determine whether a piece of context originated from a trusted user query or from a potentially compromised server, making OAV detection impossible.
+
+\subsubsection{Cross-Server Isolation with Intent-Aware Boundaries}
+
+PTG enforces isolation boundaries between servers based on intent consistency. If a tool response from $s_i$ is used as input to an invocation on $s_j$ (cross-server data flow), PTG requires that the intent summary for the $s_j$ invocation explicitly acknowledges the data source. Formally, if $\text{data}(v_i)$ flows into $v_j$, then $I_{v_j}$ must contain a reference to $s_i$'s contribution. This prevents the implicit trust propagation vulnerability identified in the MCP specification analysis, where a compromised server $s_i^{*}$ can inject content that is forwarded to $s_j$ without $s_j$'s consent or the agent's awareness.
+
+\subsection{Reasoning Trace Verifier (RTV)}
+
+RTV addresses cognitive-layer attacks by checking the \emph{consistency of the agent's externalized decision evidence}---the structured trace that the agent produces to justify each tool invocation. We emphasize that RTV verifies the \emph{justification trace}, not the agent's internal cognitive process. LLM-generated explanations can be post-hoc rationalizations, incomplete descriptions, or deliberately optimized to appear consistent. RTV's goal is therefore not to certify that the agent's reasoning is ``correct'' in a deeper sense, but to detect \emph{observable inconsistencies} between the agent's stated observations, inferences, decisions, and the provenance metadata provided by PTG. This positions RTV as an \emph{evidence consistency checker} rather than a reasoning correctness verifier: it raises an alert when the justificatory evidence is internally contradictory or fails to align with protocol-level provenance, but it cannot guarantee that a consistent trace corresponds to a safe action.
+
+\subsubsection{Structured Decision Evidence Trace}
+
+RTV requires the agent to produce a structured trace $\mathcal{T} = (r_1, r_2, \ldots, r_k)$ before each tool invocation, where each $r_i$ is a reasoning step containing:
+\begin{itemize}
+\item \textbf{Observation}: What the agent observes from context (distinguishing user input, prior tool responses, and system instructions via PTG origin tags).
+\item \textbf{Inference}: What the agent infers from observations, with explicit citation of supporting evidence.
+\item \textbf{Decision}: What action the agent selects, with justification linking back to inferences.
+\end{itemize}
+The structured trace serves two purposes: it forces the agent to externalize its decision justification (making inconsistencies between context, inference, and action visible to automated checking), and it provides a machine-readable format for the judge model to evaluate. We acknowledge that this externalized trace is a \emph{generated explanation} rather than a faithful record of the model's internal computation; however, requiring the agent to commit to a justification before acting creates an auditable evidence trail that is absent in unstructured tool-use agents.
+
+\subsubsection{Constrained Judge Model}
+
+RTV employs a constrained judge model $\mathcal{J}$---a lightweight, instruction-tuned verifier (Qwen2.5-7B-Instruct with constrained decoding)---that checks each evidence trace for three anomaly classes:
+
+\textbf{Context-Action Inconsistency (CAI):} The selected action does not follow from the stated observations and inferences. This detects attacks where a malicious tool response redirects the agent toward an action unrelated to its stated reasoning. CAI is scored by measuring the semantic overlap between the decision step and the observation/inference chain; low overlap indicates the decision was externally influenced rather than derived from the agent's own evidence.
+
+\textbf{Origin-Awareness Violation (OAV):} The trace treats server-originated content as user instruction or fails to account for provenance tags. This detects sampling-based injection where the agent fails to distinguish injected content from genuine user directives. OAV detection relies on PTG's origin tags: if the trace attributes server-originated content to the user, OAV is flagged.
+
+\textbf{Intent-Action Divergence (IAD):} The tool invocation's declared intent $I_v$ contradicts the trace's decision step. This detects attacks where the agent is coerced into invoking a tool for a purpose inconsistent with its stated justification, such as when a poisoned response causes the agent to call an email-sending tool for exfiltration while reasoning about file organization. IAD also detects divergence markers (``instead of'', ``rather than'') and references to sensitive paths (e.g., \texttt{.ssh/id\_rsa}) absent from the original intent.
+
+For each anomaly class $c \in \{\text{CAI}, \text{OAV}, \text{IAD}\}$, the judge produces a score $\sigma_c \in [0, 1]$. A trace is flagged if any $\sigma_c > \tau_c$, where $\tau_c$ is a calibrated threshold per anomaly class (determined on a held-out validation set of 50 benign and 50 attack scenarios). Flagged traces trigger a confirmation prompt to the user before the tool invocation is executed. We note that the current heuristic scoring (keyword overlap and rule-based pattern matching) represents a precision-oriented baseline; the architecture supports replacement with neural entailment models for stronger semantic matching, at the cost of additional latency.
+
+\subsubsection{Cross-Session Memory Auditing}
+
+For T3 threats, RTV maintains a persistent memory provenance graph $\mathcal{G} = (V, E)$ where nodes $v \in V$ represent memory entries (each tagged with origin, session, and intent hash) and edges $e \in E$ represent dependencies. When the agent reads from memory in session $t+k$, RTV traces the provenance chain back to the originating session and checks whether any prior write was flagged as suspicious. This enables detection of cross-session attacks where a malicious tool response in session $t$ corrupts memory that influences behavior in session $t+k$. The graph traversal is bounded to depth 10 to ensure constant-time overhead.
+
+\subsection{Integration: The Dual-Layer Protocol}
+
+Algorithm~\ref{alg:rg} describes the integrated defense protocol. For each agent-tool interaction, PTG first validates protocol-level properties (attestation, intent, origin). If PTG approves, RTV then verifies the reasoning trace. Only if both layers approve is the invocation forwarded. If either layer flags the invocation, the system either blocks it (PTG violation) or escalates to user confirmation (RTV flag). This ordering ensures that protocol-level violations are caught immediately without invoking the judge model, minimizing latency for clear-cut attacks.
+
+\begin{algorithm}[tb]
+\caption{\textsc{ReasoningGuard} Dual-Layer Verification}
+\label{alg:rg}
+\textbf{Input}: Agent request $v = (s_i, m, \text{args}, I_v)$, reasoning trace $\mathcal{T}$, provenance ledger $\mathcal{L}$\\
+\textbf{Output}: \textsc{Approve}, \textsc{Block}, or \textsc{Escalate}
+\begin{algorithmic}[1]
+\STATE $\sigma_v \leftarrow \text{HMAC}(K_{\text{PTG}}, I_v \| s_i \| m \| \text{args} \| t_v)$
+\IF{!VerifyAttestation($s_i$, $C_i$)}
+    \RETURN \textsc{Block}
+\ENDIF
+\IF{!VerifyIntentEntailment($I_v$, $C_i$)}
+    \RETURN \textsc{Block}
+\ENDIF
+\IF{CheckCrossServerFlow($v$, $\mathcal{L}$) \AND !VerifyCrossServerConsent($v$)}
+    \RETURN \textsc{Block}
+\ENDIF
+\STATE $(\sigma_{\text{CAI}}, \sigma_{\text{OAV}}, \sigma_{\text{IAD}}) \leftarrow \mathcal{J}(\mathcal{T}, I_v, \mathcal{L})$
+\IF{$\sigma_c > \tau_c$ for any $c$}
+    \RETURN \textsc{Escalate}
+\ENDIF
+\STATE $\mathcal{L} \leftarrow \mathcal{L} \cup \{(v, \sigma_v, \mathcal{T}, t_v)\}$
+\RETURN \textsc{Approve}
+\end{algorithmic}
+\end{algorithm}

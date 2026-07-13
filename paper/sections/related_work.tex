@@ -1,0 +1,24 @@
+\section{Related Work}
+
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.98\textwidth]{Figures/1.pdf}
+    \caption{Attack surfaces in undefended MCP-based LLM agents.
+    Cognitive-layer attacks manipulate the agent’s reasoning through poisoned tool responses, while protocol-layer attacks exploit missing capability attestation to perform unauthorized tool invocations. The two scenarios illustrate why protocol checks and reasoning verification must be addressed jointly.}
+    \label{figure1}
+\end{figure*}
+
+
+
+\subsection{MCP Security Analysis}
+
+The security of the Model Context Protocol has attracted growing research attention since its standardization. \citet{maloyan2026breaking} present the first rigorous analysis of the MCP specification, identifying three protocol-level vulnerabilities---absence of capability attestation, unauthenticated sampling requests, and implicit trust propagation across server boundaries---and proposing AttestMCP, a backward-compatible extension reducing ASR from 52.8\% to 12.4\%. \citet{huang2026model} provide complementary threat modeling focusing on prompt injection via tool poisoning, classifying attacks by injection vector and persistence mechanism. \citet{shuli2025parasites} conduct large-scale empirical analysis of attacks across the MCP ecosystem, revealing that compromised tool descriptions account for 63\% of successful exploits. \citet{shiva2025systematization} systematize security and safety knowledge in the broader MCP ecosystem, mapping threats to protocol lifecycle stages. \citet{mas2026trustworthy} propose a cryptographic provenance architecture for MCP registries, addressing supply-chain integrity, and \citet{forough2026when} survey confidential computing approaches for agentic AI, identifying hardware-enforced isolation as a promising direction for protecting agent secrets.
+
+\subsection{Agent Security Surveys and Frameworks}
+
+Several recent surveys organize the agent security landscape. The LASM framework~\citep{lasm2026} introduces a seven-layer decomposition (L1--L7: from LLM core through application) with a four-class temporality axis (T1: instantaneous, T2: session-persistent, T3: cross-session, T4: slow-burn), revealing that the under-studied zone $\{L_5, L_6, L_7\} \times \{T_3, T_4\}$ holds only 6.3\% of research despite containing the highest-severity threats. The AgentPI systematization~\citep{agentpi2026} demonstrates that all eight tested defenses fail on context-dependent tasks, where the attack vector operates through the reasoning process rather than the action itself, and shows that execution-level defenses reduce task completion rates by 15--25\%. \citet{agentsok2026} map the attack surface through a causal threat graph connecting tool vulnerabilities to agent autonomy levels, while \citet{openclaw2026} and \citet{matra2026} provide layered reviews with the OpenClaw framework as a case study. \citet{skills2026} analyze the Agent Skills framework, identifying structural vulnerabilities analogous to MCP's trust model issues. \citet{gulyamov2026prompt} provide a comprehensive review of prompt injection attack vectors and defense mechanisms across LLM and agent systems, noting that multi-layer defenses remain underexplored.
+
+\subsection{LLM Guardrails and Reasoning Verification}
+
+Guardrail-based defenses validate LLM outputs against safety policies~\citep{dong2025safeguarding}. While effective for content filtering, they operate post hoc on the final action rather than the reasoning process, and their classification-based approach cannot detect semantically coherent but maliciously motivated reasoning. Process reward models (PRMs) verify step-by-step reasoning in mathematical domains, but have not been applied to agent security---their training on mathematical correctness provides no signal for detecting security-relevant reasoning anomalies. \citet{secureagent2026} propose system-level defenses against indirect prompt injection, including input sanitization and output filtering, but do not address protocol-level vulnerabilities or provide cross-session protection. \citet{sapkota2025agents} distinguish AI agents from agentic AI systems, highlighting that increased autonomy amplifies the need for reasoning-level verification. Our work differs by combining protocol-level attestation with reasoning-level verification, exploiting the complementarity established by the LASM non-transferability property to provide coverage that no single-layer approach can achieve.

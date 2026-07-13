@@ -1,0 +1,45 @@
+\section{Introduction}
+
+LLM-based agents increasingly rely on the Model Context Protocol (MCP) to interact with external tools, data sources, and services. Through a common JSON-RPC interface, MCP lets agents discover and invoke tools ranging from file-system access and database queries to web browsing and code execution. However, this integration significantly increases the attack surface, exceeding the protection offered by standalone LLM security measures.
+
+Recent empirical evidence underscores the severity of the problem. MCPTox (~\citep{wang2026mcptox}) shows that tool poisoning attacks against real MCP servers, even using state-of-the-art models including o1-mini, still have an attack success rate (ASR) as high as 72.8\%. Notably, the improved model capabilities are associated with increased vulnerability. The first formal security analysis of the MCP specification (~\citep{maloyan2026breaking}) identified three architectural vulnerabilities: lack of capability proof, unauthenticated sampling, and implicit trust propagation. These vulnerabilities increased the attack success rate by 23\% to 41\% compared to equivalent non-MCP integrations. These problems are not implementation flaws but rather protocol-level design flaws that cannot be completely resolved through server-side hardening.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{Figures/0.pdf}
+    \caption{Defence placement and timing coverage. ReasoningGuard applies RTV at the inference layer (L2) and PTG at the protocol layer (L4), which is consistent with the non-portability of defence techniques between LASM layers. MCPTox+ extends the existing MCP benchmarks from T1 transient assaults to T3 cross-session threats.}
+    \label{fig:illustration}
+    \vspace{-2em}
+\end{figure}
+
+
+The emerging defense landscape remains fragmented. AttestMCP~\citep{maloyan2026breaking} proposes a backward-compatible protocol extension adding capability attestation and message authentication, reducing overall ASR from 52.8\% to 12.4\%. However, AttestMCP operates entirely at the protocol layer (L4 in the Layered Attack Surface Model taxonomy~\citep{lasm2026}): it verifies \emph{who} is calling and \emph{what} capabilities they possess, but not \emph{why} a tool is being invoked or whether the agent's reasoning has been corrupted by a prior malicious response. Concurrently, guardrail-based defenses~\citep{dong2025safeguarding} validate agent actions post hoc but cannot detect tampered reasoning chains---the AgentPI systematization~\citep{agentpi2026} demonstrates that all eight tested defenses fail on context-dependent tasks where the attack vector operates through the reasoning process rather than the action itself.
+
+This gap is structural, not incidental. The observability-based defense limitation property establishes that a defense mechanism at one architectural layer has \emph{significantly reduced} detection power against attacks localized at another, because the primary attack signature lies outside the defender's observation space~\citep{lasm2026}. While cross-layer information leakage is non-zero (e.g., PTG uses semantic intent, RTV uses protocol origin tags), the core detection signal for each layer remains within that layer. A single-layer defense is therefore fundamentally insufficient for comprehensive tool-integrated agent security.
+
+We propose \textsc{ReasoningGuard}, a dual-layer defense framework that addresses both layers simultaneously through two complementary components:
+
+\begin{enumerate}
+\item \textbf{Protocol-Attested Tool Gateway (PTG):} A middleware layer between the LLM agent and MCP servers that enforces capability attestation, origin-tagged sampling, and---critically---\emph{semantic intent attestation}. Unlike AttestMCP, which verifies only structural protocol properties, PTG requires each tool invocation to carry a cryptographically bound reasoning summary. The gateway cross-checks this summary against declared capabilities and prior context before forwarding the request, blocking calls where the stated intent contradicts the server's attested permissions.
+
+\item \textbf{Reasoning Trace Verifier (RTV):} A structured logging and evidence consistency verification system that captures the agent's decision justification before each tool invocation and validates it for consistency with the observed context, provenance metadata, and stated intent. RTV employs a constrained judge model that flags evidence inconsistencies---logical contradictions between context and action, provenance violations, and intent-action mismatches---that indicate the agent's decision process has been corrupted by a malicious tool response. We emphasize that RTV verifies the \emph{consistency of externalized evidence}, not the correctness of internal reasoning, positioning it as a necessary-but-not-sufficient detection layer in a defense-in-depth strategy.
+\end{enumerate}
+
+The dual-layer design is motivated by the observability-based defense limitation property and validated empirically across eight SOTA models.
+On GPT-4o, the most comprehensively evaluated model, No Defense ASR reaches 70.8\%---with L4 (protocol-layer) attacks achieving 91.7\% ASR and L2 (cognitive-layer) attacks achieving 50.0\% ASR.
+PTG-Only reduces L4-ASR by 89.1\% (to 10.0\%) but L2-ASR by only 3.4\% (to 48.3\%), confirming that a protocol-layer defense has significantly reduced detection power against cognitive-layer attacks.
+RTV-Only reduces L2-ASR by 43.4\% (to 28.3\%) but L4-ASR by only 21.7\% (to 71.7\%), confirming the reverse.
+Only \textsc{ReasoningGuard} (PTG~+~RTV) achieves low ASR on both layers simultaneously (L4=3.3\%, L2=35.0\%), demonstrating that the two layers are complementary.
+Across all eight models, \textsc{ReasoningGuard} reduces overall ASR by 48.5\%--92.6\% relative to No Defense, with negligible defense computation overhead (0.1\,ms per tool call) and a measurable but acceptable TCR cost (16.7\,pp on GPT-4o).
+
+We further contribute \textbf{MCPTox+}, a comprehensive benchmark comprising 342 scenarios across six attack categories spanning both L4 and L2 attack surfaces, including the first cross-session (T3) memory poisoning evaluation for MCP security. MCPTox+ strictly separates model-visible runtime specifications from evaluator-only ground truth, preventing label leakage into the defense pipeline---a flaw we identify in prior benchmark constructions.
+
+Our contributions are:
+\begin{itemize}
+\item \textsc{ReasoningGuard}, a dual-layer defense combining Protocol-Attested Tool Gateway (PTG) with Reasoning Trace Verifier (RTV), grounded in the observability-based defense limitation property and validated on 9{,}192 episodes across eight SOTA models.
+\item Semantic intent attestation: a novel protocol extension that binds reasoning summaries to tool invocations, identified by ablation as the most critical single defense component (removing it increases ASR by 6.7--18.3\,pp across three models). We position this as a necessary-but-not-sufficient capability boundary check, complementary to formal authorization systems.
+\item Evidence consistency verification with three anomaly classes (OAV, IAD, CAI): a constrained-judge approach that checks the consistency of the agent's externalized decision evidence rather than claiming to verify internal reasoning correctness. RTV achieves 100\% TPR and 0\% FPR on direct evaluation, providing clear incremental value beyond PTG on L2 attacks (13.3\,pp additional L2-ASR reduction on GPT-4o).
+\item MCPTox+: a benchmark of 342 scenarios across six attack categories with strict RuntimeSpec/EvaluationOracle separation, including the first T3 cross-session memory poisoning evaluation for MCP security.
+\item Extensive multi-model evaluation demonstrating that \textsc{ReasoningGuard} consistently achieves the lowest ASR across all eight tested models, with 0\% invalid episodes ensuring fair cross-defense comparison, plus adaptive adversary analysis identifying three evasion strategies and their feasibility.
+\end{itemize}
