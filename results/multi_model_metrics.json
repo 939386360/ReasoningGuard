@@ -1,0 +1,14 @@
+{
+  "GPT-4o": {"no_defense": {"ASR": 70.8, "L4_ASR": 91.7, "L2_ASR": 50.0, "TCR": 75.0}, "reasoning_guard": {"ASR": 19.2, "L4_ASR": 3.3, "L2_ASR": 35.0, "TCR": 58.3}},
+  "GPT-3.5-Turbo": {"no_defense": {"ASR": 50.0, "L4_ASR": 38.3, "L2_ASR": 61.7, "TCR": 83.3}, "reasoning_guard": {"ASR": 20.0, "L4_ASR": 0.0, "L2_ASR": 40.0, "TCR": 75.0}},
+  "GPT-4o-mini": {"no_defense": {"ASR": 56.7, "L4_ASR": 26.7, "L2_ASR": 86.7, "TCR": 91.7}, "reasoning_guard": {"ASR": 29.2, "L4_ASR": 5.0, "L2_ASR": 53.3, "TCR": 66.7}},
+  "GPT-4-Turbo": {"no_defense": {"ASR": 63.3, "L4_ASR": 46.7, "L2_ASR": 80.0, "TCR": 91.7}, "reasoning_guard": {"ASR": 26.7, "L4_ASR": 0.0, "L2_ASR": 53.3, "TCR": 91.7}},
+  "ablation_GPT-4o": {
+    "reasoning_guard": {"ASR": 20.0, "L4_ASR": 5.0, "L2_ASR": 35.0, "TCR": 50.0},
+    "rg_minus_intent": {"ASR": 38.3, "L4_ASR": 45.0, "L2_ASR": 31.7, "TCR": 50.0},
+    "rg_minus_origin": {"ASR": 14.2, "L4_ASR": 0.0, "L2_ASR": 28.3, "TCR": 50.0},
+    "rg_minus_memory": {"ASR": 15.8, "L4_ASR": 1.7, "L2_ASR": 30.0, "TCR": 58.3},
+    "ptg_only": {"ASR": 30.8, "L4_ASR": 11.7, "L2_ASR": 50.0, "TCR": 75.0},
+    "rtv_only": {"ASR": 49.2, "L4_ASR": 66.7, "L2_ASR": 31.7, "TCR": 58.3}
+  }
+}
