@@ -55,6 +55,7 @@ def main():
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--api_key", default=os.environ.get("LLM_API_KEY", ""))
     parser.add_argument("--api_base_url", default=os.environ.get("LLM_API_BASE_URL", "https://api.chatanywhere.tech/v1/chat/completions"))
+    parser.add_argument("--ablation", action="store_true", help="Use ablation profiles (Table 5) instead of main profiles")
     args = parser.parse_args()
 
     model_map = json.loads(args.model_map)
@@ -74,7 +75,10 @@ def main():
     for cat, cnt in sorted(cat_counts.items()):
         print(f"  {cat}: {cnt}", flush=True)
 
-    profiles = DefenseProfile.all_profiles()
+    if args.ablation:
+        profiles = DefenseProfile.ablation_profiles()
+    else:
+        profiles = DefenseProfile.all_profiles()
     total = len(subset) * len(profiles)
     print(f"\n{len(subset)} scenarios x {len(profiles)} profiles = {total} episodes", flush=True)
     print(f"Started at {time.strftime('%H:%M:%S')}", flush=True)
@@ -88,11 +92,12 @@ def main():
     elapsed = time.time() - t0
 
     print(f"\n=== Results: {args.model} (New Framework) ===", flush=True)
-    print(f"{'Profile':<20s} {'ASR':>6s} {'TCR':>6s} {'L4':>6s} {'L2':>6s} {'Invalid':>8s} {'Valid':>6s}", flush=True)
-    print("-" * 60, flush=True)
-    for pid in ["no_defense","attest_mcp","guardrail","ptg_only","rtv_only","reasoning_guard"]:
+    print(f"{'Profile':<20s} {'ASR':>6s} {'TCR':>6s} {'L4':>6s} {'L2':>6s} {'Lat':>8s} {'Invalid':>8s} {'Valid':>6s}", flush=True)
+    print("-" * 72, flush=True)
+    profile_ids = [p.profile_id for p in profiles]
+    for pid in profile_ids:
         m = results["metrics"].get(pid, {})
-        print(f"{pid:<20s} {m.get('ASR',0):>6.1f} {m.get('TCR',0):>6.1f} {m.get('L4_ASR',0):>6.1f} {m.get('L2_ASR',0):>6.1f} {m.get('num_invalid',0):>8d} {str(m.get('metrics_valid',False)):>6s}", flush=True)
+        print(f"{pid:<20s} {m.get('ASR',0):>6.1f} {m.get('TCR',0):>6.1f} {m.get('L4_ASR',0):>6.1f} {m.get('L2_ASR',0):>6.1f} {m.get('Latency_ms',0):>7.1f}m {m.get('num_invalid',0):>8d} {str(m.get('metrics_valid',False)):>6s}", flush=True)
 
     print(f"\nElapsed: {elapsed:.0f}s ({elapsed/60:.1f}m)", flush=True)
     print(f"Per-sample: {len(results['per_sample'])} episodes", flush=True)
@@ -104,14 +109,15 @@ def main():
 
     # Per-category breakdown
     print(f"\n=== Per-Category Breakdown ===", flush=True)
+    summary_pids = ["no_defense","ptg_only","rtv_only","reasoning_guard"] if not args.ablation else profile_ids
     for cat in sorted(cat_counts):
         cat_results = [r for r in results["per_sample"] if r["category"] == cat]
-        for pid in ["no_defense","ptg_only","rtv_only","reasoning_guard"]:
+        for pid in summary_pids:
             pid_results = [r for r in cat_results if r["profile_id"] == pid]
             attacks = [r for r in pid_results if r["attack_layer"] in ("L4","L2")]
             succeeded = sum(r["attack_succeeded"] for r in attacks)
             asr = 100 * succeeded / max(len(attacks), 1)
-            if pid == "no_defense":
+            if pid == summary_pids[0]:
                 print(f"  {cat:<30s} {pid:<20s} ASR={asr:>5.1f}% ({succeeded}/{len(attacks)})", flush=True)
             else:
                 print(f"  {'':30s} {pid:<20s} ASR={asr:>5.1f}% ({succeeded}/{len(attacks)})", flush=True)

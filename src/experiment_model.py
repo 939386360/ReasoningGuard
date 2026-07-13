@@ -392,6 +392,9 @@ class DefenseRun:
     rtv_result: Optional[Any] = None       # RTVResult
     verdict: Optional[str] = None          # "APPROVE" | "BLOCK" | "ESCALATE"
     runtime_error: Optional[Dict[str, Any]] = None
+    gateway_latency_ms: float = 0.0
+    rtv_latency_ms: float = 0.0
+    guardrail_latency_ms: float = 0.0
 
 
 # ---------------------------------------------------------------------------

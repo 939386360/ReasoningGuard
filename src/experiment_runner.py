@@ -170,17 +170,24 @@ def _run_defense(
     gateway_result = None
     rtv_result = None
     runtime_error = None
+    gateway_latency_ms = 0.0
+    rtv_latency_ms = 0.0
+    guardrail_latency_ms = 0.0
 
     try:
         # Step 1: Gateway (PTG or AttestMCP)
         if gateway is not None:
+            t0 = time.time()
             gateway_result = gateway.verify_invocation(msg, intent)
+            gateway_latency_ms = (time.time() - t0) * 1000
             if not gateway_result.approved:
                 verdict = "BLOCK"
 
         # Step 2: Guardrail (action-level filter)
         if guardrail is not None and verdict == "APPROVE":
+            t0 = time.time()
             gr_result = guardrail.evaluate(msg)
+            guardrail_latency_ms = (time.time() - t0) * 1000
             if gr_result["verdict"] != "APPROVE":
                 verdict = "BLOCK"
 
@@ -193,7 +200,9 @@ def _run_defense(
                     {"origin": tag.origin.value, "server_id": tag.source_id}
                     for tag in origin_tags
                 ]
+            t0 = time.time()
             rtv_result = rtv.verify(trace, intent, provenance_tags)
+            rtv_latency_ms = (time.time() - t0) * 1000
             if not rtv_result.approved:
                 verdict = "ESCALATE"
 
@@ -214,6 +223,9 @@ def _run_defense(
         rtv_result=rtv_result,
         verdict=verdict,
         runtime_error=runtime_error,
+        gateway_latency_ms=gateway_latency_ms,
+        rtv_latency_ms=rtv_latency_ms,
+        guardrail_latency_ms=guardrail_latency_ms,
     )
 
 
@@ -778,6 +790,12 @@ def run_full_experiment(
         for profile in profiles:
             agent = agent_factory()  # Fresh agent per profile
             episode, outcome = run_episode(scenario, profile, agent, seed)
+            # Collect latency data
+            latencies = []
+            for dr in episode.defense_runs:
+                lat = dr.gateway_latency_ms + dr.rtv_latency_ms + dr.guardrail_latency_ms
+                latencies.append(lat)
+            avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
             results.append({
                 "scenario_id": scenario.scenario_id,
                 "category": scenario.category,
@@ -792,6 +810,7 @@ def run_full_experiment(
                 "memory_write_status": outcome.memory_write_status,
                 "memory_read_status": outcome.memory_read_status,
                 "verdict": [dr.verdict for dr in episode.defense_runs],
+                "latency_ms": round(avg_latency, 2),
             })
 
     # Compute metrics per profile
@@ -810,12 +829,14 @@ def run_full_experiment(
         l4_asr = 100 * sum(r["attack_succeeded"] for r in l4_attacks) / max(len(l4_attacks), 1)
         l2_asr = 100 * sum(r["attack_succeeded"] for r in l2_attacks) / max(len(l2_attacks), 1)
         num_invalid = len(p_results) - len(valid)
+        avg_latency = sum(r.get("latency_ms", 0) for r in valid) / max(len(valid), 1)
 
         metrics[profile.profile_id] = {
             "ASR": round(asr, 1),
             "TCR": round(tcr, 1),
             "L4_ASR": round(l4_asr, 1),
             "L2_ASR": round(l2_asr, 1),
+            "Latency_ms": round(avg_latency, 2),
             "num_attacks": len(attacks),
             "num_benign": len(benign),
             "num_invalid": num_invalid,
