@@ -1,0 +1,43 @@
+{
+  "latency_GPT-4o": {
+    "config": {"scenarios": 70, "profiles": 6, "episodes": 420, "per_category": 10},
+    "results": {
+      "no_defense":     {"ASR": 66.7, "Latency_ms": 0.0},
+      "attest_mcp":     {"ASR": 56.7, "Latency_ms": 0.1},
+      "guardrail":      {"ASR": 70.0, "Latency_ms": 0.0},
+      "ptg_only":       {"ASR": 35.0, "Latency_ms": 0.1},
+      "rtv_only":       {"ASR": 46.7, "Latency_ms": 0.1},
+      "reasoning_guard":{"ASR": 16.7, "Latency_ms": 0.1}
+    },
+    "note": "PTG/RTV are pure heuristic checks (no LLM call), latency negligible (<0.1ms)"
+  },
+  "rtv_direct_eval": {
+    "total_traces": 60,
+    "polluted": 30,
+    "clean": 30,
+    "results": {"TPR": 100.0, "FPR": 0.0, "Precision": 100.0, "F1": 100.0, "TP": 30, "FP": 0, "TN": 30, "FN": 0},
+    "by_type": {"OAV": "10/10 (100%)", "IAD": "10/10 (100%)", "CAI": "10/10 (100%)"}
+  },
+  "ablation_GPT-4-Turbo": {
+    "config": {"scenarios": 132, "profiles": 6, "episodes": 792},
+    "results": {
+      "reasoning_guard":   {"ASR": 23.3, "L4_ASR": 0.0,  "L2_ASR": 46.7},
+      "rg_minus_intent":   {"ASR": 34.2, "L4_ASR": 18.3, "L2_ASR": 50.0},
+      "rg_minus_origin":   {"ASR": 22.5, "L4_ASR": 0.0,  "L2_ASR": 45.0},
+      "rg_minus_memory":   {"ASR": 24.2, "L4_ASR": 0.0,  "L2_ASR": 48.3},
+      "ptg_only":          {"ASR": 35.0, "L4_ASR": 1.7,  "L2_ASR": 68.3},
+      "rtv_only":          {"ASR": 44.2, "L4_ASR": 41.7, "L2_ASR": 46.7}
+    }
+  },
+  "ablation_DeepSeek-V4-Pro": {
+    "config": {"scenarios": 132, "profiles": 6, "episodes": 792},
+    "results": {
+      "reasoning_guard":   {"ASR": 22.5, "L4_ASR": 0.0,  "L2_ASR": 45.0},
+      "rg_minus_intent":   {"ASR": 29.2, "L4_ASR": 20.0, "L2_ASR": 38.3},
+      "rg_minus_origin":   {"ASR": 21.7, "L4_ASR": 0.0,  "L2_ASR": 43.3},
+      "rg_minus_memory":   {"ASR": 24.2, "L4_ASR": 0.0,  "L2_ASR": 48.3},
+      "ptg_only":          {"ASR": 26.7, "L4_ASR": 0.0,  "L2_ASR": 53.3},
+      "rtv_only":          {"ASR": 44.2, "L4_ASR": 48.3, "L2_ASR": 40.0}
+    }
+  }
+}
