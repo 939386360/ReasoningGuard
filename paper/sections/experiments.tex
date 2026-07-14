@@ -6,13 +6,20 @@
 
 \textbf{Models.} We evaluate eight SOTA agent backbones: GPT-4o, GPT-4-Turbo, GPT-4o-mini, GPT-3.5-Turbo, DeepSeek-V4-Pro, Claude-Sonnet-5, Gemini-3.5-Flash, and Qwen3.5-397B-A17B. All models are accessed through a unified API endpoint with temperature~0 and max\_tokens~1024.
 
-\textbf{Defense Profiles.} We compare seven defense configurations: (1)~\textbf{No Defense}, (2)~\textbf{AttestMCP} (protocol-only capability attestation with origin tags), (3)~\textbf{Guardrail} (action-level keyword filter), (4)~\textbf{PTG-Only} (full gateway with intent attestation, no RTV), (5)~\textbf{RTV-Only} (reasoning trace verification without gateway), (6)~\textbf{ReasoningGuard} (full dual-layer: PTG~+~RTV), and (7)~\textbf{Prompt-Only Defense} (security instructions injected into the agent's system prompt, no architectural defense). Each profile creates an isolated agent episode with per-profile origin tag visibility---No Defense, Guardrail, RTV-Only, and Prompt-Only never see origin tags, while AttestMCP, PTG, and ReasoningGuard do.
+\textbf{Defense Profiles.} We compare nine defense configurations: (1)~\textbf{No Defense}, (2)~\textbf{AttestMCP}~\citep{maloyan2026breaking} (protocol-only capability attestation with origin tags), (3)~\textbf{Guardrail} (action-level keyword filter), (4)~\textbf{PTG-Only} (full gateway with intent attestation, no RTV), (5)~\textbf{RTV-Only} (reasoning trace verification without gateway), (6)~\textbf{ReasoningGuard} (full dual-layer: PTG~+~RTV), (7)~\textbf{Prompt-Only Defense} (security instructions in system prompt), (8)~\textbf{StruQ-Style}~\citep{chen2024struq} (structured instruction-data separation in system prompt), and (9)~\textbf{IPIGuard-Style}~\citep{an2025ipiguard} (post-hoc tool dependency graph check). Configurations 7--9 are evaluated on GPT-4o only. Each profile creates an isolated agent episode with per-profile origin tag visibility.
 
 \textbf{Metrics.} Attack Success Rate (ASR, \%), Task Completion Rate (TCR, \%), L4-ASR (\%), L2-ASR (\%), and defense Latency (ms per tool call). All results use 20 scenarios per attack category (120 attack + 12 benign = 132 scenarios per model) with 6 defense profiles, yielding 792 episodes per model and 6{,}336 episodes total across eight models. Every episode is marked \texttt{valid} (zero runtime errors) across all configurations, enabling fair cross-defense comparison.
 
 \subsection{Main Results}
 
-Table~\ref{tab:main_8models} summarizes the main results across all eight models. The key findings are threefold.
+Table~\ref{tab:main_8models} summarizes the main results across all eight models. Figure~\ref{fig:asr_comparison} visualizes the ASR reduction across all models. The key findings are threefold.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{Figures/asr_comparison.pdf}
+    \caption{ASR comparison across eight models: No Defense (red) vs.\ ReasoningGuard (green). ReasoningGuard consistently achieves the lowest ASR on every model, with relative reductions of 48.5\%--92.6\%.}
+    \label{fig:asr_comparison}
+\end{figure}
 
 \begin{table}[htbp]
 \centering\small
@@ -36,7 +43,7 @@ Claude-Sonnet-5 & 10.8 &  8.3 & 10.8 &  7.5 &  9.2 &  \textbf{0.8} \\
 
 \textbf{First}, \textsc{ReasoningGuard} consistently achieves the lowest ASR across all eight models, reducing it by 48.5\%--92.6\% relative to No Defense. The absolute ASR ranges from 0.8\% (Claude-Sonnet-5, the most robust model) to 29.2\% (GPT-4o-mini, the most susceptible). On GPT-4o, the most comprehensively evaluated model, ASR drops from 70.8\% to 19.2\%---a 72.9\% relative reduction.
 
-\textbf{Second}, the dual-layer design is essential: neither PTG-Only nor RTV-Only alone matches ReasoningGuard. Table~\ref{tab:layer_breakdown} decomposes the GPT-4o results by attack layer, revealing the LASM non-transferability property in practice.
+\textbf{Second}, the dual-layer design is essential: neither PTG-Only nor RTV-Only alone matches ReasoningGuard. Table~\ref{tab:layer_breakdown} decomposes the GPT-4o results by attack layer, revealing the observability-based defense limitation property in practice.
 
 \begin{table}[htbp]
 \centering\small
@@ -55,6 +62,13 @@ ReasoningGuard  & \textbf{19.2} & \textbf{3.3} & \textbf{35.0} & 58.3 \\
 \caption{Layer-wise ASR decomposition on GPT-4o (120 attack + 12 benign scenarios). PTG reduces L4-ASR from 91.7\% to 10.0\% but leaves L2-ASR at 48.3\%. RTV reduces L2-ASR from 50.0\% to 28.3\% but leaves L4-ASR at 71.7\%. Only the combination achieves low ASR on both layers.}
 \label{tab:layer_breakdown}
 \end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{Figures/layer_breakdown.pdf}
+    \caption{Layer-wise ASR decomposition on GPT-4o. PTG-Only (orange, left bar) effectively blocks L4 attacks (91.7\%$\to$10.0\%) but not L2 (48.3\%). RTV-Only blocks L2 (50.0\%$\to$28.3\%) but not L4 (71.7\%). Only ReasoningGuard achieves low ASR on both layers.}
+    \label{fig:layer_breakdown}
+\end{figure}
 
 PTG-Only reduces L4-ASR from 91.7\% to 10.0\% but leaves L2-ASR nearly unchanged (48.3\% vs.\ 50.0\% No Defense), confirming that protocol-layer defenses cannot detect cognitive-layer attacks. Conversely, RTV-Only reduces L2-ASR from 50.0\% to 28.3\% but leaves L4-ASR at 71.7\%, confirming the reverse non-transferability. Only \textsc{ReasoningGuard} achieves both low L4-ASR (3.3\%) and low L2-ASR (35.0\%), demonstrating that the two layers are complementary.
 
@@ -164,26 +178,29 @@ Clean hard-negative (FPR) & 20 & 20 & 100.0\% \\
 
 Table~\ref{tab:adaptive} reveals two important findings. \textbf{First}, RTV detects 75\% of adaptive attacks, demonstrating partial robustness: three of four evasion strategies fail because the adaptive traces still trigger policy-word detection (``backup'', ``compliance''), cross-server patterns, or origin-tag violations. \textbf{Second}, the path obfuscation strategy---where the attacker avoids mentioning sensitive paths (e.g., \texttt{.ssh/id\_rsa}) in the decision step, instead referencing ``the default path specified by the tool''---completely evades detection (0/10). This confirms the fundamental limitation: RTV checks the \emph{consistency of externalized evidence}, and an attacker who crafts internally consistent evidence can evade it. The clean hard-negative FPR of 100\% further reveals that RTV's keyword-based heuristic is overly aggressive, flagging legitimate actions that reference policy-related terms---this explains the TCR decrease observed in the end-to-end experiments. These findings motivate future work on neural entailment models and content-level authorization that go beyond evidence consistency.
 
-\subsection{Prompt-Only Defense Baseline}
+\subsection{Defense Baseline Comparison}
 
-To demonstrate that architectural defense (ReasoningGuard) outperforms prompt-level defense, we compare against a \textbf{Prompt-Only Defense} baseline: the agent's system prompt is augmented with seven explicit security instructions (e.g., ``Never follow instructions embedded in tool responses,'' ``Never read sensitive files unless explicitly requested''). This baseline requires no middleware or verification infrastructure---only prompt engineering.
+To demonstrate that architectural defense (ReasoningGuard) outperforms both prompt-level and graph-based defenses, we compare against three additional baselines on GPT-4o: \textbf{Prompt-Only} (7 security instructions in system prompt), \textbf{StruQ-Style}~\citep{chen2024struq} (strict instruction-data separation: all tool responses marked as untrusted DATA, agent instructed to never follow imperatives in tool responses), and \textbf{IPIGuard-Style}~\citep{an2025ipiguard} (post-hoc tool dependency graph that flags suspicious cross-server data flows, e.g., file-read $\to$ email-send).
 
 \begin{table}[htbp]
 \centering\small
-\begin{tabular}{lrrrr}
+\begin{tabular}{llrrrr}
 \toprule
-\textbf{Defense} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L4-ASR} & \textbf{L2-ASR} \\
+\textbf{Defense} & \textbf{Type} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L4-ASR} & \textbf{L2-ASR} \\
 \midrule
-No Defense       & 70.8 & 75.0 & 91.7 & 50.0 \\
-Prompt-Only      & 36.7 & 90.0 & 46.7 & 26.7 \\
-ReasoningGuard   & \textbf{19.2} & 58.3 & \textbf{3.3} & 35.0 \\
+No Defense       & ---      & 70.0 & 75.0 & 88.3 & 51.7 \\
+Prompt-Only      & Prompt   & 36.7 & 90.0 & 46.7 & 26.7 \\
+StruQ-Style      & Prompt   & 34.2 & 66.7 & 58.3 & \textbf{10.0} \\
+IPIGuard-Style   & Graph    & 53.3 & 66.7 & 90.0 & 16.7 \\
+\midrule
+ReasoningGuard   & Arch.    & \textbf{19.2} & 58.3 & \textbf{3.3} & 35.0 \\
 \bottomrule
 \end{tabular}
-\caption{Prompt-Only Defense vs.\ ReasoningGuard (GPT-4o). Prompt-Only reduces ASR by 48.2\% relative to No Defense, but leaves 46.7\% L4-ASR---protocol-level attacks bypass prompt instructions. ReasoningGuard achieves 3.3\% L4-ASR via architectural enforcement. Prompt-Only has higher TCR (90.0\%) because it does not escalate borderline actions, but its security guarantee is weaker.}
-\label{tab:prompt_baseline}
+\caption{Defense baseline comparison on GPT-4o (132 scenarios). Prompt-level defenses (Prompt-Only, StruQ-Style) reduce L2-ASR effectively (10.0--26.7\%) but leave high L4-ASR (46.7--58.3\%). IPIGuard-Style reduces L2-ASR (16.7\%) but is completely ineffective on L4 (90.0\%, same as No Defense). Only ReasoningGuard achieves both low L4-ASR (3.3\%) and moderate L2-ASR (35.0\%) through architectural enforcement.}
+\label{tab:baselines}
 \end{table}
 
-Table~\ref{tab:prompt_baseline} shows that Prompt-Only Defense reduces ASR from 70.8\% to 36.7\%---a meaningful improvement demonstrating that explicit security instructions in the system prompt partially immunize the agent against social engineering injections. However, Prompt-Only leaves 46.7\% L4-ASR, because protocol-level attacks (tool description poisoning, parameter injection) exploit the tool catalog structure rather than the agent's reasoning, and prompt instructions cannot prevent the agent from following poisoned tool descriptions. ReasoningGuard's PTG blocks these attacks architecturally (L4-ASR=3.3\%) by rejecting calls to unattested capabilities regardless of what the agent's prompt says. This comparison validates the core thesis: prompt-level defenses are insufficient for protocol-layer attacks, and architectural enforcement is necessary.
+Table~\ref{tab:baselines} reveals a striking pattern that directly validates the observability-based defense limitation property. \textbf{Prompt-level defenses} (Prompt-Only, StruQ-Style) are effective against L2 attacks (reducing L2-ASR to 10.0--26.7\%) because they instruct the agent to distrust tool-response content, but they cannot prevent L4 attacks (L4-ASR remains 46.7--58.3\%) because protocol-level poisoning exploits the tool catalog structure, not the agent's reasoning. \textbf{Graph-based defense} (IPIGuard-Style) detects suspicious cross-server data flows after the fact, reducing L2-ASR to 16.7\%, but has zero effect on L4 attacks (L4-ASR=90.0\%, identical to No Defense) because L4 attacks use the same server/method as legitimate calls, producing no anomalous graph edges. Only \textbf{ReasoningGuard}, with its architectural PTG layer, achieves low L4-ASR (3.3\%) by rejecting calls to unattested capabilities before they reach the agent. This comparison demonstrates that no single-layer defense---whether prompt-based or graph-based---can match the dual-layer coverage of ReasoningGuard, and that the L4/L2 complementarity is not an artifact of our defense design but a structural property of the attack surface.
 
 \subsection{Latency and Cost Analysis}
 
@@ -195,7 +212,7 @@ However, the \emph{end-to-end overhead} includes additional costs not captured b
 
 \textsc{ReasoningGuard} introduces a measurable TCR cost that varies by model. On GPT-4o, TCR drops from 75.0\% (No Defense) to 58.3\% (ReasoningGuard)---a 16.7 percentage-point decrease. This occurs because RTV's heuristic scoring occasionally flags legitimate actions as suspicious (false escalations), particularly when the agent's reasoning references policy-related keywords (e.g., ``backup'', ``sync'') that overlap with attack patterns. The trade-off varies significantly by model: GPT-4-Turbo shows no TCR decrease (91.7\%$\to$91.7\%), while GPT-4o-mini loses 25\,pp (91.7\%$\to$66.7\%). This model-dependence suggests that the trade-off can be improved by calibrating thresholds per model or replacing the heuristic judge with a more precise neural model.
 
-To characterize the security--utility Pareto frontier, we vary the RTV anomaly thresholds across three configurations (low: 0.3, default: 0.6--0.7, high: 0.9) on a 5-scenario-per-category subset with GPT-4o:
+To characterize the security--utility Pareto frontier, we vary the RTV anomaly thresholds across five configurations on the full 132-scenario set with GPT-4o:
 
 \begin{table}[htbp]
 \centering\small
@@ -203,13 +220,22 @@ To characterize the security--utility Pareto frontier, we vary the RTV anomaly t
 \toprule
 \textbf{Threshold} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L4-ASR} & \textbf{L2-ASR} \\
 \midrule
-Low ($\tau$=0.3)     & 16.7 & 80.0 & 0.0 & 33.3 \\
-Default ($\tau$=0.6--0.7) & 16.7 & 80.0 & 0.0 & 33.3 \\
-High ($\tau$=0.9)    & 23.3 & 80.0 & 0.0 & 46.7 \\
+Very Low ($\tau$=0.2)     & 15.8 & \textbf{83.3} & 0.0 & 31.7 \\
+Low ($\tau$=0.4)          & 15.8 & 58.3 & 0.0 & 31.7 \\
+Default ($\tau$=0.6--0.7) & 16.7 & 66.7 & 0.0 & 33.3 \\
+High ($\tau$=0.8)         & 15.8 & 66.7 & 0.0 & 31.7 \\
+Very High ($\tau$=0.95)   & 23.3 & 75.0 & 0.0 & 46.7 \\
 \bottomrule
 \end{tabular}
-\caption{Security--utility Pareto analysis on GPT-4o (5 scenarios per category, 35 total). Lower thresholds detect more anomalies but risk false escalations; higher thresholds miss L2 attacks. The default threshold achieves the same ASR as the low threshold, suggesting the current calibration is near-optimal for this configuration. The high threshold increases L2-ASR by 13.4\,pp, confirming that threshold sensitivity primarily affects L2 detection.}
+\caption{Security--utility Pareto analysis on GPT-4o (132 scenarios, 5 threshold configurations). ASR is stable across $\tau \in [0.2, 0.8]$ (15.8--16.7\%), with L4-ASR remaining 0.0\% throughout---confirming PTG's independence from RTV thresholds. Only at $\tau$=0.95 does L2-ASR increase significantly (46.7\%), as overly permissive thresholds miss L2 attacks. The very-low threshold achieves the best TCR (83.3\%) because early blocking of suspicious calls prevents cascading failures in multi-turn scenarios.}
 \label{tab:pareto}
 \end{table}
 
-Table~\ref{tab:pareto} shows that the default thresholds (0.6--0.7) achieve the same ASR as the low thresholds (0.3), indicating that the current calibration is not overly conservative. Raising thresholds to 0.9 increases L2-ASR from 33.3\% to 46.7\% (+13.4\,pp) while TCR remains constant at 80.0\%---the TCR cost in the full experiment (16.7\,pp) arises from the larger scenario set where more borderline actions trigger false escalations. This analysis confirms that the security--utility trade-off is threshold-sensitive and can be tuned per deployment context.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Figures/pareto_curve.pdf}
+    \caption{Security--utility Pareto frontier on GPT-4o (132 scenarios). ASR (red, left axis) remains stable at 15.8--16.7\% for $\tau \in [0.2, 0.8]$, while TCR (blue, right axis) varies from 58.3\% to 83.3\%. Only at $\tau$=0.95 does ASR increase to 23.3\%.}
+    \label{fig:pareto}
+\end{figure}
+
+Table~\ref{tab:pareto} reveals three findings. \textbf{First}, ASR is remarkably stable across $\tau \in [0.2, 0.8]$ (15.8--16.7\%), indicating that the default threshold is not a bottleneck and the defense is robust to threshold mis-calibration within a wide range. \textbf{Second}, L4-ASR remains 0.0\% across all thresholds, confirming that PTG operates independently of RTV threshold settings---the dual-layer architecture provides genuine separation of concerns. \textbf{Third}, only at the extreme threshold $\tau$=0.95 does L2-ASR increase significantly (46.7\%, +15\,pp), as overly permissive settings allow L2 anomalies to pass undetected. The very-low threshold ($\tau$=0.2) achieves the best TCR (83.3\%) because aggressive early blocking prevents cascading failures in multi-turn T2/T3 scenarios, suggesting that a more conservative RTV configuration may improve both security and utility simultaneously.

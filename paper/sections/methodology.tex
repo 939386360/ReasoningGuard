@@ -11,7 +11,7 @@
 
 \subsection{Overview}
 
-\textsc{ReasoningGuard} comprises two complementary components: the Protocol-Attested Tool Gateway (PTG) at L4 and the Reasoning Trace Verifier (RTV) at L2. PTG intercepts all MCP messages between the agent and servers, enforcing attestation and intent verification before forwarding. RTV monitors the agent's reasoning process, detecting anomalies that indicate cognitive-layer manipulation. The components communicate through a shared provenance ledger that records every tool invocation with its attested intent and verified reasoning trace. Figure~\ref{fig:architecture} illustrates the system architecture.
+\textsc{ReasoningGuard} comprises two complementary components: the Protocol-Attested Tool Gateway (PTG) at L4 and the Reasoning Trace Verifier (RTV) at L2. PTG intercepts all MCP messages between the agent and servers, enforcing attestation and intent verification before forwarding. RTV monitors the agent's externalized decision evidence, detecting inconsistencies that indicate cognitive-layer manipulation. The components communicate through a shared provenance ledger that records every tool invocation with its attested intent and verified reasoning trace. Figure~\ref{fig:architecture} illustrates the system architecture.
 
 \subsection{Protocol-Attested Tool Gateway (PTG)}
 
