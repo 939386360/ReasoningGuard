@@ -1,0 +1,34 @@
+{
+  "gpt4o_main": {
+    "no_defense":     {"ASR": "66.9±6.4", "TCR": "66.7±10.4", "L4": "83.4±5.8", "L2": "50.5±7.5"},
+    "attest_mcp":     {"ASR": "53.1±2.0", "TCR": "65.0±15.0"},
+    "guardrail":      {"ASR": "65.8±2.5", "TCR": "65.0±10.0"},
+    "ptg_only":       {"ASR": "28.9±3.0", "TCR": "65.0±10.0", "L4": "10.5±2.5", "L2": "47.2±8.4"},
+    "rtv_only":       {"ASR": "30.8±4.6", "TCR": "53.3±2.9", "L4": "28.9±3.5", "L2": "32.8±8.6"},
+    "reasoning_guard":{"ASR": "16.9±2.4", "TCR": "51.7±5.8", "L4": "3.3±2.9", "L2": "30.6±6.8"},
+    "t_tests": {"nd_vs_rg": "t=20.62, p=0.0023", "ptg_vs_rg": "t=16.07, p=0.0038"}
+  },
+  "gpt4o-mini_main": {
+    "no_defense":     {"ASR": "56.7±3.4", "TCR": "86.7±7.6"},
+    "ptg_only":       {"ASR": "35.0±2.9", "TCR": "81.7±12.6"},
+    "rtv_only":       {"ASR": "40.5±5.0", "TCR": "68.3±2.9"},
+    "reasoning_guard":{"ASR": "25.8±3.4", "TCR": "70.0±5.0"},
+    "t_tests": {"nd_vs_rg": "t=925, p<0.0001", "ptg_vs_rg": "t=9.37, p=0.0112"}
+  },
+  "gpt35turbo_main": {
+    "no_defense":     {"ASR": "48.3±1.7", "TCR": "85.0±5.0"},
+    "ptg_only":       {"ASR": "25.3±1.3", "TCR": "85.0±5.0"},
+    "rtv_only":       {"ASR": "32.2±2.5", "TCR": "66.7±2.9"},
+    "reasoning_guard":{"ASR": "18.6±2.1", "TCR": "68.3±2.9"},
+    "t_tests": {"nd_vs_rg": "t=32, p=0.0010", "ptg_vs_rg": "t=8.37, p=0.0140"}
+  },
+  "gpt4o_ablation": {
+    "reasoning_guard":  {"ASR": "17.2±2.9"},
+    "rg_minus_intent":  {"ASR": "19.2±3.0"},
+    "rg_minus_origin":  {"ASR": "16.9±2.7"},
+    "rg_minus_memory":  {"ASR": "15.3±2.1"},
+    "ptg_only":         {"ASR": "28.6±1.3"},
+    "rtv_only":         {"ASR": "31.7±1.4"}
+  },
+  "note": "3 seeds (42, 43, 44), 140 scenarios per seed (20/cat + 50 benign), GPT-4-Turbo excluded from t-test summary due to high variance (seed 44 gave ASR=3.3%)"
+}
