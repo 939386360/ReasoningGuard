@@ -137,8 +137,18 @@ def _build_rtv(profile: DefenseProfile):
     if not profile.use_rtv:
         return None
 
-    from src.rtv import ReasoningTraceVerifier
+    from src.rtv import ReasoningTraceVerifier, ConstrainedJudgeModel
+    import os
+    api_key = os.environ.get("LLM_API_KEY", "")
+    base_url = os.environ.get("LLM_API_BASE_URL", "https://api.chatanywhere.tech/v1/chat/completions")
+    judge = ConstrainedJudgeModel(
+        api_key=api_key,
+        base_url=base_url,
+        model_name="gpt-4o-mini",
+        use_llm=bool(api_key),
+    )
     return ReasoningTraceVerifier(
+        judge=judge,
         disable_memory_provenance=not profile.use_memory_graph,
     )
 
