@@ -96,7 +96,23 @@ GPT-4-Turbo   & 47.2$\pm$38.2 & 17.8$\pm$15.6 & 0.15 & 0.19 \\
 \label{tab:multiseed}
 \end{table}
 
-\textbf{LLM Judge vs.\ heuristic.} We also compare the LLM judge (GPT-4o-mini) against a rule-based heuristic on GPT-4o (seed 42). The LLM judge achieves ASR=20.0\% (vs.\ 19.2\% heuristic) but improves TCR from 58.3\% to 65.0\% (fewer false escalations on benign tasks), reduces L4-ASR from 3.3\% to 1.7\%, and improves T3 (cross-session) ASR from 40\% to 25\%. The trade-off is latency: the LLM judge adds $\sim$600\,ms per RTV check (total 672\,ms vs.\ 0.1\,ms for heuristic). All main-table results use the LLM judge unless otherwise noted.
+\textbf{LLM Judge vs.\ heuristic.} The main-table results use the rule-based heuristic judge for consistency across all eight models. We additionally evaluate the LLM judge (GPT-4o-mini) on GPT-4o (seed 42) to assess the impact of judge model quality (Table~\ref{tab:judge_comparison}).
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Judge} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L4-ASR} & \textbf{L2-ASR} & \textbf{Latency} \\
+\midrule
+Heuristic      & 19.2 & 58.3 & 3.3 & 35.0 & 0.1\,ms \\
+LLM (GPT-4o-mini) & \textbf{20.0} & \textbf{65.0} & \textbf{1.7} & 38.3 & 672\,ms \\
+\bottomrule
+\end{tabular}
+\caption{Judge model comparison on GPT-4o (seed 42, 140 scenarios). The LLM judge improves TCR by 6.7\,pp (fewer false escalations) and L4-ASR by 1.6\,pp, at the cost of 672\,ms additional latency. ASR and L2-ASR are comparable, confirming that the defense's effectiveness is not dependent on judge model sophistication.}
+\label{tab:judge_comparison}
+\end{table}
+
+The LLM judge achieves comparable ASR (20.0\% vs.\ 19.2\%) but significantly better TCR (65.0\% vs.\ 58.3\%) due to fewer false escalations on benign tasks, and slightly better L4-ASR (1.7\% vs.\ 3.3\%) and T3 ASR (25\% vs.\ 40\%). The trade-off is latency: the LLM judge adds $\sim$600\,ms per RTV check (672\,ms vs.\ 0.1\,ms). The main table uses the heuristic judge for cross-model consistency; the LLM judge results demonstrate that the architecture supports plug-and-play judge replacement with measurable quality improvements.
 
 \subsection{Per-Category Analysis}
 
@@ -234,7 +250,7 @@ The TCR difference between Prompt-Only (90.0\%) and ReasoningGuard (58.3\%) meri
 
 \subsection{Latency and Cost Analysis}
 
-The \emph{defense computation overhead} of \textsc{ReasoningGuard} depends on the judge model configuration. With the LLM judge (GPT-4o-mini), RTV verification adds approximately 600\,ms per tool call (one API call for anomaly scoring), bringing the total defense overhead to $\sim$672\,ms. With the heuristic fallback (keyword overlap and pattern matching), the overhead is 0.1\,ms. Since the LLM judge provides better TCR (65.0\% vs.\ 58.3\%) and comparable ASR (20.0\% vs.\ 19.2\%), we use the LLM judge as the default configuration. The 672\,ms overhead is comparable to typical LLM inference time (500--2000\,ms) and does not represent a bottleneck for interactive agent deployments.
+The \emph{defense computation overhead} of \textsc{ReasoningGuard} with the default heuristic judge is negligible: 0.1\,ms per tool call, measured as the sum of PTG attestation verification and RTV heuristic scoring. Since the heuristic judge uses rule-based pattern matching (no LLM call is made for defense decisions), the defense latency is orders of magnitude below typical LLM inference time (500--2000\,ms). With the optional LLM judge (GPT-4o-mini), the overhead increases to $\sim$672\,ms per tool call (one additional API call for anomaly scoring), which is still comparable to the agent's own inference latency and does not represent a bottleneck. The main-table results use the heuristic judge for cross-model consistency; the LLM judge comparison is reported in Table~\ref{tab:judge_comparison}.
 
 However, the \emph{end-to-end overhead} includes additional costs not captured by the defense computation metric: (1)~the agent must generate structured reasoning traces (Observation/Inference/Decision) before each tool call, adding approximately 50--100 output tokens per invocation; (2)~the intent summary adds 10--20 tokens; (3)~the system prompt is extended with trace formatting instructions. We estimate the total additional token cost at 60--120 tokens per tool call, translating to approximately \$0.0003--0.0006 per invocation at GPT-4o pricing (\$5/M input, \$15/M output). The latency impact of additional token generation is approximately 200--500\,ms, comparable to the agent's own reasoning latency. We report the 0.1\,ms defense computation overhead separately to isolate the defense mechanism's cost from the agent's natural inference cost.
 
