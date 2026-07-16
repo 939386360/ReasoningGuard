@@ -12,7 +12,7 @@ Each scenario strictly separates the model-visible \texttt{RuntimeSpec} from the
 
 \textbf{Defense Profiles.} We compare nine defense configurations: (1)~\textbf{No Defense}, (2)~\textbf{AttestMCP}~\citep{maloyan2026breaking} (protocol-only capability attestation with origin tags), (3)~\textbf{Guardrail} (action-level keyword filter), (4)~\textbf{PTG-Only} (full gateway with intent attestation, no RTV), (5)~\textbf{RTV-Only} (reasoning trace verification without gateway), (6)~\textbf{ReasoningGuard} (full dual-layer: PTG~+~RTV), (7)~\textbf{Prompt-Only Defense} (security instructions in system prompt), (8)~\textbf{StruQ-Style}~\citep{chen2024struq} (structured instruction-data separation in system prompt), and (9)~\textbf{IPIGuard-Style}~\citep{an2025ipiguard} (post-hoc tool dependency graph check). Configurations 7--9 are evaluated on GPT-4o only. Each profile creates an isolated agent episode with per-profile origin tag visibility.
 
-\textbf{Metrics.} Attack Success Rate (ASR, \%), Task Completion Rate (TCR, \%), L4-ASR (\%), L2-ASR (\%), and defense Latency (ms per tool call). All results use 20 scenarios per attack category (120 attack + 50 benign = 170 scenarios per model) with 6 defense profiles. The main table (Table~\ref{tab:main_8models}) reports single-seed results (seed~42) across eight models; for statistical robustness, we additionally report multi-seed results (seeds 42, 43, 44) with mean$\pm$std and paired $t$-tests on four models (Table~\ref{tab:multiseed}). Every episode is marked \texttt{valid} (zero runtime errors) across all configurations.
+\textbf{Metrics.} Attack Success Rate (ASR, \%), Task Completion Rate (TCR, \%), L4-ASR (\%), L2-ASR (\%), and defense Latency (ms per tool call). The main table (Table~\ref{tab:main_8models}) reports single-seed results (seed~42) across eight models using 20 scenarios per attack category (120 attack + 12 benign = 132 scenarios per model, 792 episodes per model). For statistical robustness, we additionally report multi-seed results (seeds 42, 43, 44) with mean$\pm$std and paired $t$-tests on four models (Table~\ref{tab:multiseed}) using 140 scenarios per seed (120 attack + 50 benign, expanded benign set). Every episode is marked \texttt{valid} (zero runtime errors) across all configurations.
 
 \subsection{Main Results}
 
@@ -41,7 +41,7 @@ Gemini-3.5-Flash& 30.0 & 15.0 & 25.0 & 16.7 & 20.8 & \textbf{10.0} \\
 Claude-Sonnet-5 & 10.8 &  8.3 & 10.8 &  7.5 &  9.2 &  \textbf{0.8} \\
 \bottomrule
 \end{tabular}
-\caption{Main results: ASR (\%) across eight models and six defense profiles (792 episodes per model). RG = ReasoningGuard. All episodes valid (zero runtime errors). Bold indicates the best (lowest) ASR per model.}
+\caption{Main results: ASR (\%) across eight models and six defense profiles (132 scenarios per model, seed 42, heuristic judge). RG = ReasoningGuard. All episodes valid (zero runtime errors). Bold indicates the best (lowest) ASR per model.}
 \label{tab:main_8models}
 \end{table}
 
@@ -88,11 +88,11 @@ PTG-Only reduces L4-ASR from 91.7\% to 10.0\% but leaves L2-ASR nearly unchanged
 \midrule
 GPT-4o        & 66.9$\pm$6.4 & \textbf{16.9$\pm$2.4} & 0.0023 & 0.0038 \\
 GPT-4o-mini   & 56.7$\pm$3.4 & \textbf{25.8$\pm$3.4} & $<$0.0001 & 0.0112 \\
-GPT-3.5-Turbo & 48.3$\pm$1.7 & \textbf{18.6$\pm$2.1} & 0.0010 & 0.0140 \\
+GPT-3.5-Turbo & 45.3$\pm$0.9 & \textbf{18.6$\pm$2.1} & 0.0010 & 0.0140 \\
 GPT-4-Turbo   & 47.2$\pm$38.2 & 17.8$\pm$15.6 & 0.15 & 0.19 \\
 \bottomrule
 \end{tabular}
-\caption{Multi-seed results (3 seeds, mean$\pm$std ASR \%). Paired $t$-tests confirm that ReasoningGuard significantly reduces ASR vs.\ No Defense on 3/4 models ($p<0.01$). RTV's incremental value (PTG-Only vs.\ RG) is significant on 3/4 models ($p<0.02$). GPT-4-Turbo exhibits high variance (seed 44 yields ASR=3.3\%) due to model instability.}
+\caption{Multi-seed results (3 seeds, mean$\pm$std ASR \%, 140 scenarios per seed). Paired $t$-tests confirm that ReasoningGuard significantly reduces ASR vs.\ No Defense on 3/4 models ($p<0.01$). RTV's incremental value (PTG-Only vs.\ RG) is significant on 3/4 models ($p<0.02$). GPT-4-Turbo exhibits high variance (seed 44 yields ASR=3.3\%) due to model instability.}
 \label{tab:multiseed}
 \end{table}
 
