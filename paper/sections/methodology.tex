@@ -53,15 +53,17 @@ The structured trace serves two purposes: it forces the agent to externalize its
 
 \subsubsection{Constrained Judge Model}
 
-RTV employs a constrained judge model $\mathcal{J}$---an LLM-based verifier (GPT-4o-mini with temperature~0 and constrained JSON output)---that evaluates each evidence trace for three anomaly classes:
+RTV employs a constrained judge model $\mathcal{J}$---an LLM-based verifier (GPT-4o-mini with temperature~0 and constrained JSON output)---that evaluates each evidence trace for four anomaly classes:
 
-\textbf{Context-Action Inconsistency (CAI):} The selected action does not follow from the stated observations and inferences. This detects attacks where a malicious tool response redirects the agent toward an action unrelated to its stated reasoning. The judge evaluates whether the decision logically follows from the observation/inference chain.
+\textbf{Context-Action Inconsistency (CAI):} The selected action does not follow from the stated observations and inferences. This detects attacks where a malicious tool response redirects the agent toward an action unrelated to its stated reasoning. The judge evaluates whether the decision logically follows from the observation/inference chain, with context-awareness: policy-related keywords (``backup'', ``sync'', ``compliance'') trigger CAI only when they appear in the decision but not in the user's original query, avoiding false positives on legitimate user-requested operations.
 
 \textbf{Origin-Awareness Violation (OAV):} The trace treats server-originated content as user instruction or fails to account for provenance tags. This detects sampling-based injection where the agent fails to distinguish injected content from genuine user directives. OAV detection relies on PTG's origin tags: if the trace attributes server-originated content to the user, OAV is flagged.
 
-\textbf{Intent-Action Divergence (IAD):} The tool invocation's declared intent $I_v$ contradicts the trace's decision step. This detects attacks where the agent is coerced into invoking a tool for a purpose inconsistent with its stated justification, such as when a poisoned response causes the agent to call an email-sending tool for exfiltration while reasoning about file organization.
+\textbf{Intent-Action Divergence (IAD):} The tool invocation's declared intent $I_v$ contradicts the trace's decision step. This detects attacks where the agent is coerced into invoking a tool for a purpose inconsistent with its stated justification. IAD inspects both the decision text and the \emph{actual invocation parameters} $\theta$: if the parameters contain sensitive paths (e.g., \texttt{.ssh/id\_rsa}), external email addresses not present in the user's query, or exfiltration methods (e.g., \texttt{email/send} when the intent is ``read file''), IAD is flagged. This parameter-level inspection bridges the gap between the agent's externalized reasoning and its actual tool call.
 
-For each anomaly class $c \in \{\text{CAI}, \text{OAV}, \text{IAD}\}$, the judge produces a score $\sigma_c \in [0, 1]$. A trace is flagged if any $\sigma_c > \tau_c$, where $\tau_c$ is a calibrated threshold per anomaly class (determined on a held-out validation set of 50 benign and 50 attack scenarios). Flagged traces trigger a confirmation prompt to the user before the tool invocation is executed. The default judge uses rule-based heuristic scoring (keyword overlap, pattern matching, and origin-tag verification) with 0.1\,ms latency. The architecture supports replacement with an LLM-based judge (e.g., GPT-4o-mini with structured JSON output) for improved semantic understanding at the cost of $\sim$600\,ms additional latency per check. We evaluate both configurations in Section~\ref{sec:experiments} (Table~\ref{tab:judge_comparison}).
+\textbf{Tool-Data Instruction (TDI):} The agent follows instructions embedded in tool or server responses rather than the user's original request. This is the StruQ-inspired instruction--data separation check: the judge inspects whether the agent's decision references imperative language from tool responses (e.g., ``must be sent to'', ``as configured'', ``per policy'') that does not appear in the user's query, and whether the invocation parameters indicate data exfiltration patterns (external email addresses, write operations when the user requested a read-only action). TDI directly addresses the L2 attack surface where poisoned tool responses inject social engineering instructions.
+
+For each anomaly class $c \in \{\text{CAI}, \text{OAV}, \text{IAD}, \text{TDI}\}$, the judge produces a score $\sigma_c \in [0, 1]$. A trace is flagged if any $\sigma_c > \tau_c$, where $\tau_c$ is a calibrated threshold per anomaly class ($\tau_{\text{CAI}}=0.65$, $\tau_{\text{OAV}}=0.60$, $\tau_{\text{IAD}}=0.70$, $\tau_{\text{TDI}}=0.65$). Flagged traces trigger a confirmation prompt to the user before the tool invocation is executed. The default configuration uses the LLM-based judge (GPT-4o-mini) with heuristic fallback, achieving $\sim$926\,ms latency per check. A rule-based heuristic-only mode (0.1\,ms latency) is available for zero-cost deployment. We evaluate both configurations in Section~\ref{sec:experiments} (Table~\ref{tab:judge_comparison}).
 
 \subsubsection{Cross-Session Memory Auditing}
 
@@ -87,7 +89,7 @@ Algorithm~\ref{alg:rg} describes the integrated defense protocol. For each agent
 \IF{CheckCrossServerFlow($v$, $\mathcal{L}$) \AND !VerifyCrossServerConsent($v$)}
     \RETURN \textsc{Block}
 \ENDIF
-\STATE $(\sigma_{\text{CAI}}, \sigma_{\text{OAV}}, \sigma_{\text{IAD}}) \leftarrow \mathcal{J}(\mathcal{T}, I_v, \mathcal{L})$
+\STATE $(\sigma_{\text{CAI}}, \sigma_{\text{OAV}}, \sigma_{\text{IAD}}, \sigma_{\text{TDI}}) \leftarrow \mathcal{J}(\mathcal{T}, I_v, \mathcal{L}, \theta, q)$
 \IF{$\sigma_c > \tau_c$ for any $c$}
     \RETURN \textsc{Escalate}
 \ENDIF

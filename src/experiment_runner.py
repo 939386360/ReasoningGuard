@@ -173,6 +173,7 @@ def _run_defense(
     origin_tags: Tuple[OriginTag, ...],
     visible_evidence_ids: Tuple[str, ...],
     visible_memory_ids: Tuple[str, ...],
+    user_query: str = "",
 ) -> DefenseRun:
     """Run defense pipeline for one invocation."""
     invocation_id = msg.msg_id
@@ -211,7 +212,9 @@ def _run_defense(
                     for tag in origin_tags
                 ]
             t0 = time.time()
-            rtv_result = rtv.verify(trace, intent, provenance_tags)
+            rtv_result = rtv.verify(trace, intent, provenance_tags,
+                                    invocation_params=getattr(msg, "params", None),
+                                    user_query=user_query)
             rtv_latency_ms = (time.time() - t0) * 1000
             if not rtv_result.approved:
                 verdict = "ESCALATE"
@@ -372,6 +375,7 @@ def _run_t1(
         origin_tags=(),
         visible_evidence_ids=(),
         visible_memory_ids=(),
+        user_query=spec.user_query,
     )
     episode.defense_runs.append(defense_run)
     session.turns.append(InteractionTurn(
@@ -417,6 +421,7 @@ def _run_t1(
                     origin_tags=origin_tags,
                     visible_evidence_ids=(f"response-{scheduled.input_id}",),
                     visible_memory_ids=(),
+                    user_query=spec.user_query,
                 )
 
                 break
@@ -450,7 +455,7 @@ def _parse_and_extract(response_text):
 def _multi_call_loop(
     episode, session, agent, gateway, rtv, guardrail, profile,
     origin_tags, visible_evidence_ids, visible_memory_ids,
-    max_calls=4,
+    max_calls=4, user_query="",
 ):
     """Let the agent make multiple LLM calls, running defense on each.
     Returns when agent stops calling tools or max_calls reached.
@@ -473,6 +478,7 @@ def _multi_call_loop(
             origin_tags=origin_tags,
             visible_evidence_ids=visible_evidence_ids,
             visible_memory_ids=visible_memory_ids,
+            user_query=user_query,
         )
         episode.defense_runs.append(defense_run)
         session.turns.append(InteractionTurn(
@@ -535,6 +541,7 @@ def _run_t2(
             origin_tags=(),
             visible_evidence_ids=(),
             visible_memory_ids=(),
+            user_query=spec.user_query,
         )
         episode.defense_runs.append(setup_defense)
         session.turns.append(InteractionTurn(
@@ -577,6 +584,7 @@ def _run_t2(
                         origin_tags=origin_tags,
                         visible_evidence_ids=(f"response-{scheduled.input_id}",),
                         visible_memory_ids=(),
+                        user_query=spec.user_query,
                     )
 
                     break
@@ -639,6 +647,7 @@ def _run_t3(
             origin_tags=(),
             visible_evidence_ids=(),
             visible_memory_ids=(),
+            user_query=spec.user_query,
         )
         episode.defense_runs.append(poison_defense)
         session_t.turns.append(InteractionTurn(
@@ -695,6 +704,7 @@ def _run_t3(
                 origin_tags=(),
                 visible_evidence_ids=(),
                 visible_memory_ids=tuple(episode.memory_store.keys()),
+                user_query=spec.user_query,
             )
             episode.defense_runs.append(gap_defense)
             gap_session.turns.append(InteractionTurn(
@@ -755,6 +765,7 @@ def _run_t3(
             origin_tags=origin_tags,
             visible_evidence_ids=visible_memory_ids,
             visible_memory_ids=visible_memory_ids,
+            user_query=spec.user_query,
         )
         episode.defense_runs.append(trigger_defense)
         session_k.turns.append(InteractionTurn(
@@ -777,6 +788,7 @@ def _run_t3(
                 origin_tags=origin_tags,
                 visible_evidence_ids=visible_memory_ids,
                 visible_memory_ids=visible_memory_ids,
+                user_query=spec.user_query,
             )
 
     return _evaluate_outcome(

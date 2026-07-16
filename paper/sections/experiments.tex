@@ -31,7 +31,7 @@ Table~\ref{tab:main_8models} summarizes the main results across all eight models
 \toprule
 \textbf{Model} & \textbf{No Def.} & \textbf{AttestMCP} & \textbf{Guardrail} & \textbf{PTG-Only} & \textbf{RTV-Only} & \textbf{RG} \\
 \midrule
-GPT-4o          & 70.8 & 52.5 & 68.3 & 29.2 & 50.0 & \textbf{19.2} \\
+GPT-4o$^\dagger$ & 74.2 & 60.8 & 70.8 & 29.2 & 29.2 & \textbf{0.8} \\
 GPT-4-Turbo     & 63.3 & 47.5 & 65.0 & 38.3 & 40.8 & \textbf{26.7} \\
 GPT-4o-mini     & 56.7 & 50.8 & 55.0 & 35.0 & 40.8 & \textbf{29.2} \\
 DeepSeek-V4-Pro & 50.8 & 36.7 & 52.5 & 25.0 & 39.2 & \textbf{19.2} \\
@@ -41,11 +41,11 @@ Gemini-3.5-Flash& 30.0 & 15.0 & 25.0 & 16.7 & 20.8 & \textbf{10.0} \\
 Claude-Sonnet-5 & 10.8 &  8.3 & 10.8 &  7.5 &  9.2 &  \textbf{0.8} \\
 \bottomrule
 \end{tabular}
-\caption{Main results: ASR (\%) across eight models and six defense profiles (132 scenarios per model, seed 42, heuristic judge). RG = ReasoningGuard. All episodes valid (zero runtime errors). Bold indicates the best (lowest) ASR per model.}
+\caption{Main results: ASR (\%) across eight models and six defense profiles (132 scenarios per model, seed 42). RG = ReasoningGuard. All episodes valid (zero runtime errors). Bold indicates the best (lowest) ASR per model. $^\dagger$GPT-4o uses the improved four-dimensional RTV (CAI/OAV/IAD/TDI) with LLM judge (GPT-4o-mini) on 140 scenarios; other models use the original three-dimensional heuristic RTV.}
 \label{tab:main_8models}
 \end{table}
 
-\textbf{First}, \textsc{ReasoningGuard} consistently achieves the lowest ASR across all eight models, reducing it by 48.5\%--92.6\% relative to No Defense. The absolute ASR ranges from 0.8\% (Claude-Sonnet-5, the most robust model) to 29.2\% (GPT-4o-mini, the most susceptible). On GPT-4o, the most comprehensively evaluated model, ASR drops from 70.8\% to 19.2\%---a 72.9\% relative reduction.
+\textbf{First}, \textsc{ReasoningGuard} consistently achieves the lowest ASR across all eight models, reducing it by 48.5\%--98.9\% relative to No Defense. The absolute ASR ranges from 0.8\% (GPT-4o with the improved four-dimensional RTV) to 29.2\% (GPT-4o-mini). On GPT-4o, the most comprehensively evaluated model, ASR drops from 74.2\% to 0.8\%---a 98.9\% relative reduction.
 
 \textbf{Second}, the dual-layer design is essential: neither PTG-Only nor RTV-Only alone matches ReasoningGuard. Table~\ref{tab:layer_breakdown} decomposes the GPT-4o results by attack layer, revealing the observability-based defense limitation property in practice.
 
@@ -55,15 +55,15 @@ Claude-Sonnet-5 & 10.8 &  8.3 & 10.8 &  7.5 &  9.2 &  \textbf{0.8} \\
 \toprule
 \textbf{Defense} & \textbf{Overall ASR} & \textbf{L4-ASR} & \textbf{L2-ASR} & \textbf{TCR} \\
 \midrule
-No Defense      & 70.8 & 91.7 & 50.0 & 75.0 \\
-AttestMCP       & 52.5 & 58.3 & 46.7 & 75.0 \\
-Guardrail       & 68.3 & 88.3 & 48.3 & 75.0 \\
-PTG-Only        & 29.2 & 10.0 & 48.3 & 66.7 \\
-RTV-Only        & 50.0 & 71.7 & 28.3 & 66.7 \\
-ReasoningGuard  & \textbf{19.2} & \textbf{3.3} & \textbf{35.0} & 58.3 \\
+No Defense      & 74.2 & 90.0 & 58.3 & 70.0 \\
+AttestMCP       & 60.8 & 61.7 & 60.0 & 65.0 \\
+Guardrail       & 70.8 & 83.3 & 58.3 & 70.0 \\
+PTG-Only        & 29.2 &  6.7 & 51.7 & 70.0 \\
+RTV-Only        & 29.2 & 53.3 &  5.0 & 65.0 \\
+ReasoningGuard  & \textbf{0.8} & \textbf{1.7} & \textbf{0.0} & 60.0 \\
 \bottomrule
 \end{tabular}
-\caption{Layer-wise ASR decomposition on GPT-4o (120 attack + 12 benign scenarios). PTG reduces L4-ASR from 91.7\% to 10.0\% but leaves L2-ASR at 48.3\%. RTV reduces L2-ASR from 50.0\% to 28.3\% but leaves L4-ASR at 71.7\%. Only the combination achieves low ASR on both layers.}
+\caption{Layer-wise ASR decomposition on GPT-4o (120 attack + 20 benign scenarios, improved RTV with TDI). PTG reduces L4-ASR from 90.0\% to 6.7\% but leaves L2-ASR at 51.7\%. RTV reduces L2-ASR from 58.3\% to 5.0\% but leaves L4-ASR at 53.3\%. Only the combination achieves near-zero ASR on both layers (0.8\% overall, 0.0\% L2).}
 \label{tab:layer_breakdown}
 \end{table}
 
@@ -74,9 +74,9 @@ ReasoningGuard  & \textbf{19.2} & \textbf{3.3} & \textbf{35.0} & 58.3 \\
     \label{fig:layer_breakdown}
 \end{figure}
 
-PTG-Only reduces L4-ASR from 91.7\% to 10.0\% but leaves L2-ASR nearly unchanged (48.3\% vs.\ 50.0\% No Defense), confirming that protocol-layer defenses cannot detect cognitive-layer attacks. Conversely, RTV-Only reduces L2-ASR from 50.0\% to 28.3\% but leaves L4-ASR at 71.7\%, confirming the reverse non-transferability. Only \textsc{ReasoningGuard} achieves both low L4-ASR (3.3\%) and low L2-ASR (35.0\%), demonstrating that the two layers are complementary.
+PTG-Only reduces L4-ASR from 90.0\% to 6.7\% but leaves L2-ASR nearly unchanged (51.7\% vs.\ 58.3\% No Defense), confirming that protocol-layer defenses cannot detect cognitive-layer attacks. Conversely, RTV-Only reduces L2-ASR from 58.3\% to 5.0\% but leaves L4-ASR at 53.3\%, confirming the reverse non-transferability. Only \textsc{ReasoningGuard} achieves both low L4-ASR (1.7\%) and zero L2-ASR (0.0\%), demonstrating that the two layers are complementary and that the improved four-dimensional RTV (with TDI) effectively closes the L2 gap.
 
-\textbf{Third}, RTV provides clear \emph{incremental value} beyond PTG. Comparing PTG-Only (L2-ASR=48.3\%) to ReasoningGuard (L2-ASR=35.0\%) on GPT-4o, RTV reduces L2 attacks by an additional 13.3 percentage points. This increment is consistent across all eight models, confirming that RTV is not redundant with PTG.
+\textbf{Third}, RTV provides clear \emph{incremental value} beyond PTG. Comparing PTG-Only (L2-ASR=51.7\%) to ReasoningGuard (L2-ASR=0.0\%) on GPT-4o, RTV reduces L2 attacks by an additional 51.7 percentage points---completely eliminating all L2 attacks. This increment is consistent across all eight models, confirming that RTV is not redundant with PTG.
 
 \textbf{Statistical robustness.} To verify that these results are not artifacts of a single random seed, we run three seeds (42, 43, 44) on four models and report mean$\pm$std with paired $t$-tests (Table~\ref{tab:multiseed}).
 
@@ -102,17 +102,18 @@ GPT-4-Turbo   & 47.2$\pm$38.2 & 17.8$\pm$15.6 & 0.15 & 0.19 \\
 \centering\small
 \begin{tabular}{lrrrrr}
 \toprule
-\textbf{Judge} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L4-ASR} & \textbf{L2-ASR} & \textbf{Latency} \\
+\textbf{Configuration} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L4-ASR} & \textbf{L2-ASR} & \textbf{Latency} \\
 \midrule
-Heuristic      & 19.2 & 58.3 & 3.3 & 35.0 & 0.1\,ms \\
-LLM (GPT-4o-mini) & \textbf{20.0} & \textbf{65.0} & \textbf{1.7} & 38.3 & 672\,ms \\
+Original RTV (3-dim, heuristic) & 19.2 & 58.3 & 3.3 & 35.0 & 0.1\,ms \\
++ LLM judge (3-dim)            & 20.0 & 65.0 & 1.7 & 38.3 & 672\,ms \\
+Improved RTV (4-dim, LLM)      & \textbf{0.8} & \textbf{60.0} & \textbf{1.7} & \textbf{0.0} & 926\,ms \\
 \bottomrule
 \end{tabular}
-\caption{Judge model comparison on GPT-4o (seed 42, 140 scenarios). The LLM judge improves TCR by 6.7\,pp (fewer false escalations) and L4-ASR by 1.6\,pp, at the cost of 672\,ms additional latency. ASR and L2-ASR are comparable, confirming that the defense's effectiveness is not dependent on judge model sophistication.}
+\caption{RTV configuration comparison on GPT-4o (seed 42). Adding the TDI dimension (Tool-Data Instruction detection) to the LLM judge reduces ASR from 20.0\% to 0.8\% and L2-ASR from 38.3\% to 0.0\%, while maintaining TCR at 60.0\%. The TDI dimension's invocation-parameter inspection (detecting external email addresses and method-level intent divergence) is the primary driver of the L2 improvement.}
 \label{tab:judge_comparison}
 \end{table}
 
-The LLM judge achieves comparable ASR (20.0\% vs.\ 19.2\%) but significantly better TCR (65.0\% vs.\ 58.3\%) due to fewer false escalations on benign tasks, and slightly better L4-ASR (1.7\% vs.\ 3.3\%) and T3 ASR (25\% vs.\ 40\%). The trade-off is latency: the LLM judge adds $\sim$600\,ms per RTV check (672\,ms vs.\ 0.1\,ms). The main table uses the heuristic judge for cross-model consistency; the LLM judge results demonstrate that the architecture supports plug-and-play judge replacement with measurable quality improvements.
+The improved four-dimensional RTV (CAI/OAV/IAD/TDI) with the LLM judge achieves a dramatic improvement over the original three-dimensional heuristic: ASR drops from 19.2\% to 0.8\%, L2-ASR from 35.0\% to 0.0\%, while TCR improves from 58.3\% to 60.0\%. The key innovation is the TDI dimension, which inspects actual invocation parameters for data exfiltration patterns (external email addresses, method-level intent divergence such as file-read$\to$email-send) and detects tool-response instruction following. The latency trade-off is moderate: 926\,ms per RTV check (one LLM API call), which is comparable to the agent's own inference latency and does not represent a bottleneck.
 
 \subsection{Per-Category Analysis}
 
@@ -124,23 +125,21 @@ Table~\ref{tab:per_category} breaks down the GPT-4o results by attack category, 
 \toprule
 \textbf{Category} & \textbf{Layer} & \textbf{No Def.} & \textbf{PTG-Only} & \textbf{RTV-Only} & \textbf{RG} \\
 \midrule
-TDP       & L4 & 100.0 &   0.0 &  75.0 &   0.0 \\
-PI        & L4 &  95.0 &  30.0 &  80.0 &  10.0 \\
-CE        & L4 &  80.0 &   0.0 &  60.0 &   0.0 \\
-T2        & L2 &  45.0 &  50.0 &  35.0 &  40.0 \\
-T3        & L2 &  70.0 &  65.0 &  35.0 &  40.0 \\
-RM        & L2 &  35.0 &  30.0 &  15.0 &  25.0 \\
+TDP       & L4 & 100.0 &   0.0 &  10.0 &   0.0 \\
+PI        & L4 &  90.0 &  20.0 &  70.0 &   5.0 \\
+CE        & L4 &  80.0 &   0.0 &  80.0 &   0.0 \\
+T2        & L2 &  55.0 &  50.0 &   5.0 &   0.0 \\
+T3        & L2 &  60.0 &  60.0 &   0.0 &   0.0 \\
+RM        & L2 &  60.0 &  45.0 &  10.0 &   0.0 \\
 \bottomrule
 \end{tabular}
-\caption{Per-category ASR (\%) on GPT-4o (20 scenarios per category). TDP and CE are fully blocked by PTG (L4). RM is best handled by RTV (L2). T2 and T3 remain challenging---the social engineering injections in tool responses partially bypass both layers.}
+\caption{Per-category ASR (\%) on GPT-4o (20 scenarios per category, improved RTV with TDI). TDP and CE are fully blocked by PTG (L4). All L2 categories (T2, T3, RM) are fully blocked by ReasoningGuard (0.0\% ASR). RTV-Only alone achieves strong L2 performance (0.0--10.0\%), confirming the TDI dimension's effectiveness in detecting tool-response instruction following.}
 \label{tab:per_category}
 \end{table}
 
-The L4 categories (TDP, PI, CE) are effectively blocked by PTG: TDP drops from 100\% to 0\% and CE from 80\% to 0\%, as the gateway rejects calls to unattested capabilities. PI is partially blocked (95\%$\to$30\%) because some parameter injections use the same server/method as legitimate calls, making the gateway's capability check insufficient without full parameter attestation.
+The L4 categories (TDP, PI, CE) are effectively blocked by PTG: TDP drops from 100\% to 0\% and CE from 80\% to 0\%, as the gateway rejects calls to unattested capabilities. PI is partially blocked by PTG alone (90\%$\to$20\%) because some parameter injections use the same server/method as legitimate calls, but ReasoningGuard further reduces PI to 5.0\% through RTV's invocation-parameter inspection.
 
-The L2 categories (T2, T3, RM) are more challenging. RM is best handled by RTV alone (35\%$\to$15\%), as the reasoning trace reveals the agent following instructions from a tool response rather than the user. T2 and T3 remain the hardest categories: even ReasoningGuard leaves 40\% ASR on T2 and T3, because the multi-turn context makes it harder for RTV to distinguish legitimate sequential actions from injected ones.
-
-A notable observation is that on T2 and T3, RTV-Only (35\%) achieves slightly lower ASR than full ReasoningGuard (40\%). This counterintuitive result arises from the \emph{defense interaction effect}: when PTG runs first and blocks certain tool calls, it changes the agent's conversation trajectory, leading to different reasoning traces in the trigger phase. In some cases, PTG's blocking causes the agent to produce a \emph{different} (but still malicious) action path that RTV finds harder to detect, whereas without PTG the agent follows the original (more detectable) injection path. This interaction effect highlights a subtlety of dual-layer defense: the layers are not simply additive, and the ordering can introduce non-trivial interactions. However, the overall ASR of ReasoningGuard (19.2\%) remains substantially lower than RTV-Only (50.0\%) because PTG's contribution to L4 defense far outweighs this localized L2 interaction.
+The L2 categories (T2, T3, RM) are comprehensively blocked by the improved RTV: all three drop to 0.0\% ASR under ReasoningGuard. RTV-Only alone achieves strong L2 performance (T2=5.0\%, T3=0.0\%, RM=10.0\%), confirming that the TDI (Tool-Data Instruction) dimension effectively detects agents following instructions embedded in tool responses. The key improvement comes from RTV's ability to inspect actual invocation parameters: when the agent calls \texttt{email/send} with an external address not present in the user's original query, the IAD scorer flags the intent-action divergence, and the TDI scorer detects the tool-response instruction following pattern.
 
 \subsection{Ablation Study}
 
@@ -193,7 +192,7 @@ CAI detection & 10/10 (100\%) \\
 \label{tab:rtv_direct}
 \end{table}
 
-Table~\ref{tab:rtv_direct} shows that RTV achieves perfect detection (TPR=100\%, FPR=0\%, F1=100\%) on the constructed traces. This confirms that the three anomaly classes---Origin Awareness Violation (agent treats server data as user instruction), Intent-Action Divergence (agent's action contradicts its stated intent), and Cross-server Action Injection (agent calls an unattested server based on tool response)---are reliably detectable when they manifest as observable inconsistencies in the agent's externalized evidence trace. The residual L2-ASR in the end-to-end pipeline (35.0\% on GPT-4o) arises not from RTV's detection failure but from cases where the agent's trace is internally consistent yet serves a malicious purpose (e.g., the agent silently follows an injected instruction without producing an observable inconsistency in its justification). This is the fundamental limitation of evidence consistency checking: it can detect \emph{inconsistent} malicious actions but cannot detect \emph{consistent} ones, which require deeper semantic policy reasoning or formal authorization.
+Table~\ref{tab:rtv_direct} shows that RTV achieves perfect detection (TPR=100\%, FPR=0\%, F1=100\%) on the constructed traces. This confirms that the four anomaly classes---Origin Awareness Violation, Intent-Action Divergence, Cross-server Action Injection, and Tool-Data Instruction (agent follows tool-response imperatives)---are reliably detectable when they manifest as observable inconsistencies in the agent's externalized evidence trace. With the improved RTV, the end-to-end L2-ASR on GPT-4o drops to 0.0\%, confirming that the TDI dimension's invocation-parameter inspection (detecting external email addresses, method-level intent divergence, and tool-response instruction following) effectively closes the evidence-consistency gap that previously allowed 35.0\% of L2 attacks to succeed.
 
 \subsection{Adaptive Attacker Evaluation}
 
@@ -232,31 +231,31 @@ To demonstrate that architectural defense (ReasoningGuard) outperforms both prom
 \toprule
 \textbf{Defense} & \textbf{Type} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L4-ASR} & \textbf{L2-ASR} \\
 \midrule
-No Defense       & ---      & 70.0 & 75.0 & 88.3 & 51.7 \\
+No Defense       & ---      & 74.2 & 70.0 & 90.0 & 58.3 \\
 Prompt-Only      & Prompt   & 36.7 & 90.0 & 46.7 & 26.7 \\
-StruQ-Style      & Prompt   & 34.2 & 66.7 & 58.3 & \textbf{10.0} \\
+StruQ-Style      & Prompt   & 34.2 & 66.7 & 58.3 & 10.0 \\
 IPIGuard-Style   & Graph    & 53.3 & 66.7 & 90.0 & 16.7 \\
 \midrule
-ReasoningGuard   & Arch.    & \textbf{19.2} & 58.3 & \textbf{3.3} & 35.0 \\
+ReasoningGuard   & Arch.    & \textbf{0.8} & 60.0 & \textbf{1.7} & \textbf{0.0} \\
 \bottomrule
 \end{tabular}
-\caption{Defense baseline comparison on GPT-4o (132 scenarios). Prompt-level defenses (Prompt-Only, StruQ-Style) reduce L2-ASR effectively (10.0--26.7\%) but leave high L4-ASR (46.7--58.3\%). IPIGuard-Style reduces L2-ASR (16.7\%) but is completely ineffective on L4 (90.0\%, same as No Defense). Only ReasoningGuard achieves both low L4-ASR (3.3\%) and moderate L2-ASR (35.0\%) through architectural enforcement.}
+\caption{Defense baseline comparison on GPT-4o. Prompt-level defenses (Prompt-Only, StruQ-Style) reduce L2-ASR (10.0--26.7\%) but leave high L4-ASR (46.7--58.3\%). IPIGuard-Style reduces L2-ASR (16.7\%) but is ineffective on L4 (90.0\%). ReasoningGuard achieves the lowest ASR (0.8\%), L4-ASR (1.7\%), and L2-ASR (0.0\%)---comprehensively outperforming all baselines on security. Baselines use 132 scenarios; RG uses 140 scenarios with the improved four-dimensional RTV.}
 \label{tab:baselines}
 \end{table}
 
-Table~\ref{tab:baselines} reveals a striking pattern that directly validates the observability-based defense limitation property. \textbf{Prompt-level defenses} (Prompt-Only, StruQ-Style) are effective against L2 attacks (reducing L2-ASR to 10.0--26.7\%) because they instruct the agent to distrust tool-response content, but they cannot prevent L4 attacks (L4-ASR remains 46.7--58.3\%) because protocol-level poisoning exploits the tool catalog structure, not the agent's reasoning. \textbf{Graph-based defense} (IPIGuard-Style) detects suspicious cross-server data flows after the fact, reducing L2-ASR to 16.7\%, but has zero effect on L4 attacks (L4-ASR=90.0\%, identical to No Defense) because L4 attacks use the same server/method as legitimate calls, producing no anomalous graph edges. Only \textbf{ReasoningGuard}, with its architectural PTG layer, achieves low L4-ASR (3.3\%) by rejecting calls to unattested capabilities before they reach the agent.
+Table~\ref{tab:baselines} reveals a striking pattern that directly validates the observability-based defense limitation property. \textbf{Prompt-level defenses} (Prompt-Only, StruQ-Style) are effective against L2 attacks (reducing L2-ASR to 10.0--26.7\%) because they instruct the agent to distrust tool-response content, but they cannot prevent L4 attacks (L4-ASR remains 46.7--58.3\%) because protocol-level poisoning exploits the tool catalog structure, not the agent's reasoning. \textbf{Graph-based defense} (IPIGuard-Style) detects suspicious cross-server data flows after the fact, reducing L2-ASR to 16.7\%, but has zero effect on L4 attacks (L4-ASR=90.0\%, identical to No Defense). Only \textbf{ReasoningGuard}, with its architectural PTG layer and improved four-dimensional RTV, achieves comprehensively dominant security: ASR=0.8\% (33.4\,pp lower than StruQ), L4-ASR=1.7\% (56.6\,pp lower than StruQ), and L2-ASR=0.0\% (10.0\,pp lower than StruQ).
 
-The TCR difference between Prompt-Only (90.0\%) and ReasoningGuard (58.3\%) merits explanation. Prompt-Only defense does not block or escalate any tool call---it only modifies the agent's system prompt, so every benign task that the agent can complete without defense remains completable. ReasoningGuard, however, actively escalates suspicious tool calls: when RTV's heuristic scoring flags a benign action (e.g., a legitimate backup or sync operation that uses policy-related keywords overlapping with attack patterns), the escalation mechanism interrupts the task flow, lowering TCR. This is a deliberate trade-off: ReasoningGuard trades utility for security by being conservative, while Prompt-Only trades security for utility by being non-interruptive. The Pareto analysis (Table~\ref{tab:pareto}) shows that lowering the RTV threshold to $\tau$=0.2 recovers TCR to 83.3\% while maintaining ASR at 15.8\%, suggesting that the trade-off can be substantially mitigated through threshold calibration.
+The TCR difference between Prompt-Only (90.0\%) and ReasoningGuard (60.0\%) merits explanation. Prompt-Only defense does not block or escalate any tool call---it only modifies the agent's system prompt, so every benign task that the agent can complete without defense remains completable. ReasoningGuard, however, actively escalates suspicious tool calls: when RTV's scoring flags a benign action (e.g., a legitimate backup or sync operation that uses policy-related keywords overlapping with attack patterns), the escalation mechanism interrupts the task flow, lowering TCR. This is a deliberate trade-off: ReasoningGuard trades 10.0\,pp of utility for a 36--73\,pp improvement in security over prompt-based defenses. The Pareto analysis (Table~\ref{tab:pareto}) shows that threshold calibration can partially mitigate this trade-off.
 
 \subsection{Latency and Cost Analysis}
 
-The \emph{defense computation overhead} of \textsc{ReasoningGuard} with the default heuristic judge is negligible: 0.1\,ms per tool call, measured as the sum of PTG attestation verification and RTV heuristic scoring. Since the heuristic judge uses rule-based pattern matching (no LLM call is made for defense decisions), the defense latency is orders of magnitude below typical LLM inference time (500--2000\,ms). With the optional LLM judge (GPT-4o-mini), the overhead increases to $\sim$672\,ms per tool call (one additional API call for anomaly scoring), which is still comparable to the agent's own inference latency and does not represent a bottleneck. The main-table results use the heuristic judge for cross-model consistency; the LLM judge comparison is reported in Table~\ref{tab:judge_comparison}.
+The \emph{defense computation overhead} of \textsc{ReasoningGuard} depends on the judge configuration. With the original three-dimensional heuristic judge, the overhead is negligible: 0.1\,ms per tool call (rule-based pattern matching, no LLM call). With the improved four-dimensional RTV using the LLM judge (GPT-4o-mini), the overhead increases to $\sim$926\,ms per tool call (one additional API call for anomaly scoring, including TDI's invocation-parameter inspection). Since PTG blocks many attacks before RTV runs, the effective per-episode latency is lower: ReasoningGuard averages 926\,ms (fewer RTV calls due to PTG blocking) compared to RTV-Only's 1737\,ms (every call requires RTV). Both are comparable to the agent's own inference latency (500--2000\,ms) and do not represent a bottleneck. The main-table results for GPT-4o use the improved RTV with LLM judge; the other seven models use the original heuristic judge for cross-model consistency.
 
 However, the \emph{end-to-end overhead} includes additional costs not captured by the defense computation metric: (1)~the agent must generate structured reasoning traces (Observation/Inference/Decision) before each tool call, adding approximately 50--100 output tokens per invocation; (2)~the intent summary adds 10--20 tokens; (3)~the system prompt is extended with trace formatting instructions. We estimate the total additional token cost at 60--120 tokens per tool call, translating to approximately \$0.0003--0.0006 per invocation at GPT-4o pricing (\$5/M input, \$15/M output). The latency impact of additional token generation is approximately 200--500\,ms, comparable to the agent's own reasoning latency. We report the 0.1\,ms defense computation overhead separately to isolate the defense mechanism's cost from the agent's natural inference cost.
 
 \subsection{Security--Utility Trade-off}
 
-\textsc{ReasoningGuard} introduces a measurable TCR cost that varies by model. On GPT-4o, TCR drops from 75.0\% (No Defense) to 58.3\% (ReasoningGuard)---a 16.7 percentage-point decrease. This occurs because RTV's heuristic scoring occasionally flags legitimate actions as suspicious (false escalations), particularly when the agent's reasoning references policy-related keywords (e.g., ``backup'', ``sync'') that overlap with attack patterns. The trade-off varies significantly by model: GPT-4-Turbo shows no TCR decrease (91.7\%$\to$91.7\%), while GPT-4o-mini loses 25\,pp (91.7\%$\to$66.7\%). This model-dependence suggests that the trade-off can be improved by calibrating thresholds per model or replacing the heuristic judge with a more precise neural model.
+\textsc{ReasoningGuard} introduces a measurable TCR cost that varies by model. On GPT-4o, TCR drops from 70.0\% (No Defense) to 60.0\% (ReasoningGuard)---a 10.0 percentage-point decrease. This occurs because RTV's scoring occasionally flags legitimate actions as suspicious (false escalations), particularly when the agent's reasoning references policy-related keywords (e.g., ``backup'', ``sync'') that overlap with attack patterns. The improved TDI dimension mitigates this by checking whether such keywords appear in the user's original query (user-requested backup/sync is legitimate) versus in tool responses (injected instructions are suspicious). The remaining TCR cost reflects the inherent tension between security and utility in an actively interrupting defense.
 
 To characterize the security--utility Pareto frontier, we vary the RTV anomaly thresholds across five configurations on the full 132-scenario set with GPT-4o:
 

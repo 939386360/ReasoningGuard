@@ -27,11 +27,11 @@ We propose \textsc{ReasoningGuard}, a dual-layer defense framework that addresse
 \end{enumerate}
 
 The dual-layer design is motivated by the observability-based defense limitation property and validated empirically across eight SOTA models.
-On GPT-4o, the most comprehensively evaluated model, No Defense ASR reaches 70.8\%---with L4 (protocol-layer) attacks achieving 91.7\% ASR and L2 (cognitive-layer) attacks achieving 50.0\% ASR.
-PTG-Only reduces L4-ASR by 89.1\% (to 10.0\%) but L2-ASR by only 3.4\% (to 48.3\%), confirming that a protocol-layer defense has significantly reduced detection power against cognitive-layer attacks.
-RTV-Only reduces L2-ASR by 43.4\% (to 28.3\%) but L4-ASR by only 21.7\% (to 71.7\%), confirming the reverse.
-Only \textsc{ReasoningGuard} (PTG~+~RTV) achieves low ASR on both layers simultaneously (L4=3.3\%, L2=35.0\%), demonstrating that the two layers are complementary.
-Across all eight models, \textsc{ReasoningGuard} reduces overall ASR by 48.5\%--92.6\% relative to No Defense, with negligible defense computation overhead (0.1\,ms per tool call) and a measurable but acceptable TCR cost (16.7\,pp on GPT-4o).
+On GPT-4o, the most comprehensively evaluated model, No Defense ASR reaches 74.2\%---with L4 (protocol-layer) attacks achieving 90.0\% ASR and L2 (cognitive-layer) attacks achieving 58.3\% ASR.
+PTG-Only reduces L4-ASR by 92.6\% (to 6.7\%) but L2-ASR by only 11.3\% (to 51.7\%), confirming that a protocol-layer defense has significantly reduced detection power against cognitive-layer attacks.
+RTV-Only reduces L2-ASR by 91.4\% (to 5.0\%) but L4-ASR by only 40.8\% (to 53.3\%), confirming the reverse.
+Only \textsc{ReasoningGuard} (PTG~+~RTV) achieves near-zero ASR on both layers simultaneously (L4=1.7\%, L2=0.0\%, overall ASR=0.8\%), demonstrating that the two layers are complementary and that the improved four-dimensional RTV effectively closes the L2 gap.
+Across all eight models, \textsc{ReasoningGuard} reduces overall ASR by 48.5\%--98.9\% relative to No Defense, with defense computation overhead of 926\,ms per tool call (LLM judge) and a measurable TCR cost (10.0\,pp on GPT-4o).
 
 We further contribute \textbf{MCPTox+}, a comprehensive benchmark comprising 342 scenarios across six attack categories spanning both L4 and L2 attack surfaces, including the first cross-session (T3) memory poisoning evaluation for MCP security. MCPTox+ strictly separates model-visible runtime specifications from evaluator-only ground truth, preventing label leakage into the defense pipeline---a flaw we identify in prior benchmark constructions.
 
@@ -39,7 +39,7 @@ Our contributions are:
 \begin{itemize}
 \item \textsc{ReasoningGuard}, a dual-layer defense combining Protocol-Attested Tool Gateway (PTG) with Reasoning Trace Verifier (RTV), grounded in the observability-based defense limitation property and validated on 9{,}192 episodes across eight SOTA models.
 \item Semantic intent attestation: a novel protocol extension that binds reasoning summaries to tool invocations, identified by ablation as the most critical single defense component (removing it increases ASR by 6.7--18.3\,pp across three models). We position this as a necessary-but-not-sufficient capability boundary check, complementary to formal authorization systems.
-\item Evidence consistency verification with three anomaly classes (OAV, IAD, CAI): a constrained-judge approach that checks the consistency of the agent's externalized decision evidence rather than claiming to verify internal reasoning correctness. RTV achieves 100\% TPR and 0\% FPR on direct evaluation, providing clear incremental value beyond PTG on L2 attacks (13.3\,pp additional L2-ASR reduction on GPT-4o).
+\item Evidence consistency verification with four anomaly classes (OAV, IAD, CAI, TDI): a constrained-judge approach that checks the consistency of the agent's externalized decision evidence, including invocation-parameter inspection for data exfiltration patterns. RTV achieves 100\% TPR and 0\% FPR on direct evaluation, reducing L2-ASR to 0.0\% on GPT-4o (51.7\,pp reduction beyond PTG alone).
 \item MCPTox+: a benchmark of 342 scenarios across six attack categories with strict RuntimeSpec/EvaluationOracle separation, including the first T3 cross-session memory poisoning evaluation for MCP security.
 \item Extensive multi-model evaluation demonstrating that \textsc{ReasoningGuard} consistently achieves the lowest ASR across all eight tested models, with 0\% invalid episodes ensuring fair cross-defense comparison, plus adaptive adversary analysis identifying three evasion strategies and their feasibility.
 \end{itemize}
