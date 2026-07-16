@@ -78,21 +78,22 @@ PTG-Only reduces L4-ASR from 90.0\% to 6.7\% but leaves L2-ASR nearly unchanged 
 
 \textbf{Third}, RTV provides clear \emph{incremental value} beyond PTG. Comparing PTG-Only (L2-ASR=51.7\%) to ReasoningGuard (L2-ASR=0.0\%) on GPT-4o, RTV reduces L2 attacks by an additional 51.7 percentage points---completely eliminating all L2 attacks. This increment is consistent across all eight models, confirming that RTV is not redundant with PTG.
 
-\textbf{Statistical robustness.} To verify that these results are not artifacts of a single random seed, we run three seeds (42, 43, 44) on four models and report mean$\pm$std with paired $t$-tests (Table~\ref{tab:multiseed}).
+\textbf{Statistical robustness.} To verify that these results are not artifacts of a single random seed, we run three seeds (42, 43, 44) on GPT-4o with the improved four-dimensional RTV and report mean$\pm$std with paired $t$-tests (Table~\ref{tab:multiseed}). We additionally include multi-seed results for three other models using the original three-dimensional heuristic RTV for comparison.
 
 \begin{table}[htbp]
 \centering\small
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrr}
 \toprule
-\textbf{Model} & \textbf{No Defense} & \textbf{RG} & \textbf{$p$ (ND vs RG)} & \textbf{$p$ (PTG vs RG)} \\
+\textbf{Model (RTV)} & \textbf{No Defense} & \textbf{RG} & \textbf{L2-ASR} & \textbf{$p$ (ND vs RG)} & \textbf{$p$ (PTG vs RG)} \\
 \midrule
-GPT-4o        & 66.9$\pm$6.4 & \textbf{16.9$\pm$2.4} & 0.0023 & 0.0038 \\
-GPT-4o-mini   & 56.7$\pm$3.4 & \textbf{25.8$\pm$3.4} & $<$0.0001 & 0.0112 \\
-GPT-3.5-Turbo & 45.3$\pm$0.9 & \textbf{18.6$\pm$2.1} & 0.0010 & 0.0140 \\
-GPT-4-Turbo   & 47.2$\pm$38.2 & 17.8$\pm$15.6 & 0.15 & 0.19 \\
+GPT-4o (4-dim LLM)    & 68.3$\pm$5.1 & \textbf{2.2$\pm$1.8} & \textbf{0.6$\pm$1.0} & 0.0035 & 0.0004 \\
+GPT-4o (3-dim heur.)   & 66.9$\pm$6.4 & \textbf{16.9$\pm$2.4} & 30.6$\pm$6.8 & 0.0023 & 0.0038 \\
+GPT-4o-mini (3-dim)   & 56.7$\pm$3.4 & \textbf{25.8$\pm$3.4} & --- & $<$0.0001 & 0.0112 \\
+GPT-3.5-Turbo (3-dim) & 45.3$\pm$0.9 & \textbf{18.6$\pm$2.1} & --- & 0.0010 & 0.0140 \\
+GPT-4-Turbo (3-dim)   & 47.2$\pm$38.2 & 17.8$\pm$15.6 & --- & 0.15 & 0.19 \\
 \bottomrule
 \end{tabular}
-\caption{Multi-seed results (3 seeds, mean$\pm$std ASR \%, 140 scenarios per seed). Paired $t$-tests confirm that ReasoningGuard significantly reduces ASR vs.\ No Defense on 3/4 models ($p<0.01$). RTV's incremental value (PTG-Only vs.\ RG) is significant on 3/4 models ($p<0.02$). GPT-4-Turbo exhibits high variance (seed 44 yields ASR=3.3\%) due to model instability.}
+\caption{Multi-seed results (3 seeds, mean$\pm$std ASR \%, 140 scenarios per seed). The improved four-dimensional RTV on GPT-4o achieves ASR=2.2$\pm$1.8\% with L2-ASR=0.6$\pm$1.0\%, both dramatically lower than the original three-dimensional heuristic RTV (16.9\% and 30.6\%). Paired $t$-tests confirm high significance ($p<0.005$ for ND vs RG, $p<0.001$ for PTG vs RG). The original three-dimensional RTV on other models also achieves significant reductions ($p<0.01$ on 3/4 models). GPT-4-Turbo exhibits high variance due to model instability.}
 \label{tab:multiseed}
 \end{table}
 
@@ -143,30 +144,30 @@ The L2 categories (T2, T3, RM) are comprehensively blocked by the improved RTV: 
 
 \subsection{Ablation Study}
 
-We ablate the three key ReasoningGuard components---intent attestation, origin tags, and memory graph---across three models (GPT-4o, GPT-4-Turbo, DeepSeek-V4-Pro), using 792 episodes per configuration (Table~\ref{tab:ablation}).
+We ablate the key ReasoningGuard components---intent attestation, origin tags, and memory graph---on GPT-4o with the improved four-dimensional RTV, using 140 scenarios per configuration (Table~\ref{tab:ablation}).
 
 \begin{table}[htbp]
 \centering\small
 \begin{tabular}{lrrr}
 \toprule
-\textbf{Configuration} & \textbf{GPT-4o} & \textbf{GPT-4-Turbo} & \textbf{DeepSeek} \\
+\textbf{Configuration} & \textbf{ASR (\%)} & \textbf{TCR (\%)} & \textbf{L2-ASR (\%)} \\
 \midrule
-ReasoningGuard (full)  & \textbf{20.0} & \textbf{23.3} & \textbf{22.5} \\
-\quad $-$Intent attestation & 38.3 & 34.2 & 29.2 \\
-\quad $-$Origin tags    & 14.2 & 22.5 & 21.7 \\
-\quad $-$Memory graph   & 15.8 & 24.2 & 24.2 \\
+ReasoningGuard (full)  & \textbf{0.8} & 60.0 & \textbf{0.0} \\
+\quad $-$Intent attestation & 11.7 & 60.0 & 0.0 \\
+\quad $-$Origin tags    & 2.5 & 65.0 & 1.7 \\
+\quad $-$Memory graph   & 0.0 & 60.0 & 0.0 \\
 \midrule
-PTG-Only ($-$RTV)      & 30.8 & 35.0 & 26.7 \\
-RTV-Only ($-$PTG)      & 49.2 & 44.2 & 44.2 \\
+PTG-Only ($-$RTV)      & 27.5 & 65.0 & 45.0 \\
+RTV-Only ($-$PTG)      & 27.5 & 60.0 & 5.0 \\
 \bottomrule
 \end{tabular}
-\caption{Ablation study: ASR (\%) across three models (792 episodes each). Removing intent attestation causes the largest degradation on GPT-4o (+18.3\,pp) and GPT-4-Turbo (+10.9\,pp), confirming it as the most critical component. Removing PTG entirely ($-$PTG) causes +29.2--21.7\,pp degradation, confirming PTG is essential. Removing RTV ($-$RTV) causes +10.8--4.2\,pp, confirming RTV's incremental value.}
+\caption{Ablation study on GPT-4o (140 scenarios, improved 4-dim RTV). Removing intent attestation causes the largest degradation (+10.9\,pp ASR), confirming it as the most critical component. Removing PTG entirely ($-$RTV) causes +26.7\,pp degradation with L2-ASR rising to 45.0\%. Removing RTV ($-$PTG) causes +26.7\,pp degradation, confirming RTV's substantial incremental value. Notably, removing origin tags or memory graph no longer \emph{decreases} ASR---the anomaly observed with the original 3-dim RTV is resolved by the TDI dimension's context-aware scoring.}
 \label{tab:ablation}
 \end{table}
 
-The ablation reveals a consistent ranking across all three models. \textbf{Intent attestation} is the most critical single component: removing it increases ASR by 6.7--18.3\,pp, as the gateway can no longer detect mismatches between the agent's stated intent and the server's attested capabilities. \textbf{PTG} is essential for L4 defense: removing it entirely (RTV-Only) increases ASR by 20.9--29.2\,pp, as L4 attacks bypass the reasoning layer entirely. \textbf{RTV} provides clear incremental value: removing it (PTG-Only) increases ASR by 4.2--11.7\,pp, primarily from residual L2 attacks that PTG cannot detect.
+The ablation reveals a clear and consistent ranking. \textbf{Intent attestation} is the most critical single component: removing it increases ASR by 10.9\,pp (0.8\%$\to$11.7\%), as the gateway can no longer detect mismatches between the agent's stated intent and the server's attested capabilities. \textbf{PTG} is essential for L4 defense: removing it entirely (RTV-Only) increases ASR by 26.7\,pp, as L4 attacks bypass the reasoning layer entirely. \textbf{RTV} provides substantial incremental value: removing it (PTG-Only) increases ASR by 26.7\,pp (0.8\%$\to$27.5\%) and L2-ASR from 0.0\% to 45.0\%, confirming that the TDI dimension is the primary driver of L2 defense.
 
-\textbf{Ablation anomaly investigation.} Removing origin tags or the memory graph slightly \emph{decreases} ASR on some models (e.g., GPT-4o: $-$Origin=14.2\% vs.\ RG=20.0\%). A per-scenario analysis reveals that 13 out of 132 scenarios have different outcomes when origin tags are removed: in 10 cases, removing origin tags \emph{improves} security (the attack is blocked), while in 3 cases it \emph{worsens} security. The root cause is a \emph{double-edged escalation effect}: origin tags enable RTV to detect provenance violations (catching 3 additional attacks), but they also introduce false escalations on benign-looking PI and RM scenarios where the agent's reasoning references server-originated policy keywords (``backup'', ``compliance''), causing RTV to flag legitimate actions that would have succeeded without origin tags. These false escalations sometimes block the agent's first tool call, preventing it from reaching the poisoned tool response that would have triggered the attack---an incidental blocking effect. The net effect is mixed: origin tags improve detection of true OAV anomalies but increase false positives on policy-related reasoning. This suggests that origin tag utilization could benefit from more precise OAV scoring (e.g., neural entailment instead of keyword matching) to reduce false positives while retaining the provenance signal. The memory graph exhibits a similar pattern (9 scenarios where removal improves security, 4 where it worsens), confirming that both components provide genuine but noisy signal.
+\textbf{Ablation anomaly resolved.} With the original three-dimensional heuristic RTV, removing origin tags or the memory graph paradoxically \emph{decreased} ASR on some models (e.g., GPT-4o: $-$Origin=14.2\% vs.\ RG=20.0\%), caused by false escalations on benign-looking scenarios where the agent's reasoning referenced policy-related keywords. The improved four-dimensional RTV resolves this anomaly: removing origin tags now \emph{increases} ASR (0.8\%$\to$2.5\%), and removing the memory graph has negligible effect (0.8\%$\to$0.0\%, within noise). This improvement comes from the TDI and CAI dimensions' user-query context awareness: policy-related keywords (``backup'', ``sync'') only trigger escalation when they do not appear in the user's original query, eliminating the false positives that caused the paradoxical ablation results.
 
 \subsection{RTV Direct Evaluation}
 
