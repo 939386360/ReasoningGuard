@@ -1,0 +1,33 @@
+{
+  "experiment": "GPT-4o main table with LLM Judge (GPT-4o-mini)",
+  "config": {"model": "GPT-4o", "judge": "GPT-4o-mini", "scenarios": 140, "profiles": 6, "episodes": 840, "seed": 42, "elapsed_min": 71.0},
+  "main_results": {
+    "no_defense":     {"ASR": 72.5, "TCR": 65.0, "L4_ASR": 88.3, "L2_ASR": 56.7, "Latency_ms": 0.0},
+    "attest_mcp":     {"ASR": 57.5, "TCR": 70.0, "L4_ASR": 63.3, "L2_ASR": 51.7, "Latency_ms": 0.1},
+    "guardrail":      {"ASR": 75.8, "TCR": 65.0, "L4_ASR": 93.3, "L2_ASR": 58.3, "Latency_ms": 0.0},
+    "ptg_only":       {"ASR": 29.2, "TCR": 65.0, "L4_ASR": 10.0, "L2_ASR": 48.3, "Latency_ms": 0.1},
+    "rtv_only":       {"ASR": 41.7, "TCR": 70.0, "L4_ASR": 35.0, "L2_ASR": 48.3, "Latency_ms": 1131.8},
+    "reasoning_guard":{"ASR": 20.0, "TCR": 65.0, "L4_ASR": 1.7, "L2_ASR": 38.3, "Latency_ms": 671.9}
+  },
+  "per_category": {
+    "TDP (L4)":  {"no_defense": "80%", "ptg_only": "0%", "rtv_only": "80%", "rg": "0%"},
+    "PI (L4)":   {"no_defense": "85%", "ptg_only": "30%", "rtv_only": "20%", "rg": "5%"},
+    "CE (L4)":   {"no_defense": "80%", "ptg_only": "0%", "rtv_only": "80%", "rg": "0%"},
+    "T2 (L2)":   {"no_defense": "55%", "ptg_only": "45%", "rtv_only": "45%", "rg": "55%"},
+    "T3 (L2)":   {"no_defense": "60%", "ptg_only": "55%", "rtv_only": "45%", "rg": "25%"},
+    "RM (L2)":   {"no_defense": "55%", "ptg_only": "45%", "rtv_only": "55%", "rg": "35%"}
+  },
+  "comparison_heuristic_vs_llm": {
+    "heuristic_RG": {"ASR": 19.2, "L4_ASR": 3.3, "L2_ASR": 35.0, "TCR": 58.3},
+    "llm_judge_RG": {"ASR": 20.0, "L4_ASR": 1.7, "L2_ASR": 38.3, "TCR": 65.0},
+    "note": "LLM judge gives similar ASR (20.0 vs 19.2) but HIGHER TCR (65.0 vs 58.3) - fewer false escalations. L4-ASR slightly better (1.7 vs 3.3). L2-ASR slightly worse (38.3 vs 35.0). RTV-Only latency now 1131ms (LLM call) vs 0.1ms (heuristic)."
+  },
+  "key_findings": [
+    "LLM judge TCR improved: 65.0% vs 58.3% (heuristic) - fewer false positives on benign",
+    "LLM judge ASR similar: 20.0% vs 19.2% (heuristic) - detection capability unchanged",
+    "RTV-Only now shows L4-ASR=35.0% (was 71.7% with heuristic) - LLM judge detects some L4 attacks",
+    "T3 (cross-session) improved: RG ASR=25% (was 40%) - LLM judge better at detecting memory poisoning",
+    "PI improved: RG ASR=5% (was 10%) - LLM judge catches more parameter injections",
+    "Latency: RTV-Only=1131ms, RG=672ms (LLM judge adds ~600ms per RTV check)"
+  ]
+}
