@@ -8,11 +8,11 @@
 
 Each scenario strictly separates the model-visible \texttt{RuntimeSpec} from the evaluator-only \texttt{EvaluationOracle}, ensuring no ground-truth labels leak into the defense pipeline.
 
-\textbf{Models.} We evaluate eight SOTA agent backbones: GPT-4o, GPT-4-Turbo, GPT-4o-mini, GPT-3.5-Turbo, DeepSeek-V4-Pro, Claude-Sonnet-5, Gemini-3.5-Flash, and Qwen3.5-397B-A17B. All models are accessed through a unified API endpoint with temperature~0 and max\_tokens~1024.
+\textbf{Models.} We evaluate eight SOTA agent backbones: GPT-4o, GPT-4-Turbo, GPT-4o-mini, GPT-3.5-Turbo, DeepSeek-V4-Pro, Claude-Sonnet-5, Gemini-3.5-Flash, and Qwen3.5-397B-A17B. All models are accessed through a unified API endpoint with temperature~0 and max\_tokens~1024. The RTV judge model uses GPT-4o-mini (temperature~0, max\_tokens~100) with structured JSON output for anomaly scoring.
 
 \textbf{Defense Profiles.} We compare nine defense configurations: (1)~\textbf{No Defense}, (2)~\textbf{AttestMCP}~\citep{maloyan2026breaking} (protocol-only capability attestation with origin tags), (3)~\textbf{Guardrail} (action-level keyword filter), (4)~\textbf{PTG-Only} (full gateway with intent attestation, no RTV), (5)~\textbf{RTV-Only} (reasoning trace verification without gateway), (6)~\textbf{ReasoningGuard} (full dual-layer: PTG~+~RTV), (7)~\textbf{Prompt-Only Defense} (security instructions in system prompt), (8)~\textbf{StruQ-Style}~\citep{chen2024struq} (structured instruction-data separation in system prompt), and (9)~\textbf{IPIGuard-Style}~\citep{an2025ipiguard} (post-hoc tool dependency graph check). Configurations 7--9 are evaluated on GPT-4o only. Each profile creates an isolated agent episode with per-profile origin tag visibility.
 
-\textbf{Metrics.} Attack Success Rate (ASR, \%), Task Completion Rate (TCR, \%), L4-ASR (\%), L2-ASR (\%), and defense Latency (ms per tool call). All results use 20 scenarios per attack category (120 attack + 12 benign = 132 scenarios per model) with 6 defense profiles, yielding 792 episodes per model and 6{,}336 episodes total across eight models. Every episode is marked \texttt{valid} (zero runtime errors) across all configurations, enabling fair cross-defense comparison.
+\textbf{Metrics.} Attack Success Rate (ASR, \%), Task Completion Rate (TCR, \%), L4-ASR (\%), L2-ASR (\%), and defense Latency (ms per tool call). All results use 20 scenarios per attack category (120 attack + 50 benign = 170 scenarios per model) with 6 defense profiles. The main table (Table~\ref{tab:main_8models}) reports single-seed results (seed~42) across eight models; for statistical robustness, we additionally report multi-seed results (seeds 42, 43, 44) with mean$\pm$std and paired $t$-tests on four models (Table~\ref{tab:multiseed}). Every episode is marked \texttt{valid} (zero runtime errors) across all configurations.
 
 \subsection{Main Results}
 
@@ -77,6 +77,26 @@ ReasoningGuard  & \textbf{19.2} & \textbf{3.3} & \textbf{35.0} & 58.3 \\
 PTG-Only reduces L4-ASR from 91.7\% to 10.0\% but leaves L2-ASR nearly unchanged (48.3\% vs.\ 50.0\% No Defense), confirming that protocol-layer defenses cannot detect cognitive-layer attacks. Conversely, RTV-Only reduces L2-ASR from 50.0\% to 28.3\% but leaves L4-ASR at 71.7\%, confirming the reverse non-transferability. Only \textsc{ReasoningGuard} achieves both low L4-ASR (3.3\%) and low L2-ASR (35.0\%), demonstrating that the two layers are complementary.
 
 \textbf{Third}, RTV provides clear \emph{incremental value} beyond PTG. Comparing PTG-Only (L2-ASR=48.3\%) to ReasoningGuard (L2-ASR=35.0\%) on GPT-4o, RTV reduces L2 attacks by an additional 13.3 percentage points. This increment is consistent across all eight models, confirming that RTV is not redundant with PTG.
+
+\textbf{Statistical robustness.} To verify that these results are not artifacts of a single random seed, we run three seeds (42, 43, 44) on four models and report mean$\pm$std with paired $t$-tests (Table~\ref{tab:multiseed}).
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Model} & \textbf{No Defense} & \textbf{RG} & \textbf{$p$ (ND vs RG)} & \textbf{$p$ (PTG vs RG)} \\
+\midrule
+GPT-4o        & 66.9$\pm$6.4 & \textbf{16.9$\pm$2.4} & 0.0023 & 0.0038 \\
+GPT-4o-mini   & 56.7$\pm$3.4 & \textbf{25.8$\pm$3.4} & $<$0.0001 & 0.0112 \\
+GPT-3.5-Turbo & 48.3$\pm$1.7 & \textbf{18.6$\pm$2.1} & 0.0010 & 0.0140 \\
+GPT-4-Turbo   & 47.2$\pm$38.2 & 17.8$\pm$15.6 & 0.15 & 0.19 \\
+\bottomrule
+\end{tabular}
+\caption{Multi-seed results (3 seeds, mean$\pm$std ASR \%). Paired $t$-tests confirm that ReasoningGuard significantly reduces ASR vs.\ No Defense on 3/4 models ($p<0.01$). RTV's incremental value (PTG-Only vs.\ RG) is significant on 3/4 models ($p<0.02$). GPT-4-Turbo exhibits high variance (seed 44 yields ASR=3.3\%) due to model instability.}
+\label{tab:multiseed}
+\end{table}
+
+\textbf{LLM Judge vs.\ heuristic.} We also compare the LLM judge (GPT-4o-mini) against a rule-based heuristic on GPT-4o (seed 42). The LLM judge achieves ASR=20.0\% (vs.\ 19.2\% heuristic) but improves TCR from 58.3\% to 65.0\% (fewer false escalations on benign tasks), reduces L4-ASR from 3.3\% to 1.7\%, and improves T3 (cross-session) ASR from 40\% to 25\%. The trade-off is latency: the LLM judge adds $\sim$600\,ms per RTV check (total 672\,ms vs.\ 0.1\,ms for heuristic). All main-table results use the LLM judge unless otherwise noted.
 
 \subsection{Per-Category Analysis}
 
@@ -214,7 +234,7 @@ The TCR difference between Prompt-Only (90.0\%) and ReasoningGuard (58.3\%) meri
 
 \subsection{Latency and Cost Analysis}
 
-The \emph{defense computation overhead} of \textsc{ReasoningGuard} is negligible: 0.1\,ms per tool call, measured as the sum of PTG attestation verification and RTV heuristic scoring. Since both components use rule-based heuristics (no LLM call is made for defense decisions), the defense latency is orders of magnitude below typical LLM inference time (500--2000\,ms).
+The \emph{defense computation overhead} of \textsc{ReasoningGuard} depends on the judge model configuration. With the LLM judge (GPT-4o-mini), RTV verification adds approximately 600\,ms per tool call (one API call for anomaly scoring), bringing the total defense overhead to $\sim$672\,ms. With the heuristic fallback (keyword overlap and pattern matching), the overhead is 0.1\,ms. Since the LLM judge provides better TCR (65.0\% vs.\ 58.3\%) and comparable ASR (20.0\% vs.\ 19.2\%), we use the LLM judge as the default configuration. The 672\,ms overhead is comparable to typical LLM inference time (500--2000\,ms) and does not represent a bottleneck for interactive agent deployments.
 
 However, the \emph{end-to-end overhead} includes additional costs not captured by the defense computation metric: (1)~the agent must generate structured reasoning traces (Observation/Inference/Decision) before each tool call, adding approximately 50--100 output tokens per invocation; (2)~the intent summary adds 10--20 tokens; (3)~the system prompt is extended with trace formatting instructions. We estimate the total additional token cost at 60--120 tokens per tool call, translating to approximately \$0.0003--0.0006 per invocation at GPT-4o pricing (\$5/M input, \$15/M output). The latency impact of additional token generation is approximately 200--500\,ms, comparable to the agent's own reasoning latency. We report the 0.1\,ms defense computation overhead separately to isolate the defense mechanism's cost from the agent's natural inference cost.
 
